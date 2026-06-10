@@ -1,0 +1,948 @@
+//@version=6
+indicator("Institutional ORB + Brooks Box v3", shorttitle="iORB v3", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  INSTITUTIONAL ORB + BROOKS BOX v3                          ║
+// ╚══════════════════════════════════════════════════════════════╝
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — CORE SETTINGS
+// ──────────────────────────────────────────────────────────────
+
+var g_CORE = "Core Settings"
+int contracts = input.int(10, "Contracts", group=g_CORE)
+float tickValue = input.float(12.5, "Tick Value ($)", tooltip="MNQ=0.50, MES=1.25, NQ=5.00, ES=12.50", group=g_CORE)
+float pointValue = tickValue * 4
+float maxLossPerDay = input.float(1250, "Max Loss Per Day ($)", group=g_CORE, tooltip="Used in the dashboard to show remaining risk budget")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — OPENING RANGE
+// ──────────────────────────────────────────────────────────────
+
+var g_OR = "Opening Range"
+string orTF = input.timeframe("30", title="OR Time Period", group=g_OR, tooltip="Length of the Opening Range window. 30 = first 30 minutes of session.")
+bool crTog = input.bool(false, title="Use Custom Session", inline="Custom", group=g_OR)
+string crSesh = input.session("0930-0945", title="", inline="Custom", group=g_OR)
+string tz = input.string("UTC-5", title="", group=g_OR, inline="Custom", options=["UTC-10","UTC-8","UTC-7","UTC-6","UTC-5","UTC-4","UTC-3","UTC+0","UTC+1","UTC+2","UTC+3","UTC+3:30","UTC+4","UTC+5","UTC+5:30","UTC+5:45","UTC+6","UTC+6:30","UTC+7","UTC+8","UTC+9","UTC+9:30","UTC+10","UTC+11","UTC+12","UTC+12:45","UTC+13"])
+float tPer = input.float(50, minval=1, title="Target % of Range", group=g_OR, tooltip="Each target level = this % of OR width beyond ORH/ORL. 50% means targets every half-OR-width.") * 0.01
+string tSrc = input.string("Close", title="Target Cross Source", options=["Close","Highs/Lows"], group=g_OR, tooltip="'Close' = target hit only on close beyond level. 'Highs/Lows' = any wick touch counts.")
+string tDispType = input.string("Adaptive", title="Target Display", options=["Adaptive","Extended"], group=g_OR, tooltip="Adaptive: shows only nearest 2 targets. Extended: shows all targets drawn forward.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — BROOKS 18-BAR BOX
+// ──────────────────────────────────────────────────────────────
+
+var g_BOX = "Brooks 18-Bar Box"
+bool showBox = input.bool(true, "Show 18-Bar Box", group=g_BOX)
+bool showBoxLabel = input.bool(true, "Show 18-Bar Box Label", group=g_BOX, tooltip="Displays the range in points, ADR %, and day type classification.")
+color boxColor = input.color(color.orange, "Box Color", group=g_BOX)
+int boxTrans = input.int(80, "Box Transparency", minval=0, maxval=100, group=g_BOX)
+color coilColor = input.color(color.yellow, "Coil Label (<30% ADR)", group=g_BOX)
+color boColor = input.color(color.green, "BO Label (30-50% ADR)", group=g_BOX)
+color trColor = input.color(color.red, "TR Label (>50% ADR)", group=g_BOX)
+bool suppressTR = input.bool(true, "Suppress Breakout Signals on TR Days", group=g_BOX, tooltip="When the 18-bar box classifies the day as Trading Range (>50% ADR), initial breakout signals are suppressed.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — INITIAL BALANCE (60-MIN)
+// ──────────────────────────────────────────────────────────────
+
+var g_IB = "Initial Balance (60-min)"
+bool showIB = input.bool(true, "Show Initial Balance", group=g_IB)
+color ibColor = input.color(color.new(color.blue, 70), "IB Color", group=g_IB)
+bool showIBExt = input.bool(true, "Show IB Extensions (1.5x, 2x)", group=g_IB, tooltip="Draws 1.5x and 2x IB extension levels.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — VOLUME & VWAP
+// ──────────────────────────────────────────────────────────────
+
+var g_VOL = "Volume & VWAP"
+bool showVWAP = input.bool(true, "Show VWAP", group=g_VOL)
+bool showVWAPBands = input.bool(true, "Show VWAP ±1σ/±2σ Bands", group=g_VOL, tooltip="Standard deviation bands around VWAP.")
+color vwapColor = input.color(color.purple, "VWAP Color", group=g_VOL)
+float volGate = input.float(1.2, "Min Volume Gate (x avg)", group=g_VOL, tooltip="Breakout signals require at least this multiple of 20-bar average volume to fire.")
+float volSpikeMult = input.float(1.8, "Volume Spike (x avg)", group=g_VOL, tooltip="Volume above this multiple flags the bar as a high-conviction spike.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — 20 EMA
+// ──────────────────────────────────────────────────────────────
+
+var g_EMA = "20 EMA"
+bool showEMA = input.bool(true, "Show 20 EMA", group=g_EMA)
+color emaColor = input.color(color.orange, "EMA Color", group=g_EMA)
+int emaWidth = input.int(2, "EMA Line Width", minval=1, maxval=5, group=g_EMA)
+bool useEMAInScore = input.bool(true, "Use in Confluence Score", group=g_EMA, tooltip="Adds +1 to bull score when price is above EMA, +1 to bear score when below.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — GAP ANALYSIS
+// ──────────────────────────────────────────────────────────────
+
+var g_GAP = "Gap Analysis"
+bool showGap = input.bool(true, "Show Gap Classification", group=g_GAP, tooltip="Displays the gap type on the first bar of RTH in the dashboard.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — TIME-OF-DAY FILTER
+// ──────────────────────────────────────────────────────────────
+
+var g_TIME = "Time-of-Day Filter"
+bool useTODFilter = input.bool(true, "Apply Time-of-Day Weighting", group=g_TIME, tooltip="Downgrades signal confluence during low-probability windows (lunch chop).")
+bool suppressLunch = input.bool(false, "Suppress ALL Signals During Lunch", group=g_TIME, tooltip="11:30-13:30 ET. Completely blocks signals during lunch chop.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — FAILED BREAKOUT & RETEST
+// ──────────────────────────────────────────────────────────────
+
+var g_FAIL = "Failed Breakout & Retest"
+bool showFailed = input.bool(true, "Show Failed Breakout Signals", group=g_FAIL)
+int failBars = input.int(5, "Failed BO Lookback (bars)", minval=2, maxval=10, group=g_FAIL, tooltip="If price breaks ORH/ORL then closes back inside within this many bars, a Failed BO signal fires.")
+bool showRetest = input.bool(true, "Show Retest Signals", group=g_FAIL)
+float retestTicks = input.float(2.0, "Retest Proximity (points)", group=g_FAIL, tooltip="How close price must return to ORH/ORL to count as a retest.")
+int retestHoldBars = input.int(2, "Retest Hold (min bars)", minval=1, maxval=5, group=g_FAIL, tooltip="Price must hold near the retest level for at least this many bars before the retest signal fires.")
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — DISPLAY & STYLE
+// ──────────────────────────────────────────────────────────────
+
+var g_STYLE = "Display & Style"
+bool showHist = input.bool(true, "Show Historical Data", group=g_STYLE)
+bool showSignals = input.bool(true, "Show Breakout Signals", group=g_STYLE)
+bool showStops = input.bool(true, "Show Stop Levels on Signals", group=g_STYLE, tooltip="Draws a red line at the stop level for each signal.")
+bool showDashboard = input.bool(true, "Show Info Dashboard", group=g_STYLE)
+bool showPriorOR = input.bool(true, "Show Prior Day ORH/ORL", group=g_STYLE, tooltip="Draws faded lines at yesterday's ORH, ORL, and ORM.")
+float labelOffset = input.float(0.5, "Label & Bar Number Offset (x ATR)", minval=0, step=0.1, group=g_STYLE)
+
+string dashPosition = input.string("Top Right", "Dashboard Position", options=["Top Right","Top Left","Top Center","Bottom Right","Bottom Left","Bottom Center","Middle Right","Middle Left","Middle Center"], group=g_STYLE)
+string dashTextSize = input.string("Small", "Dashboard Text Size", options=["Tiny","Small","Normal","Large","Huge"], group=g_STYLE)
+color dashHeaderColor = input.color(color.white, "Dashboard Header Color", group=g_STYLE)
+color dashLabelColor = input.color(color.gray, "Dashboard Label Color", group=g_STYLE)
+
+color green = input.color(color.new(#089981, 60), "Bull Target Color", inline="bull", group=g_STYLE)
+color greenFill = input.color(color.new(#089981, 80), "Bull Fill", inline="bull", group=g_STYLE)
+color red = input.color(color.new(#f23645, 60), "Bear Target Color", inline="bear", group=g_STYLE)
+color redFill = input.color(color.new(#f23645, 80), "Bear Fill", inline="bear", group=g_STYLE)
+color orColor = input.color(#787b86, "OR Levels Color", inline="or", group=g_STYLE)
+color orFillColor = input.color(color.new(color.gray, 60), "OR Fill", inline="or", group=g_STYLE)
+color failColor = input.color(color.new(color.fuchsia, 0), "Failed BO Signal Color", group=g_STYLE)
+color retestColor = input.color(color.new(color.aqua, 0), "Retest Signal Color", group=g_STYLE)
+string tStyle = input.string("___", "Target Line Style", options=["___","- - -",". . ."], group=g_STYLE)
+int tLineWidth = input.int(1, "Target Line Width", minval=1, maxval=5, group=g_STYLE, tooltip="Thickness of the target lines.")
+string txtSize = str.lower(input.string("Small", "Text Size", options=["Tiny","Small","Normal","Large","Huge"], group=g_STYLE))
+string sigSize = str.lower(input.string("Small", "Signal Label Size", options=["Tiny","Small","Normal","Large","Huge"], group=g_STYLE))
+
+// ──────────────────────────────────────────────────────────────
+// INPUTS — BAR NUMBERS
+// ──────────────────────────────────────────────────────────────
+
+var g_BARNUM = "Bar Numbers"
+bool showBarNums = input.bool(true, "Show Bar Numbers", group=g_BARNUM)
+int barNumFreq = input.int(1, "Show Every Nth Bar", minval=1, maxval=10, group=g_BARNUM, tooltip="1 = every bar, 2 = every other bar, etc.")
+string barNumPos = input.string("Below Bar", "Label Position", options=["Below Bar","Above Bar"], group=g_BARNUM)
+string barNumSize = input.string("Tiny", "Label Size", options=["Tiny","Small","Normal"], group=g_BARNUM)
+color barNumRTHColor = input.color(color.new(color.white, 30), "RTH Number Color", group=g_BARNUM)
+color barNumETHColor = input.color(color.new(color.gray, 30), "ETH Number Color", group=g_BARNUM)
+string barNumScope = input.string("RTH + ETH", "Show Numbers For", options=["RTH + ETH","RTH Only","ETH Only"], group=g_BARNUM, tooltip="Choose whether to display bar numbers during RTH, ETH, or both.")
+
+// ──────────────────────────────────────────────────────────────
+// RESOLVE DASHBOARD POSITION + TEXT SIZE
+// ──────────────────────────────────────────────────────────────
+
+_dashPos = switch dashPosition
+    "Top Right"      => position.top_right
+    "Top Left"       => position.top_left
+    "Top Center"     => position.top_center
+    "Bottom Right"   => position.bottom_right
+    "Bottom Left"    => position.bottom_left
+    "Bottom Center"  => position.bottom_center
+    "Middle Right"   => position.middle_right
+    "Middle Left"    => position.middle_left
+    "Middle Center"  => position.middle_center
+    =>                 position.top_right
+
+_txtSize = switch dashTextSize
+    "Tiny"   => size.tiny
+    "Small"  => size.small
+    "Normal" => size.normal
+    "Large"  => size.large
+    "Huge"   => size.huge
+    =>         size.small
+
+color invis = color.rgb(0, 0, 0, 100)
+
+// ──────────────────────────────────────────────────────────────
+// ERROR GUARD
+// ──────────────────────────────────────────────────────────────
+
+if timeframe.in_seconds(timeframe.period) >= timeframe.in_seconds("D")
+    runtime.error("Timeframe too high — use intraday (< 1 Day).")
+
+// ──────────────────────────────────────────────────────────────
+// HELPER FUNCTIONS
+// ──────────────────────────────────────────────────────────────
+
+fz(float _val) => _val == 0 ? 1.0 : _val
+
+linestyle(string _input) =>
+    switch _input
+        "___"   => line.style_solid
+        "- - -" => line.style_dashed
+        ". . ." => line.style_dotted
+        =>         line.style_solid
+
+get_1up(float _val) =>
+    (_val - math.floor(_val)) > 0 ? int(math.floor(_val) + 1) : int(_val)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 1: VWAP + STANDARD DEVIATION BANDS
+// ══════════════════════════════════════════════════════════════
+
+float vwapVal = ta.vwap(close)
+
+// Simplified VWAP bands using standard deviation
+float vwapStd = ta.stdev(close, 20)
+
+float vwapU1 = vwapVal + vwapStd
+float vwapD1 = vwapVal - vwapStd
+float vwapU2 = vwapVal + vwapStd * 2
+float vwapD2 = vwapVal - vwapStd * 2
+
+plot(showVWAP ? vwapVal : na, "VWAP", color=vwapColor, linewidth=2)
+plot(showVWAPBands ? vwapU1 : na, "VWAP +1σ", color=color.new(vwapColor, 60), style=plot.style_circles)
+plot(showVWAPBands ? vwapD1 : na, "VWAP -1σ", color=color.new(vwapColor, 60), style=plot.style_circles)
+plot(showVWAPBands ? vwapU2 : na, "VWAP +2σ", color=color.new(vwapColor, 75), style=plot.style_cross)
+plot(showVWAPBands ? vwapD2 : na, "VWAP -2σ", color=color.new(vwapColor, 75), style=plot.style_cross)
+
+bool aboveVWAP = close > vwapVal
+bool belowVWAP = close < vwapVal
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 2: 20 EMA
+// ══════════════════════════════════════════════════════════════
+
+float ema20 = ta.ema(close, 20)
+float ema20Prev = nz(ema20[1])
+bool emaRising = ema20 > ema20Prev
+bool emaFalling = ema20 < ema20Prev
+
+plot(showEMA ? ema20 : na, "20 EMA", color=emaColor, linewidth=emaWidth)
+
+bool aboveEMA = close > ema20
+bool belowEMA = close < ema20
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 3: VOLUME CONTEXT
+// ══════════════════════════════════════════════════════════════
+
+float volSMA = ta.sma(volume, 20)
+float relVol = volSMA > 0 ? volume / volSMA : 0
+bool volSurge = relVol >= volGate
+bool volSpike = relVol >= volSpikeMult
+
+float _atr14 = ta.atr(14)
+float _labelOff = labelOffset * nz(_atr14, 1.0)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 4: TIME-OF-DAY CONTEXT
+// ══════════════════════════════════════════════════════════════
+
+int nyHour = hour(time, "America/New_York")
+int nyMinute = minute(time, "America/New_York")
+int nyTime = nyHour * 100 + nyMinute
+
+int todScore = nyTime >= 1030 and nyTime < 1130 ? 1 : nyTime >= 1400 and nyTime < 1500 ? 1 : nyTime >= 1130 and nyTime < 1330 ? -1 : nyTime >= 1000 and nyTime < 1030 ? -1 : 0
+
+bool isLunchChop = nyTime >= 1130 and nyTime < 1330
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 5: BROOKS 18-BAR BOX
+// ══════════════════════════════════════════════════════════════
+
+int rthOpen = timestamp("America/New_York", year, month, dayofmonth, 9, 30)
+int barsSinceRTH = ta.barssince(time >= rthOpen and time[1] < rthOpen)
+
+var float hi18 = na
+var float lo18 = na
+var string dayType = "—"
+var float dayPctADR = 0.0
+
+if barsSinceRTH == 0
+    hi18 := high
+    lo18 := low
+    dayType := "—"
+    dayPctADR := 0.0
+else if barsSinceRTH < 18
+    hi18 := math.max(hi18, high)
+    lo18 := math.min(lo18, low)
+
+float adr = ta.sma(ta.highest(high, 20) - ta.lowest(low, 20), 8)
+
+if barsSinceRTH == 17
+    float range18 = hi18 - lo18
+    dayPctADR := adr > 0 ? range18 / adr * 100 : 0
+    dayType := dayPctADR < 30 ? "Coil" : dayPctADR <= 50 ? "B-Trade BO" : "T- FadeMode"
+    
+    color col = dayPctADR < 30 ? coilColor : dayPctADR <= 50 ? boColor : trColor
+    
+    if showBox
+        box.new(bar_index - 17, hi18, bar_index, lo18, border_color=boxColor, bgcolor=color.new(boxColor, boxTrans))
+    if showBoxLabel
+        label.new(bar_index, hi18, str.tostring(math.round(range18, 2)) + " pts (" + str.tostring(math.round(dayPctADR)) + "% ADR) → " + dayType, style=label.style_label_down, color=col, textcolor=color.black, size=txtSize)
+
+bool isTRDay = dayType == "T- FadeMode"
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 6: ADR CONSUMPTION TRACKER
+// ══════════════════════════════════════════════════════════════
+
+var float dayHigh = na
+var float dayLow = na
+
+if barsSinceRTH == 0
+    dayHigh := high
+    dayLow := low
+else
+    dayHigh := math.max(nz(dayHigh), high)
+    dayLow := math.min(nz(dayLow), low)
+
+float dayRange = dayHigh - dayLow
+float adrConsumed = adr > 0 ? dayRange / adr * 100 : 0
+bool adrExhausted = adrConsumed > 85
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 7: INITIAL BALANCE (60-MIN)
+// ══════════════════════════════════════════════════════════════
+
+var float ibHigh = na
+var float ibLow = na
+var bool ibSet = false
+
+if barsSinceRTH == 0
+    ibHigh := high
+    ibLow := low
+    ibSet := false
+else if not ibSet
+    ibHigh := math.max(nz(ibHigh), high)
+    ibLow := math.min(nz(ibLow), low)
+
+int ibEndTime = rthOpen + 60 * 60 * 1000
+if time >= ibEndTime and not ibSet
+    ibSet := true
+
+float ibWidth = ibHigh - ibLow
+
+var line ibHighLine = na
+var line ibLowLine = na
+var line ibExt15H = na
+var line ibExt15L = na
+var line ibExt20H = na
+var line ibExt20L = na
+
+if ibSet and showIB
+    if barsSinceRTH == 0
+        ibHighLine := line.new(bar_index, ibHigh, bar_index, ibHigh, color=ibColor, width=1, style=line.style_dashed)
+        ibLowLine := line.new(bar_index, ibLow, bar_index, ibLow, color=ibColor, width=1, style=line.style_dashed)
+        if showIBExt
+            ibExt15H := line.new(bar_index, ibHigh + ibWidth * 0.5, bar_index, ibHigh + ibWidth * 0.5, color=color.new(ibColor, 80), style=line.style_dotted)
+            ibExt15L := line.new(bar_index, ibLow - ibWidth * 0.5, bar_index, ibLow - ibWidth * 0.5, color=color.new(ibColor, 80), style=line.style_dotted)
+            ibExt20H := line.new(bar_index, ibHigh + ibWidth, bar_index, ibHigh + ibWidth, color=color.new(ibColor, 85), style=line.style_dotted)
+            ibExt20L := line.new(bar_index, ibLow - ibWidth, bar_index, ibLow - ibWidth, color=color.new(ibColor, 85), style=line.style_dotted)
+    else
+        if not na(ibHighLine)
+            ibHighLine.set_x2(bar_index)
+        if not na(ibLowLine)
+            ibLowLine.set_x2(bar_index)
+        if showIBExt
+            if not na(ibExt15H)
+                ibExt15H.set_x2(bar_index)
+            if not na(ibExt15L)
+                ibExt15L.set_x2(bar_index)
+            if not na(ibExt20H)
+                ibExt20H.set_x2(bar_index)
+            if not na(ibExt20L)
+                ibExt20L.set_x2(bar_index)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 8: OPENING RANGE DETECTION
+// ══════════════════════════════════════════════════════════════
+
+// Use arrays of line and label IDs instead of UDT to avoid v6 issues
+var array<line> up_targ_lines = array.new<line>()
+var array<label> up_targ_labels = array.new<label>()
+var array<line> down_targ_lines = array.new<line>()
+var array<label> down_targ_labels = array.new<label>()
+var array<label> signal_labels = array.new<label>()
+
+var bool or_sesh = false
+var bool or_token = false
+var float orh = na
+var float orl = na
+var float hst = na
+var float lst = na
+var float prev_orm = na
+var int up_count = 0
+var int down_count = 0
+var box or_bx = na
+var int day_dir = 0
+var bool down_check = false
+var bool up_check = false
+bool down_signal = false
+bool up_signal = false
+
+var line h_line = na
+var label h_label = na
+var line l_line = na
+var label l_label = na
+var line m_ln = na
+
+float orm = math.avg(orh, orl)
+float orw = math.abs(orh - orl)
+
+float h_src = tSrc == "Close" ? close : high
+float l_src = tSrc == "Close" ? close : low
+
+bool new_tf = timeframe.change(orTF)
+if crTog
+    or_sesh := not na(time(timeframe.period, crSesh, tz))
+else
+    if session.isfirstbar
+        or_sesh := true
+    else if not session.isfirstbar and new_tf
+        or_sesh := false
+
+bool or_start = or_sesh and not or_sesh[1]
+bool or_end = or_sesh[1] and not or_sesh
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 9: GAP ANALYSIS
+// ══════════════════════════════════════════════════════════════
+
+var float prevORH = na
+var float prevORL = na
+var float prevORM = na
+var string gapType = "NONE"
+
+if or_start
+    prevORH := orh
+    prevORL := orl
+    prevORM := orm
+    
+    if not na(prevORH) and showGap
+        if open > prevORH
+            gapType := "GAP UP"
+        else if open < prevORL
+            gapType := "GAP DN"
+        else
+            gapType := "IN RANGE"
+    else
+        gapType := "NONE"
+
+var bool gapFilled = false
+if or_start
+    gapFilled := false
+if not or_sesh and or_token and not gapFilled
+    if gapType == "GAP UP" and low <= nz(prevORH)
+        gapFilled := true
+    if gapType == "GAP DN" and high >= nz(prevORL)
+        gapFilled := true
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 10: PRIOR DAY OR LEVELS
+// ══════════════════════════════════════════════════════════════
+
+var line prevORHLine = na
+var line prevORLLine = na
+var line prevORMLine = na
+
+if or_start and showPriorOR and not na(prevORH)
+    if not na(prevORHLine)
+        if not showHist
+            line.delete(prevORHLine)
+            line.delete(prevORLLine)
+            line.delete(prevORMLine)
+    prevORHLine := line.new(bar_index, prevORH, bar_index, prevORH, color=color.new(orColor, 50), style=line.style_dotted, width=1)
+    prevORLLine := line.new(bar_index, prevORL, bar_index, prevORL, color=color.new(orColor, 50), style=line.style_dotted, width=1)
+    prevORMLine := line.new(bar_index, prevORM, bar_index, prevORM, color=color.new(orColor, 65), style=line.style_dotted, width=1)
+
+if not na(prevORHLine) and showPriorOR
+    prevORHLine.set_x2(bar_index)
+    prevORLLine.set_x2(bar_index)
+    prevORMLine.set_x2(bar_index)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 11: OR SESSION LIFECYCLE
+// ══════════════════════════════════════════════════════════════
+
+if or_start
+    // Only clean up if arrays have elements
+    if array.size(up_targ_lines) > 0
+        for i = 0 to array.size(up_targ_lines) - 1
+            line ln = array.get(up_targ_lines, i)
+            if not showHist
+                ln.delete()
+    if array.size(up_targ_labels) > 0
+        for i = 0 to array.size(up_targ_labels) - 1
+            label lb = array.get(up_targ_labels, i)
+            lb.delete()
+    
+    if array.size(down_targ_lines) > 0
+        for i = 0 to array.size(down_targ_lines) - 1
+            line ln = array.get(down_targ_lines, i)
+            if not showHist
+                ln.delete()
+    if array.size(down_targ_labels) > 0
+        for i = 0 to array.size(down_targ_labels) - 1
+            label lb = array.get(down_targ_labels, i)
+            lb.delete()
+    
+    if array.size(signal_labels) > 0
+        for i = 0 to array.size(signal_labels) - 1
+            label lb = array.get(signal_labels, i)
+            if not showHist
+                lb.delete()
+    
+    // Delete old objects only if they exist
+    if not na(or_bx) and not showHist
+        or_bx.delete()
+    if not na(h_line) and not showHist
+        h_line.delete()
+    if not na(l_line) and not showHist
+        l_line.delete()
+    if not na(m_ln) and not showHist
+        m_ln.delete()
+    if not na(h_label)
+        h_label.delete()
+    if not na(l_label)
+        l_label.delete()
+    
+    // Clear arrays
+    array.clear(up_targ_lines)
+    array.clear(up_targ_labels)
+    array.clear(down_targ_lines)
+    array.clear(down_targ_labels)
+    array.clear(signal_labels)
+    
+    // Reset OR variables
+    orh := high
+    orl := low
+    prev_orm := nz(orm[1])
+    up_count := 0
+    down_count := 0
+    up_check := true
+    down_check := true
+    or_bx := box.new(bar_index, high, bar_index, low, bgcolor=orFillColor, border_width=0)
+    or_token := false
+
+if or_sesh
+    if high > orh
+        orh := high
+    if low < orl
+        orl := low
+    if not na(or_bx)
+        or_bx.set_top(orh)
+        or_bx.set_bottom(orl)
+        or_bx.set_right(bar_index)
+    if orh != orl
+        or_token := true
+
+if or_end and or_token
+    h_line := line.new(bar_index, orh, bar_index, orh, color=orColor)
+    h_label := label.new(bar_index, orh, text="ORH", tooltip=str.tostring(orh, format.mintick), style=label.style_label_left, color=invis, textcolor=color.new(orColor, 0), size=txtSize)
+    l_line := line.new(bar_index, orl, bar_index, orl, color=orColor)
+    l_label := label.new(bar_index, orl, text="ORL", tooltip=str.tostring(orl, format.mintick), style=label.style_label_left, color=invis, textcolor=color.new(orColor, 0), size=txtSize)
+    m_ln := line.new(bar_index, orm, bar_index, orm, style=line.style_dashed, color=orColor)
+    hst := orh + orw * tPer
+    lst := orl - orw * tPer
+    
+    day_dir := orm > prev_orm ? 1 : orm < prev_orm ? -1 : 0
+    linefill.new(h_line, l_line, day_dir == 1 ? greenFill : day_dir == -1 ? redFill : invis)
+
+if not or_sesh and or_token
+    if not na(h_line)
+        h_line.set_x2(bar_index)
+    if not na(l_line)
+        l_line.set_x2(bar_index)
+    if not na(h_label)
+        h_label.set_x(bar_index)
+    if not na(l_label)
+        l_label.set_x(bar_index)
+    if not na(m_ln)
+        m_ln.set_x2(bar_index)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 12: CONFLUENCE SCORING ENGINE
+// ══════════════════════════════════════════════════════════════
+
+calcBullScore() =>
+    int score = 0
+    score += volSurge ? 1 : 0
+    score += volSpike ? 1 : 0
+    score += aboveVWAP ? 1 : 0
+    score += (useEMAInScore and aboveEMA) ? 1 : 0
+    score += (dayType == "Coil" or dayType == "B-Trade BO") ? 1 : 0
+    score += (useTODFilter ? (todScore > 0 ? 1 : 0) : 0)
+    score += (gapType == "GAP UP" and not gapFilled) ? 1 : 0
+    score += (not adrExhausted) ? 1 : 0
+    score
+
+calcBearScore() =>
+    int score = 0
+    score += volSurge ? 1 : 0
+    score += volSpike ? 1 : 0
+    score += belowVWAP ? 1 : 0
+    score += (useEMAInScore and belowEMA) ? 1 : 0
+    score += (dayType == "Coil" or dayType == "B-Trade BO") ? 1 : 0
+    score += (useTODFilter ? (todScore > 0 ? 1 : 0) : 0)
+    score += (gapType == "GAP DN" and not gapFilled) ? 1 : 0
+    score += (not adrExhausted) ? 1 : 0
+    score
+
+gradeLabel(int score) =>
+    score >= 7 ? "A+" : score >= 5 ? "A" : score >= 3 ? "B" : "C"
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 13: TARGET CALCULATIONS
+// ══════════════════════════════════════════════════════════════
+
+if h_src > hst
+    hst := h_src
+if l_src < lst
+    lst := l_src
+
+int up_max = get_1up((hst - orh) / (orw * tPer))
+int down_max = get_1up((orl - lst) / (orw * tPer))
+int up_cur = math.max(0, get_1up((h_src - orh) / (orw * tPer)))
+int down_cur = math.max(0, get_1up((orl - l_src) / (orw * tPer)))
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 14: BREAKOUT SIGNALS
+// ══════════════════════════════════════════════════════════════
+
+if close > orm and not down_check
+    down_check := true
+if close < orm and not up_check
+    up_check := true
+
+bool xup = ta.crossover(close, orh)
+if xup and up_check and not or_sesh and or_token
+    bool passFilters = true
+    if not volSurge
+        passFilters := false
+    if suppressTR and isTRDay
+        passFilters := false
+    if suppressLunch and isLunchChop
+        passFilters := false
+    if passFilters
+        up_signal := true
+        up_check := false
+
+bool xdown = ta.crossunder(close, orl)
+if xdown and down_check and not or_sesh and or_token
+    bool passFilters = true
+    if not volSurge
+        passFilters := false
+    if suppressTR and isTRDay
+        passFilters := false
+    if suppressLunch and isLunchChop
+        passFilters := false
+    if passFilters
+        down_signal := true
+        down_check := false
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 15: FAILED BREAKOUT DETECTION
+// ══════════════════════════════════════════════════════════════
+
+var int barsSinceBullBO = 100
+var int barsSinceBearBO = 100
+var float failBullExtreme = na
+var float failBearExtreme = na
+var bool bullBOActive = false
+var bool bearBOActive = false
+
+if not or_sesh and or_token
+    if close > orh and not bullBOActive
+        bullBOActive := true
+        barsSinceBullBO := 0
+        failBullExtreme := high
+    if bullBOActive
+        barsSinceBullBO += 1
+        failBullExtreme := math.max(nz(failBullExtreme), high)
+    
+    if close < orl and not bearBOActive
+        bearBOActive := true
+        barsSinceBearBO := 0
+        failBearExtreme := low
+    if bearBOActive
+        barsSinceBearBO += 1
+        failBearExtreme := math.min(nz(failBearExtreme), low)
+
+bool failedBullBO = bullBOActive and close < orh and barsSinceBullBO <= failBars and showFailed and not or_sesh and or_token
+bool failedBearBO = bearBOActive and close > orl and barsSinceBearBO <= failBars and showFailed and not or_sesh and or_token
+
+if failedBullBO
+    bullBOActive := false
+if failedBearBO
+    bearBOActive := false
+
+if or_start
+    bullBOActive := false
+    bearBOActive := false
+    barsSinceBullBO := 100
+    barsSinceBearBO := 100
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 16: RETEST ENTRY DETECTION
+// ══════════════════════════════════════════════════════════════
+
+var int bullRetestCount = 0
+var int bearRetestCount = 0
+var bool bullRetestDone = false
+var bool bearRetestDone = false
+
+bool bullRetestSignal = false
+bool bearRetestSignal = false
+
+if or_start
+    bullRetestCount := 0
+    bearRetestCount := 0
+    bullRetestDone := false
+    bearRetestDone := false
+
+if not or_sesh and or_token and showRetest
+    if close > orh and not bullRetestDone
+        bool nearORH = math.abs(low - orh) <= retestTicks
+        if nearORH
+            bullRetestCount += 1
+        else
+            bullRetestCount := 0
+        if bullRetestCount >= retestHoldBars and close > open
+            bullRetestSignal := true
+            bullRetestDone := true
+            bullRetestCount := 0
+    
+    if close < orl and not bearRetestDone
+        bool nearORL = math.abs(high - orl) <= retestTicks
+        if nearORL
+            bearRetestCount += 1
+        else
+            bearRetestCount := 0
+        if bearRetestCount >= retestHoldBars and close < open
+            bearRetestSignal := true
+            bearRetestDone := true
+            bearRetestCount := 0
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 17: SIGNAL DISPLAY
+// ══════════════════════════════════════════════════════════════
+
+if up_signal and showSignals
+    int sc = calcBullScore()
+    string gr = gradeLabel(sc)
+    signal_labels.push(label.new(bar_index, low - _labelOff, "BRK▲ " + gr + " (" + str.tostring(sc) + "/8)", style=label.style_label_up, color=color.new(#089981, 0), textcolor=color.white, size=sigSize))
+    if showStops
+        line.new(bar_index, orm, bar_index + 5, orm, color=color.red, width=1, style=line.style_dotted)
+        float dollarRisk = math.abs(close - orm) * pointValue * contracts
+        label.new(bar_index + 5, orm, "$" + str.tostring(dollarRisk, "#"), style=label.style_label_left, color=invis, textcolor=color.red, size=size.tiny)
+
+if down_signal and showSignals
+    int sc = calcBearScore()
+    string gr = gradeLabel(sc)
+    signal_labels.push(label.new(bar_index, high + _labelOff, "BRK▼ " + gr + " (" + str.tostring(sc) + "/8)", style=label.style_label_down, color=color.new(#f23645, 0), textcolor=color.white, size=sigSize))
+    if showStops
+        line.new(bar_index, orm, bar_index + 5, orm, color=color.red, width=1, style=line.style_dotted)
+        float dollarRisk = math.abs(orm - close) * pointValue * contracts
+        label.new(bar_index + 5, orm, "$" + str.tostring(dollarRisk, "#"), style=label.style_label_left, color=invis, textcolor=color.red, size=size.tiny)
+
+if failedBullBO
+    int sc = calcBearScore()
+    string gr = gradeLabel(sc)
+    label.new(bar_index, high + _labelOff, "FAIL▼ " + gr, style=label.style_label_down, color=failColor, textcolor=color.white, size=sigSize)
+    if showStops and not na(failBullExtreme)
+        line.new(bar_index, failBullExtreme, bar_index + 5, failBullExtreme, color=color.red, width=1, style=line.style_dotted)
+        float dollarRisk = math.abs(failBullExtreme - close) * pointValue * contracts
+        label.new(bar_index + 5, failBullExtreme, "$" + str.tostring(dollarRisk, "#"), style=label.style_label_left, color=invis, textcolor=color.red, size=size.tiny)
+
+if failedBearBO
+    int sc = calcBullScore()
+    string gr = gradeLabel(sc)
+    label.new(bar_index, low - _labelOff, "FAIL▲ " + gr, style=label.style_label_up, color=failColor, textcolor=color.white, size=sigSize)
+    if showStops and not na(failBearExtreme)
+        line.new(bar_index, failBearExtreme, bar_index + 5, failBearExtreme, color=color.red, width=1, style=line.style_dotted)
+        float dollarRisk = math.abs(close - failBearExtreme) * pointValue * contracts
+        label.new(bar_index + 5, failBearExtreme, "$" + str.tostring(dollarRisk, "#"), style=label.style_label_left, color=invis, textcolor=color.red, size=size.tiny)
+
+if bullRetestSignal
+    int sc = calcBullScore()
+    string gr = gradeLabel(sc)
+    label.new(bar_index, low - _labelOff, "RT▲ " + gr, style=label.style_label_up, color=retestColor, textcolor=color.black, size=sigSize)
+    if showStops
+        line.new(bar_index, orl, bar_index + 5, orl, color=color.red, width=1, style=line.style_dotted)
+
+if bearRetestSignal
+    int sc = calcBearScore()
+    string gr = gradeLabel(sc)
+    label.new(bar_index, high + _labelOff, "RT▼ " + gr, style=label.style_label_down, color=retestColor, textcolor=color.black, size=sigSize)
+    if showStops
+        line.new(bar_index, orh, bar_index + 5, orh, color=color.red, width=1, style=line.style_dotted)
+// ══════════════════════════════════════════════════════════════
+// SECTION 18: OR TARGETS DISPLAY
+// ══════════════════════════════════════════════════════════════
+
+if not or_sesh and or_token
+    if up_count < up_max and tDispType != ""
+        for i = up_count + 1 to up_max
+            float tPrice = orh + orw * tPer * i
+            line tLn = line.new(bar_index - 1, tPrice, bar_index, tPrice, color=green, style=linestyle(tStyle), width=tLineWidth)
+            label tLb = label.new(bar_index, tPrice, text="T" + str.tostring(i), tooltip=str.tostring(tPrice, format.mintick), style=label.style_label_left, color=invis, textcolor=color.new(green, 0), size=txtSize)
+            up_targ_lines.push(tLn)
+            up_targ_labels.push(tLb)
+            if i == up_max
+                up_count := up_max
+    
+    if down_count < down_max and tDispType != ""
+        for i = down_count + 1 to down_max
+            float tPrice = orl - orw * tPer * i
+            line tLn = line.new(bar_index - 1, tPrice, bar_index, tPrice, color=red, style=linestyle(tStyle), width=tLineWidth)
+            label tLb = label.new(bar_index, tPrice, text="T" + str.tostring(i), tooltip=str.tostring(tPrice, format.mintick), style=label.style_label_left, color=invis, textcolor=color.new(red, 0), size=txtSize)
+            down_targ_lines.push(tLn)
+            down_targ_labels.push(tLb)
+            if i == down_max
+                down_count := down_max
+
+if tDispType == "Extended"
+    int upSize = array.size(up_targ_lines)
+    if upSize > 0
+        for i = 0 to upSize - 1
+            line tLn = array.get(up_targ_lines, i)
+            label tLb = array.get(up_targ_labels, i)
+            tLn.set_x2(bar_index)
+            tLb.set_x(bar_index)
+    int downSize = array.size(down_targ_lines)
+    if downSize > 0
+        for i = 0 to downSize - 1
+            line tLn = array.get(down_targ_lines, i)
+            label tLb = array.get(down_targ_labels, i)
+            tLn.set_x2(bar_index)
+            tLb.set_x(bar_index)
+
+if tDispType == "Adaptive"
+    int upSize = array.size(up_targ_lines)
+    if upSize > 0
+        for i = 0 to upSize - 1
+            line tLn = array.get(up_targ_lines, i)
+            label tLb = array.get(up_targ_labels, i)
+            float tPrice = tLn.get_y1()
+            if tPrice <= orh + orw * tPer * up_cur and tPrice >= orh + orw * tPer * (up_cur - 2)
+                tLn.set_x2(bar_index + 1)
+                tLb.set_x(bar_index + 1)
+    int downSize = array.size(down_targ_lines)
+    if downSize > 0
+        for i = 0 to downSize - 1
+            line tLn = array.get(down_targ_lines, i)
+            label tLb = array.get(down_targ_labels, i)
+            float tPrice = tLn.get_y1()
+            if tPrice <= orl - orw * tPer * (down_cur - 2) and tPrice >= orl - orw * tPer * down_cur
+                tLn.set_x2(bar_index + 1)
+                tLb.set_x(bar_index + 1)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 19: DASHBOARD
+// ══════════════════════════════════════════════════════════════
+
+var table dash = table.new(_dashPos, 2, 16, bgcolor=color.new(color.black, 15), border_width=1, border_color=color.gray)
+
+if showDashboard and barstate.islast
+    color headerBg = color.new(color.gray, 60)
+    table.cell(dash, 0, 0, "iORB v3", text_color=dashHeaderColor, text_size=_txtSize, bgcolor=headerBg)
+    table.cell(dash, 1, 0, "INSTITUTIONAL", text_color=dashLabelColor, text_size=_txtSize, bgcolor=headerBg)
+    
+    color dtColor = dayType == "Coil" ? coilColor : dayType == "B-Trade BO" ? boColor : dayType == "T- FadeMode" ? trColor : color.gray
+    table.cell(dash, 0, 1, "Day Type", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 1, dayType + " (" + str.tostring(math.round(dayPctADR)) + "%)", text_color=dtColor, text_size=_txtSize)
+    
+    color adrColor = adrConsumed > 85 ? color.red : adrConsumed > 60 ? color.orange : color.green
+    table.cell(dash, 0, 2, "ADR Used", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 2, str.tostring(math.round(adrConsumed)) + "%", text_color=adrColor, text_size=_txtSize)
+    
+    table.cell(dash, 0, 3, "VWAP Bias", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 3, aboveVWAP ? "BULL ▲" : "BEAR ▼", text_color=aboveVWAP ? color.green : color.red, text_size=_txtSize)
+    
+    table.cell(dash, 0, 4, "EMA Bias", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 4, aboveEMA ? "BULL ▲" : "BEAR ▼", text_color=aboveEMA ? color.green : color.red, text_size=_txtSize)
+    
+    table.cell(dash, 0, 5, "OR Bias", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 5, day_dir == 1 ? "BULL ▲" : day_dir == -1 ? "BEAR ▼" : "FLAT", text_color=day_dir == 1 ? color.green : day_dir == -1 ? color.red : color.gray, text_size=_txtSize)
+    
+    table.cell(dash, 0, 6, "Rel Volume", text_color=dashLabelColor, text_size=_txtSize)
+    color vColor = volSpike ? color.green : volSurge ? color.teal : color.gray
+    table.cell(dash, 1, 6, str.tostring(relVol, "#.#") + "x" + (volSpike ? " SPIKE" : volSurge ? " SURGE" : ""), text_color=vColor, text_size=_txtSize)
+    
+    table.cell(dash, 0, 7, "Gap", text_color=dashLabelColor, text_size=_txtSize)
+    color gColor = gapFilled ? color.orange : gapType == "GAP UP" ? color.green : gapType == "GAP DN" ? color.red : color.gray
+    string gText = gapType + (gapFilled ? " (FILLED)" : "")
+    table.cell(dash, 1, 7, gText, text_color=gColor, text_size=_txtSize)
+    
+    string todText = todScore > 0 ? "PRIME" : todScore < 0 ? (isLunchChop ? "LUNCH CHOP" : "CAUTION") : "NEUTRAL"
+    color todColor = todScore > 0 ? color.green : todScore < 0 ? color.red : color.gray
+    table.cell(dash, 0, 8, "Time Window", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 8, todText, text_color=todColor, text_size=_txtSize)
+    
+    int bs = calcBullScore()
+    int ss = calcBearScore()
+    int bestScore = math.max(bs, ss)
+    string bestGrade = gradeLabel(bestScore)
+    table.cell(dash, 0, 9, "Confluence", text_color=dashLabelColor, text_size=_txtSize)
+    color confColor = bestScore >= 7 ? color.green : bestScore >= 5 ? color.teal : bestScore >= 3 ? color.orange : color.gray
+    table.cell(dash, 1, 9, bestGrade + " (" + str.tostring(bestScore) + "/8)", text_color=confColor, text_size=_txtSize)
+    
+    table.cell(dash, 0, 10, "OR Width", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 10, str.tostring(orw, "#.##") + " pts", text_color=color.white, text_size=_txtSize)
+    
+    table.cell(dash, 0, 11, "IB Width", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 11, ibSet ? str.tostring(ibWidth, "#.##") + " pts" : "forming...", text_color=color.white, text_size=_txtSize)
+    
+    table.cell(dash, 0, 15, "ADR Status", text_color=dashLabelColor, text_size=_txtSize)
+    table.cell(dash, 1, 15, adrExhausted ? "⚠ EXHAUSTED" : "ROOM TO RUN", text_color=adrExhausted ? color.red : color.green, text_size=_txtSize)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 20: BAR NUMBERS
+// ══════════════════════════════════════════════════════════════
+
+var int barCount = 0
+var bool wasRTHBar = false
+
+bool isRTHBar = nyTime >= 930 and nyTime < 1600
+
+if isRTHBar and not wasRTHBar
+    barCount := 1
+    wasRTHBar := true
+else if not isRTHBar and wasRTHBar
+    barCount := 1
+    wasRTHBar := false
+else
+    barCount += 1
+
+_barNumSize = switch barNumSize
+    "Tiny"   => size.tiny
+    "Small"  => size.small
+    "Normal" => size.normal
+    =>         size.tiny
+
+bool showThisBar = showBarNums
+showThisBar := showThisBar and (barCount % barNumFreq == 0 or barCount == 1)
+
+if barNumScope == "RTH Only" and not isRTHBar
+    showThisBar := false
+if barNumScope == "ETH Only" and isRTHBar
+    showThisBar := false
+
+string barNumText = (isRTHBar ? "" : "E") + str.tostring(barCount)
+color barNumClr = isRTHBar ? barNumRTHColor : barNumETHColor
+
+if showThisBar
+    string _barNumStyle = barNumPos == "Below Bar" ? label.style_label_up : label.style_label_down
+    float _barNumY = barNumPos == "Below Bar" ? low - _labelOff : high + _labelOff
+    label.new(bar_index, _barNumY, barNumText, style=_barNumStyle, color=color.new(color.black, 100), textcolor=barNumClr, size=_barNumSize)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 21: ALERTS
+// ══════════════════════════════════════════════════════════════
+
