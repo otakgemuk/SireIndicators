@@ -1,0 +1,394 @@
+//@version=6
+indicator("Raschke 12 Rules — SireMammat Edition", "R12R", overlay=true, max_labels_count=500, max_lines_count=500)
+
+// ───────────────────────────────────────────────────
+//  Raschke 12 Rules — Directional Confluence System
+//  Enhanced Edition with improved scoring, volume
+//  analysis, and multi-timeframe confirmation
+// ───────────────────────────────────────────────────
+
+// ═══════════════════════════════════════════════════
+//  INPUTS
+// ═══════════════════════════════════════════════════
+
+string G_MA  = "Moving Averages"
+int i_emaF   = input.int(9,  "Fast EMA",  group = G_MA, minval = 2)
+int i_emaM   = input.int(20, "Mid EMA",   group = G_MA, minval = 2)
+int i_emaS   = input.int(50, "Slow EMA",  group = G_MA, minval = 2)
+bool i_showMA = input.bool(true, "Show MAs", group = G_MA)
+
+string G_RP    = "Rule Parameters"
+int i_atrLen   = input.int(14,     "ATR Length",                  group = G_RP, minval = 1)
+int i_trailN   = input.int(3,      "Trailing Stop Bars",         group = G_RP, minval = 1)
+int i_bbLB     = input.int(20,     "Breakout Lookback",          group = G_RP, minval = 2)
+float i_rngMul = input.float(0.5,  "Range Threshold (x avg)",    group = G_RP, minval = 0.1, step = 0.1)
+int i_pullMin  = input.int(5,      "Min Bars - First Pullback",  group = G_RP, minval = 1)
+int i_pullMax  = input.int(50,     "Max Bars - First Pullback",  group = G_RP, minval = 5)
+int i_extLB    = input.int(20,     "Extension Lookback",         group = G_RP, minval = 5)
+int i_extTh    = input.int(5,      "Extension Threshold (bars)", group = G_RP, minval = 1)
+
+string G_SG    = "Signal Generation"
+int i_bullTh   = input.int(8,      "Min Bull Score for Long",    group = G_SG, minval = 3, maxval = 12)
+int i_bearTh   = input.int(8,      "Min Bear Score for Short",   group = G_SG, minval = 3, maxval = 12)
+bool i_useVol  = input.bool(true,  "Volume Confirmation",        group = G_SG)
+int i_volLen   = input.int(20,     "Volume MA Length",           group = G_SG)
+float i_volMul = input.float(1.2,  "Volume Multiplier",          group = G_SG, minval = 1.0, step = 0.1)
+bool i_useRSI  = input.bool(true,  "RSI Filter",                 group = G_SG)
+int i_rsiLen   = input.int(14,     "RSI Length",                 group = G_SG)
+int i_rsiOB    = input.int(70,     "RSI Overbought",             group = G_SG, minval = 50, maxval = 90)
+int i_rsiOS    = input.int(30,     "RSI Oversold",               group = G_SG, minval = 10, maxval = 50)
+bool i_useMTF  = input.bool(false, "Multi-Timeframe Filter",     group = G_SG)
+string i_mtfTF = input.timeframe("240", "MTF Timeframe",        group = G_SG)
+
+string G_V       = "Display"
+bool i_dash      = input.bool(true,  "Show Dashboard",        group = G_V)
+string i_dashPos = input.string("top_right", "Dashboard Position", options = ["top_left", "top_center", "top_right", "middle_left", "middle_center", "middle_right", "bottom_left", "bottom_center", "bottom_right"], group = G_V)
+string i_dashSz  = input.string("small", "Dashboard Font Size", options = ["tiny", "small", "normal", "large", "huge"], group = G_V)
+bool i_showSc    = input.bool(true,  "Show Score Label",     group = G_V)
+bool i_showBG    = input.bool(true,  "Show Background Tint", group = G_V)
+bool i_showSignals = input.bool(true, "Show Entry Signals",  group = G_V)
+
+// ═══════════════════════════════════════════════════
+//  HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════
+
+f_sz(string s) =>
+    switch s
+        "tiny"   => size.tiny
+        "small"  => size.small
+        "normal" => size.normal
+        "large"  => size.large
+        "huge"   => size.huge
+        =>         size.auto
+
+// ═══════════════════════════════════════════════════
+//  CORE CALCULATIONS
+// ═══════════════════════════════════════════════════
+
+float emaF   = ta.ema(close, i_emaF)
+float emaM   = ta.ema(close, i_emaM)
+float emaS   = ta.ema(close, i_emaS)
+float atr    = ta.atr(i_atrLen)
+float rsi    = ta.rsi(close, i_rsiLen)
+float rng    = high - low
+float avgRng = ta.sma(rng, 20)
+float volMa  = ta.sma(volume, i_volLen)
+bool  volOk  = not i_useVol or volume > (volMa * i_volMul)
+bool  rsiOk  = not i_useRSI or (rsi > i_rsiOS and rsi < i_rsiOB)
+
+// Multi-timeframe trend
+float mtfEmaF = request.security(syminfo.tickerid, i_mtfTF, ta.ema(close, i_emaF))
+float mtfEmaM = request.security(syminfo.tickerid, i_mtfTF, ta.ema(close, i_emaM))
+bool  mtfTrendUp = i_useMTF ? mtfEmaF > mtfEmaM : true
+bool  mtfTrendDn = i_useMTF ? mtfEmaF < mtfEmaM : true
+
+// Trend state
+bool bullTrend = close > emaM
+bool bearTrend = close < emaM
+bool flipUp    = bullTrend and not bullTrend[1]
+bool flipDn    = bearTrend and not bearTrend[1]
+int barsBull   = ta.barssince(flipUp)
+int barsBear   = ta.barssince(flipDn)
+bool stackUp   = emaF > emaM and emaM > emaS
+bool stackDn   = emaF < emaM and emaM < emaS
+
+// Volume analysis
+float volRatio   = volume / volMa
+bool  highVolume = volRatio > 2.0
+bool  lowVolume  = volRatio < 0.5
+
+// ═══════════════════════════════════════════════════
+//  RULE EVALUATIONS
+// ═══════════════════════════════════════════════════
+
+// R1 — TRADE WITH THE TREND
+bool r1_bull = bullTrend and close > emaF and mtfTrendUp
+bool r1_bear = bearTrend and close < emaF and mtfTrendDn
+
+// R2 — FIRST PULLBACK TO KEY MOVING AVERAGE
+bool touchUp = bullTrend and low <= emaM and low[1] > emaM
+bool touchDn = bearTrend and high >= emaM and high[1] < emaM
+bool r2_bull = touchUp and nz(barsBull) > i_pullMin and nz(barsBull) < i_pullMax and volOk
+bool r2_bear = touchDn and nz(barsBear) > i_pullMin and nz(barsBear) < i_pullMax and volOk
+
+// R3 — GAP IN TREND DIRECTION
+bool r3_bull = open > high[1] and volOk
+bool r3_bear = open < low[1] and volOk
+
+// R4 — ADEQUATE RANGE / VOLATILITY
+bool r4 = rng > avgRng * i_rngMul and volOk
+
+// R5 — KEY REVERSAL BAR
+bool r5_bull = low < low[1] and close > high[1] and close > open and volOk
+bool r5_bear = high > high[1] and close < low[1] and close < open and volOk
+
+// R6 — TRAILING STOP VALID
+float trailLo = ta.lowest(low, i_trailN)
+float trailHi = ta.highest(high, i_trailN)
+bool r6_bull  = close > trailLo
+bool r6_bear  = close < trailHi
+
+// R7 — CLOSE AT EXTREME (MOMENTUM CONVICTION)
+float closePos = rng > 0 ? (close - low) / rng : 0.5
+bool r7_bull   = closePos >= 0.85
+bool r7_bear   = closePos <= 0.15
+
+// R8 — FAILED BREAKOUT (FALSE BREAKOUT)
+float nHigh  = ta.highest(high, i_bbLB)
+float nLow   = ta.lowest(low, i_bbLB)
+bool newHi   = high >= nz(nHigh[1])
+bool newLo   = low  <= nz(nLow[1])
+bool failUp  = newHi and close < open and close < close[1]
+bool failDn  = newLo and close > open and close > close[1]
+bool r8_bull = failDn and volOk
+bool r8_bear = failUp and volOk
+
+// R9 — BREAKOUT CONFIRMATION
+bool r9_bull = close > ta.highest(high, i_bbLB)[1] and volOk
+bool r9_bear = close < ta.lowest(low, i_bbLB)[1] and volOk
+
+// R10 — TREND EXTENSION / FAILURE TO EXTEND
+int barsHi = math.abs(ta.highestbars(high, i_extLB))
+int barsLo = math.abs(ta.lowestbars(low, i_extLB))
+bool r10_bull     = bullTrend and nz(barsBull) > i_pullMin and barsHi <= i_extTh
+bool r10_bear     = bearTrend and nz(barsBear) > i_pullMin and barsLo <= i_extTh
+bool r10_exh_bull = bullTrend and nz(barsBull) > i_pullMin and barsHi > i_extTh
+bool r10_exh_bear = bearTrend and nz(barsBear) > i_pullMin and barsLo > i_extTh
+
+// R11 — EMA STACK ALIGNMENT
+bool r11_bull = stackUp
+bool r11_bear = stackDn
+
+// R12 — RISK MANAGEMENT (Always active)
+bool r12 = true
+
+// ═══════════════════════════════════════════════════
+//  DIRECTIONAL SCORING
+// ═══════════════════════════════════════════════════
+
+int bullScore = 0
+int bearScore = 0
+
+// Core trend rules
+bullScore += r1_bull ? 1 : 0
+bearScore += r1_bear ? 1 : 0
+bullScore += r11_bull ? 1 : 0
+bearScore += r11_bear ? 1 : 0
+
+// Entry signal rules
+bullScore += r2_bull ? 1 : 0
+bearScore += r2_bear ? 1 : 0
+bullScore += r3_bull ? 1 : 0
+bearScore += r3_bear ? 1 : 0
+bullScore += r5_bull ? 1 : 0
+bearScore += r5_bear ? 1 : 0
+
+// Confirmation rules
+bullScore += r4 ? 1 : 0
+bearScore += r4 ? 1 : 0
+bullScore += r6_bull ? 1 : 0
+bearScore += r6_bear ? 1 : 0
+bullScore += r7_bull ? 1 : 0
+bearScore += r7_bear ? 1 : 0
+
+// Pattern rules
+bullScore += r8_bull ? 1 : 0
+bearScore += r8_bear ? 1 : 0
+bullScore += r9_bull ? 1 : 0
+bearScore += r9_bear ? 1 : 0
+bullScore += r10_bull ? 1 : 0
+bearScore += r10_bear ? 1 : 0
+
+// Risk management
+bullScore += r12 ? 1 : 0
+bearScore += r12 ? 1 : 0
+
+// Volume and RSI adjustments
+if i_useVol and highVolume
+    bullScore += r1_bull ? 1 : 0
+    bearScore += r1_bear ? 1 : 0
+
+if i_useRSI and rsi < i_rsiOS and bullTrend
+    bullScore += 1
+if i_useRSI and rsi > i_rsiOB and bearTrend
+    bearScore += 1
+
+// Cap scores at 12
+bullScore := math.min(bullScore, 12)
+bearScore := math.min(bearScore, 12)
+
+// ═══════════════════════════════════════════════════
+//  SIGNAL GENERATION
+// ═══════════════════════════════════════════════════
+
+bool bullishDiv = rsi < rsi[1] and close > close[1] and rsi < i_rsiOS
+bool bearishDiv = rsi > rsi[1] and close < close[1] and rsi > i_rsiOB
+
+bool longActive  = bullScore >= i_bullTh and not bearishDiv
+bool shortActive = bearScore >= i_bearTh and not bullishDiv
+bool longEntry   = longActive and not longActive[1] and rsiOk
+bool shortEntry  = shortActive and not shortActive[1] and rsiOk
+
+// ═══════════════════════════════════════════════════
+//  VISUALIZATION - All plots at global scope
+// ═══════════════════════════════════════════════════
+
+// Moving Averages
+color cEmaF = bullTrend ? color.new(#FFD700, 20) : color.new(#FFD700, 55)
+color cEmaM = bullTrend ? color.new(#FF8C00, 10) : color.new(#FF8C00, 45)
+color cEmaS = stackUp ? color.new(#00E676, 30) : stackDn ? color.new(#FF1744, 30) : color.new(#999999, 50)
+
+plot(i_showMA ? emaF : na, "Fast EMA", cEmaF, display = i_showMA ? display.all : display.none)
+plot(i_showMA ? emaM : na, "Mid EMA", cEmaM, 2, display = i_showMA ? display.all : display.none)
+plot(i_showMA ? emaS : na, "Slow EMA", cEmaS, 2, display = i_showMA ? display.all : display.none)
+
+// Fill between EMAs
+fill(plot(i_showMA ? emaF : na, display = display.none), plot(i_showMA ? emaM : na, display = display.none), i_showMA ? (stackUp ? color.new(#00E676, 93) : stackDn ? color.new(#FF1744, 93) : color.new(#999999, 97)) : na)
+
+// Entry Signals - Always plot, control with display parameter
+plotshape(i_showSignals and longEntry, "Long Entry", shape.labelup, location.belowbar, color.new(#00C853, 0), text="LONG", textcolor=color.white, size=size.normal)
+plotshape(i_showSignals and shortEntry, "Short Entry", shape.labeldown, location.abovebar, color.new(#D50000, 0), text="SHORT", textcolor=color.white, size=size.normal)
+
+// Pattern Signals
+plotshape(r2_bull, "Pullback Buy", shape.triangleup, location.belowbar, color.new(#76FF03, 20), size=size.tiny)
+plotshape(r2_bear, "Pullback Sell", shape.triangledown, location.abovebar, color.new(#FF6E40, 20), size=size.tiny)
+plotshape(r8_bull, "Failed Breakdown", shape.xcross, location.belowbar, color.new(#00E676, 0), size=size.small)
+plotshape(r8_bear, "Failed Breakout", shape.xcross, location.abovebar, color.new(#FF1744, 0), size=size.small)
+plotshape(r10_exh_bull, "Exhaustion Up", shape.diamond, location.abovebar, color.new(#FFD740, 0), size=size.tiny)
+plotshape(r10_exh_bear, "Exhaustion Down", shape.diamond, location.belowbar, color.new(#FFD740, 0), size=size.tiny)
+
+// Background Tinting
+bool bgLong  = i_showBG and longActive and not shortActive
+bool bgShort = i_showBG and shortActive and not longActive
+bool bgBoth  = i_showBG and longActive and shortActive
+bgcolor(bgLong ? color.new(#00E676, 95) : bgShort ? color.new(#FF1744, 95) : bgBoth ? color.new(#FFD740, 95) : na)
+
+// Score Label
+if i_showSc and barstate.islast
+    color labelBg = bullScore > bearScore ? color.new(#00E676, 85) : bearScore > bullScore ? color.new(#FF1744, 85) : color.new(#1A1A1A, 85)
+    string scTxt = "BULL: " + str.tostring(bullScore) + "/12\nBEAR: " + str.tostring(bearScore) + "/12"
+    if highVolume
+        scTxt += "\n⚠ HIGH VOL"
+    if lowVolume
+        scTxt += "\n⚠ LOW VOL"
+    label.new(bar_index + 3, close, scTxt, style=label.style_label_left, color=labelBg, textcolor=#FFD700, size=size.normal)
+
+// ═══════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════
+
+var table t = na
+if barstate.isfirst
+    t := table.new(i_dashPos, 6, 18, color.new(#111111, 5), #333333, 1)
+
+string _ds = f_sz(i_dashSz)
+
+if i_dash and barstate.islast
+    // Header
+    table.cell(t, 0, 0, "#", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 1, 0, "RULE", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 2, 0, "BULL", text_color=#00E676, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 3, 0, "BEAR", text_color=#FF1744, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 4, 0, "VOL", text_color=#64B5F6, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 5, 0, "NOTE", text_color=#FFD740, text_size=_ds, bgcolor=#0D0D0D)
+
+    // Rule data
+    array<string> rn = array.from("1","2","3","4","5","6","7","8","9","10","11","12")
+    array<string> rl = array.from("Trend Direction","First Pullback","Gap Continuation","Range/Volume","Key Reversal","Trailing Stop","Close Extreme","Failed Breakout","Breakout Confirm","Trend Extension","EMA Alignment","Risk Stops")
+    array<bool> rb = array.from(r1_bull, r2_bull, r3_bull, r4, r5_bull, r6_bull, r7_bull, r8_bull, r9_bull, r10_bull, r11_bull, r12)
+    array<bool> rs = array.from(r1_bear, r2_bear, r3_bear, r4, r5_bear, r6_bear, r7_bear, r8_bear, r9_bear, r10_bear, r11_bear, r12)
+
+    for i = 0 to 11
+        bool bv = array.get(rb, i)
+        bool sv = array.get(rs, i)
+        color rowBg = i % 2 == 0 ? #1A1A1A : #222222
+        
+        table.cell(t, 0, i + 1, array.get(rn, i), text_color=#FFFFFF, text_size=_ds, bgcolor=rowBg)
+        table.cell(t, 1, i + 1, array.get(rl, i), text_color=#CCCCCC, text_size=_ds, bgcolor=rowBg)
+        table.cell(t, 2, i + 1, bv ? "✓" : "—", text_color=bv ? #00E676 : #555555, text_size=_ds, bgcolor=bv ? color.new(#1B5E20, 70) : rowBg)
+        table.cell(t, 3, i + 1, sv ? "✓" : "—", text_color=sv ? #FF1744 : #555555, text_size=_ds, bgcolor=sv ? color.new(#B71C1C, 70) : rowBg)
+        
+        string volNote = highVolume and (bv or sv) ? "HIGH" : lowVolume ? "LOW" : "—"
+        table.cell(t, 4, i + 1, volNote, text_color=highVolume ? #FFD740 : #64B5F6, text_size=_ds, bgcolor=rowBg)
+        
+        string nNote = ""
+        if i == 7 and (r8_bull or r8_bear)
+            nNote := "SIGNAL"
+        if i == 9 and (r10_exh_bull or r10_exh_bear)
+            nNote := "EXHAUST"
+        if bullishDiv or bearishDiv
+            nNote := "DIVERGE"
+        table.cell(t, 5, i + 1, nNote, text_color=#FFD740, text_size=_ds, bgcolor=rowBg)
+
+    // Score row
+    color bCol = bullScore >= i_bullTh ? color.new(#00C853, 0) : bullScore >= 6 ? color.new(#FFD740, 0) : #444444
+    color sCol = bearScore >= i_bearTh ? color.new(#D50000, 0) : bearScore >= 6 ? color.new(#FFD740, 0) : #444444
+    string bScTxt = str.tostring(bullScore) + "/12"
+    string sScTxt = str.tostring(bearScore) + "/12"
+    string scAct  = longActive ? "⟰ LONG" : shortActive ? "⟱ SHORT" : "—"
+    
+    table.cell(t, 0, 13, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 1, 13, "SCORE", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 2, 13, bScTxt, text_color=#FFFFFF, text_size=_ds, bgcolor=bCol)
+    table.cell(t, 3, 13, sScTxt, text_color=#FFFFFF, text_size=_ds, bgcolor=sCol)
+    table.cell(t, 4, 13, "V:" + str.tostring(volRatio, "#.1") + "x", text_color=#64B5F6, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 5, 13, scAct, text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+
+    // Quality row
+    int maxSc   = math.max(bullScore, bearScore)
+    string qual = maxSc >= 10 ? "STRONG" : maxSc >= 8 ? "SOLID" : maxSc >= 6 ? "MODERATE" : "WEAK"
+    color qCol  = maxSc >= 10 ? color.new(#00C853, 0) : maxSc >= 8 ? color.new(#FFD740, 0) : maxSc >= 6 ? color.new(#FF8C00, 0) : color.new(#FF1744, 0)
+    
+    table.cell(t, 0, 14, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 1, 14, "QUALITY", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 2, 14, qual, text_color=#FFFFFF, text_size=_ds, bgcolor=qCol)
+    table.cell(t, 3, 14, "RSI: " + str.tostring(rsi, "#.0"), text_color=rsi > 70 ? #FF1744 : rsi < 30 ? #00E676 : #FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 4, 14, "ATR: " + str.tostring(atr, "#.##"), text_color=#CCCCCC, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 5, 14, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+
+    // Context row
+    string trendStr = bullTrend ? "BULL" : bearTrend ? "BEAR" : "NEUTRAL"
+    color tCol      = bullTrend ? color.new(#00E676, 50) : bearTrend ? color.new(#FF1744, 50) : color.new(#999999, 50)
+    
+    table.cell(t, 0, 15, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 1, 15, "TREND", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+    table.cell(t, 2, 15, trendStr, text_color=#FFFFFF, text_size=_ds, bgcolor=tCol)
+    table.cell(t, 3, 15, stackUp ? "ALIGNED" : stackDn ? "ALIGNED" : "MIXED", text_color=stackUp or stackDn ? #00E676 : #FF8C00, text_size=_ds, bgcolor=#1A1A1A)
+    table.cell(t, 4, 15, mtfTrendUp ? "MTF↑" : mtfTrendDn ? "MTF↓" : "MTF—", text_color=#64B5F6, text_size=_ds, bgcolor=#1A1A1A)
+    table.cell(t, 5, 15, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+
+    // Warning row
+    string warning = ""
+    if bullishDiv
+        warning := "⚠ BULLISH DIVERGENCE"
+    if bearishDiv
+        warning := "⚠ BEARISH DIVERGENCE"
+    if highVolume and warning != ""
+        warning += " + HIGH VOLUME"
+    
+    if warning != ""
+        table.cell(t, 0, 16, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+        table.cell(t, 1, 16, "ALERT", text_color=#FFD700, text_size=_ds, bgcolor=#0D0D0D)
+        table.cell(t, 2, 16, warning, text_color=#FFD740, text_size=_ds, bgcolor=color.new(#FF6F00, 60))
+        table.cell(t, 3, 16, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+        table.cell(t, 4, 16, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+        table.cell(t, 5, 16, "", text_color=#FFFFFF, text_size=_ds, bgcolor=#0D0D0D)
+
+// ═══════════════════════════════════════════════════
+//  ALERTS
+// ═══════════════════════════════════════════════════
+
+alertcondition(longEntry, "Long Entry", "R12R: Bull score reached threshold — LONG")
+alertcondition(shortEntry, "Short Entry", "R12R: Bear score reached threshold — SHORT")
+alertcondition(r2_bull, "Pullback Buy", "R12R: First pullback buy at 20 EMA")
+alertcondition(r2_bear, "Pullback Sell", "R12R: First pullback sell at 20 EMA")
+alertcondition(r8_bull, "Failed Breakdown", "R12R: Failed breakout down — bullish reversal")
+alertcondition(r8_bear, "Failed Breakout", "R12R: Failed breakout up — bearish reversal")
+alertcondition(r10_exh_bull, "Bull Exhaustion", "R12R: Uptrend failing to extend — caution")
+alertcondition(r10_exh_bear, "Bear Exhaustion", "R12R: Downtrend failing to extend — caution")
+alertcondition(longEntry and r11_bull, "Strong Long", "R12R: Long + EMA stack aligned — STRONG")
+alertcondition(shortEntry and r11_bear, "Strong Short", "R12R: Short + EMA stack aligned — STRONG")
+alertcondition(bullishDiv, "Bullish Divergence", "R12R: Bullish RSI divergence detected")
+alertcondition(bearishDiv, "Bearish Divergence", "R12R: Bearish RSI divergence detected")
+alertcondition(highVolume and longEntry, "High Vol Long", "R12R: Long entry with high volume confirmation")
+alertcondition(highVolume and shortEntry, "High Vol Short", "R12R: Short entry with high volume confirmation")
