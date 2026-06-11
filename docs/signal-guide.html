@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signal Interpretation Guide - SireIndicators</title>
+    <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        .doc-page {
+            padding: 3rem 0;
+            min-height: 100vh;
+        }
+        .doc-header {
+            background: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 3rem;
+        }
+        .doc-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .doc-content h2 {
+            font-size: 2rem;
+            margin: 2rem 0 1rem;
+            color: var(--primary);
+            border-bottom: 3px solid var(--secondary);
+            padding-bottom: 0.5rem;
+        }
+        .doc-content h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.75rem;
+            color: var(--dark);
+        }
+        .doc-content {
+            background: white;
+        }
+        .signal-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            box-shadow: var(--shadow);
+        }
+        .signal-table th,
+        .signal-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .signal-table th {
+            background: var(--dark);
+            color: white;
+            font-weight: 600;
+        }
+        .signal-table tr:hover {
+            background: var(--light);
+        }
+        .signal-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+        .badge-bullish {
+            background: rgba(0, 230, 118, 0.1);
+            color: #00e676;
+        }
+        .badge-bearish {
+            background: rgba(255, 23, 68, 0.1);
+            color: #ff1744;
+        }
+        .badge-neutral {
+            background: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+        }
+        .signal-description {
+            background: var(--light);
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary);
+            margin: 1rem 0;
+            border-radius: 0.25rem;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 2rem;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">📊 SireIndicators</div>
+            <ul class="nav-menu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/#docs">Documentation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="doc-header">
+        <div class="container">
+            <a href="/" class="back-link">← Back to Home</a>
+            <h1>Signal Interpretation Guide</h1>
+            <p>Understanding every signal from SireIndicators</p>
+        </div>
+    </div>
+
+    <section class="doc-page">
+        <div class="container">
+            <div class="doc-content">
+                <h2>Institutional ORB + Brooks Box v3 Signals</h2>
+                
+                <h3>Breakout Signals (BRK▲ / BRK▼)</h3>
+                
+                <p>These are the primary entry signals generated when price breaks above the Opening Range High (ORH) or below the Opening Range Low (ORL).</p>
+                
+                <table class="signal-table">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Confluence Grade</th>
+                            <th>Meaning</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="signal-badge badge-bullish">BRK▲ A+</span></td>
+                            <td>7-8/8 (Excellent)</td>
+                            <td>Strong bullish breakout with maximum confluence</td>
+                            <td>Trade full size, BUY above signal bar close</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-bullish">BRK▲ A</span></td>
+                            <td>5-6/8 (Good)</td>
+                            <td>Good bullish setup with solid confluence</td>
+                            <td>Trade standard size, reduce if trendless</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-neutral">BRK▲ B</span></td>
+                            <td>3-4/8 (Marginal)</td>
+                            <td>Marginal bullish setup, multiple factors missing</td>
+                            <td>Consider reducing size or passing</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-neutral">BRK▲ C</span></td>
+                            <td>0-2/8 (Poor)</td>
+                            <td>Poor bullish setup, low probability</td>
+                            <td>Avoid or use only micro-position</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-bearish">BRK▼</span></td>
+                            <td>Varies</td>
+                            <td>Bearish breakout (mirror of bullish)</td>
+                            <td>Apply same logic in reverse</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="signal-description">
+                    <strong>💡 Pro Tip:</strong> The confluence score considers:
+                    <ul style="margin-top: 0.5rem;">
+                        <li>✓ Volume surge (above 1.2x average)</li>
+                        <li>✓ Volume spike (above 1.8x average)</li>
+                        <li>✓ VWAP bias alignment</li>
+                        <li>✓ 20 EMA position</li>
+                        <li>✓ Day type (Coil/Breakout/Trading Range)</li>
+                        <li>✓ Time of day quality</li>
+                        <li>✓ Gap status</li>
+                        <li>✓ ADR exhaustion</li>
+                    </ul>
+                </div>
+
+                <h3>Failed Breakout Signals (FAIL▲ / FAIL▼)</h3>
+                
+                <p>These signals occur when price breaks beyond an OR level but then reverses back inside the OR within a specified number of bars.</p>
+                
+                <table class="signal-table">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Setup</th>
+                            <th>Meaning</th>
+                            <th>Trading Strategy</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="signal-badge badge-bearish">FAIL▲</span></td>
+                            <td>Failed breakdown attempt</td>
+                            <td>Price broke below ORL then reversed back up</td>
+                            <td>Bullish reversal - Buy above the broken level</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-bullish">FAIL▼</span></td>
+                            <td>Failed breakdown attempt</td>
+                            <td>Price broke above ORH then reversed back down</td>
+                            <td>Bearish reversal - Sell below the broken level</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="signal-description">
+                    <strong>📌 Strategy:</strong> Failed breakouts show weak directional commitment. Wait for price to move back toward the failed level to setup your entry. This creates a more favorable risk/reward.
+                </div>
+
+                <h3>Retest Signals (RT▲ / RT▼)</h3>
+                
+                <p>Retest signals occur when price returns to test an OR level after breaking it, showing potential continuation.</p>
+                
+                <table class="signal-table">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Condition</th>
+                            <th>Meaning</th>
+                            <th>Trading Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="signal-badge badge-bullish">RT▲</span></td>
+                            <td>Price above ORH, retest near ORL</td>
+                            <td>Support hold at broken level, bullish continuation</td>
+                            <td>Buy on close above retest high</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-bearish">RT▼</span></td>
+                            <td>Price below ORL, retest near ORH</td>
+                            <td>Resistance hold at broken level, bearish continuation</td>
+                            <td>Sell on close below retest low</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>Raschke 12 Rules Signals</h2>
+
+                <h3>Directional Entry Signals (LONG / SHORT)</h3>
+                
+                <p>These signals fire when the Bull or Bear score reaches or exceeds your threshold (default 8/12).</p>
+                
+                <table class="signal-table">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Score</th>
+                            <th>Quality</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="signal-badge badge-bullish">⟰ LONG</span></td>
+                            <td>8-12/12</td>
+                            <td>Bullish confluence score met</td>
+                            <td>Enter long position at signal bar close</td>
+                        </tr>
+                        <tr>
+                            <td><span class="signal-badge badge-bearish">⟱ SHORT</span></td>
+                            <td>8-12/12</td>
+                            <td>Bearish confluence score met</td>
+                            <td>Enter short position at signal bar close</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Pattern Recognition Signals</h3>
+                
+                <table class="signal-table">
+                    <thead>
+                        <tr>
+                            <th>Signal</th>
+                            <th>Rule</th>
+                            <th>Meaning</th>
+                            <th>Best Use</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Pullback Buy ▲</strong></td>
+                            <td>Rule 2</td>
+                            <td>Price pulled back to 20-EMA with volume in uptrend</td>
+                            <td>Secondary entry point, lower risk</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Pullback Sell ▼</strong></td>
+                            <td>Rule 2</td>
+                            <td>Price pulled back to 20-EMA with volume in downtrend</td>
+                            <td>Secondary entry point, lower risk</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Failed Breakdown ✗</strong></td>
+                            <td>Rule 8</td>
+                            <td>Price made new low then reversed up on close</td>
+                            <td>Strong reversal signal, often trades hard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Failed Breakout ✗</strong></td>
+                            <td>Rule 8</td>
+                            <td>Price made new high then reversed down on close</td>
+                            <td>Strong reversal signal, often trades hard</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exhaustion Up ◆</strong></td>
+                            <td>Rule 10</td>
+                            <td>Uptrend failing to make new highs</td>
+                            <td>Caution signal - trend weakening</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exhaustion Down ◆</strong></td>
+                            <td>Rule 10</td>
+                            <td>Downtrend failing to make new lows</td>
+                            <td>Caution signal - trend weakening</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Alert Conditions (Dashboard)</h3>
+                
+                <div class="signal-description">
+                    <strong>⚠️ BULLISH DIVERGENCE</strong><br>
+                    RSI makes lower low while price makes higher high. Signals weakening uptrend momentum - potential reversal or consolidation.
+                </div>
+
+                <div class="signal-description">
+                    <strong>⚠️ BEARISH DIVERGENCE</strong><br>
+                    RSI makes higher high while price makes lower low. Signals weakening downtrend momentum - potential reversal or consolidation.
+                </div>
+
+                <div class="signal-description">
+                    <strong>ℹ️ HIGH VOLUME</strong><br>
+                    Volume is above 2.0x the 20-bar average. Increases conviction in any active signal. Strong momentum.
+                </div>
+
+                <h2>Confluence Score Grades</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
+                    <div style="background: var(--light); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid var(--success);">
+                        <h3 style="color: var(--success); margin-top: 0;">A+ Grade</h3>
+                        <p><strong>Score: 7-8/8 (ORB) or 10-12/12 (R12R)</strong></p>
+                        <p>Excellent confluence. Multiple factors aligned. Trade at full size with confidence.</p>
+                    </div>
+                    <div style="background: var(--light); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid var(--primary);">
+                        <h3 style="color: var(--primary); margin-top: 0;">A Grade</h3>
+                        <p><strong>Score: 5-6/8 (ORB) or 8-9/12 (R12R)</strong></p>
+                        <p>Good confluence. Most factors aligned. Trade standard size.</p>
+                    </div>
+                    <div style="background: var(--light); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid var(--warning);">
+                        <h3 style="color: var(--warning); margin-top: 0;">B Grade</h3>
+                        <p><strong>Score: 3-4/8 (ORB) or 6-7/12 (R12R)</strong></p>
+                        <p>Moderate confluence. Some factors missing. Reduce size or pass.</p>
+                    </div>
+                    <div style="background: var(--light); padding: 1.5rem; border-radius: 0.5rem; border-left: 4px solid var(--danger);">
+                        <h3 style="color: var(--danger); margin-top: 0;">C Grade</h3>
+                        <p><strong>Score: 0-2/8 (ORB) or <6/12 (R12R)</strong></p>
+                        <p>Poor confluence. Multiple factors missing. Avoid or use micro-position only.</p>
+                    </div>
+                </div>
+
+                <h2>Key Metrics Explained</h2>
+
+                <h3>📊 Confluence Score (ORB: 0-8 | R12R: 0-12)</h3>
+                <p>A composite score considering all active filters and technical factors. Higher score = higher probability setup.</p>
+
+                <h3>📈 ADR (Average Daily Range)</h3>
+                <p>8-day average of the daily range. Used to assess:</p>
+                <ul>
+                    <li><strong>ADR Consumption:</strong> How much of today's expected range has been used</li>
+                    <li><strong>Breakout Probability:</strong> Lower ADR % = more room to run</li>
+                    <li><strong>Day Classification:</strong> Coil (<30%), Breakout (30-50%), Trading Range (>50%)</li>
+                </ul>
+
+                <h3>💨 Volume Context</h3>
+                <table class="signal-table">
+                    <tr>
+                        <td><strong>Surge</strong></td>
+                        <td>Volume > 1.2x average - adequate volume for breakout</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Spike</strong></td>
+                        <td>Volume > 1.8x average - high conviction move</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Low</strong></td>
+                        <td>Volume < 0.5x average - weak move, suspect signals</td>
+                    </tr>
+                </table>
+
+                <h3>⏰ Time-of-Day Context</h3>
+                <table class="signal-table">
+                    <tr>
+                        <td><strong>PRIME (10:30-11:30 ET, 14:00-15:00 ET)</strong></td>
+                        <td>High probability trading windows - full trade size</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NEUTRAL (other times)</strong></td>
+                        <td>Average probability - standard size</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CAUTION (9:00-10:00 ET, 11:30-13:30 ET)</strong></td>
+                        <td>Low probability windows - reduce size or avoid</td>
+                    </tr>
+                </table>
+
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Created by Sire Mammat. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="../assets/script.js"></script>
+</body>
+</html>
