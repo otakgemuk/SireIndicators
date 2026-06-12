@@ -31,7 +31,7 @@ export default function Home() {
             Free Pine Script Indicators
           </p>
           <h1 className="text-4xl font-bold md:text-5xl">
-            Trade Price Action.\u00A0
+            Trade Price Action.{' '}
             <span className="text-[#E8C46A]">Not Hope.</span>
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-[#F5EDD8]/70">
