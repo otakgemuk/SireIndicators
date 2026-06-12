@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { CrownedCandle } from './CrownedCandle';
+import { CrownedCandleLogo } from './CrownedCandle';
 
 export const REPO_URL = 'https://github.com/otakgemuk/SireIndicators';
 export const MAIN_SITE = 'https://siremammat.vercel.app';
@@ -20,14 +20,14 @@ export function SiteNav() {
     <header className="sticky top-0 z-40 border-b border-[#B87333]/30 bg-[#0E0A04]/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
-          <CrownedCandle size={26} />
+          <CrownedCandleLogo size="sm" />
           <span className="font-display text-xl font-semibold tracking-wide text-[#F5EDD8]">
             Sire<span className="text-[#E8C46A]">Indicators</span>
           </span>
         </Link>
         <nav className="flex items-center gap-5 text-sm">
           <a href={MAIN_SITE} target="_blank" rel="noopener noreferrer" className="hidden text-[#F5EDD8]/70 transition-colors hover:text-[#E8C46A] sm:block">
-            SireMammat.com
+            SireMammat Hub
           </a>
           <a
             href={REPO_URL}
@@ -59,30 +59,34 @@ export function SiteFooter() {
         <div>
           <h4 className="mb-3 font-display text-sm font-semibold tracking-widest text-[#B87333]">EDUCATION</h4>
           <ul className="space-y-2 text-sm text-[#F5EDD8]/70">
+            <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/learn`} target="_blank" rel="noopener noreferrer">Learn Price Action</a></li>
             <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/strategies`} target="_blank" rel="noopener noreferrer">Strategies</a></li>
             <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/playbooks`} target="_blank" rel="noopener noreferrer">Playbooks</a></li>
-            <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/calculator`} target="_blank" rel="noopener noreferrer">Calculators</a></li>
+            <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/calculator`} target="_blank" rel="noopener noreferrer">Position Calculator</a></li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 font-display text-sm font-semibold tracking-widest text-[#B87333]">ANALYSIS</h4>
           <ul className="space-y-2 text-sm text-[#F5EDD8]/70">
-            <li><a className="hover:text-[#E8C46A]" href={MAIN_SITE} target="_blank" rel="noopener noreferrer">Market Analysis</a></li>
+            <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/analysis`} target="_blank" rel="noopener noreferrer">Market Analysis</a></li>
+            <li><a className="hover:text-[#E8C46A]" href={`${MAIN_SITE}/case-studies`} target="_blank" rel="noopener noreferrer">Case Studies</a></li>
             <li><a className="hover:text-[#E8C46A]" href={REPO_URL} target="_blank" rel="noopener noreferrer">Indicator Source Code</a></li>
           </ul>
         </div>
         <div>
           <h4 className="mb-3 font-display text-sm font-semibold tracking-widest text-[#B87333]">CONNECT</h4>
           <ul className="space-y-2 text-sm text-[#F5EDD8]/70">
+            <li><a className="hover:text-[#E8C46A]" href="https://x.com/SireMammat" target="_blank" rel="noopener noreferrer">X / Twitter</a></li>
+            <li><a className="hover:text-[#E8C46A]" href="https://youtube.com/@SireMammat" target="_blank" rel="noopener noreferrer">YouTube</a></li>
             <li><a className="hover:text-[#E8C46A]" href={DISCORD_URL} target="_blank" rel="noopener noreferrer">Discord Community</a></li>
-            <li><a className="hover:text-[#E8C46A]" href={MAIN_SITE} target="_blank" rel="noopener noreferrer">SireMammat.com</a></li>
+            <li><a className="hover:text-[#E8C46A]" href={MAIN_SITE} target="_blank" rel="noopener noreferrer">SireMammat Hub</a></li>
           </ul>
         </div>
       </div>
       <div className="border-t border-[#B87333]/15 py-5 text-center">
         <p className="font-display text-sm text-[#F5EDD8]/60">♛ Learn to read price — free, always.</p>
         <p className="mt-1 font-mono text-[11px] text-[#F5EDD8]/40">
-          © SireMammat (MightyOx Ventures) · Educational tools only · Not financial advice · Futures trading involves substantial risk
+          © 2026 Sire Mammat · Educational tools only · Not financial advice · Futures trading involves substantial risk
         </p>
       </div>
     </footer>
