@@ -1,14 +1,5 @@
 {
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
-  "installCommand": "cd frontend && npm install",
-  "functions": {
-    "frontend/**": {
-      "memory": 1024,
-      "maxDuration": 60
-    }
-  },
-  "routes": [
-    { "src": "/(.*)", "dest": "frontend/$1" }
-  ]
+  "installCommand": "cd frontend && npm install"
 }
