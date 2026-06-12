@@ -1,6 +1,6 @@
 {
   "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next/standalone",
+  "outputDirectory": "frontend/.next",
   "installCommand": "cd frontend && npm install",
   "env": {
     "NEXT_TELEMETRY_DISABLED": "1"
