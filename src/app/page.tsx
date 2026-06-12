@@ -1,152 +1,102 @@
-'use client';
+import Link from 'next/link';
+import { indicators } from '@/data/indicators';
 
-import { useEffect, useState } from 'react';
-import { useIndicatorStore } from '@/store/indicatorStore';
+const REPO_URL = 'https://github.com/otakgemuk/SireIndicators';
 
 export default function Home() {
-  const { dashboard, settings, setDashboard, isLoading } = useIndicatorStore();
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains('dark');
-    setIsDark(isDarkMode);
-
-    const mockDashboard = {
-      timestamp: new Date(),
-      symbol: settings.symbol,
-      timeframe: settings.timeframe,
-      lastUpdate: new Date(),
-      dataQuality: 'LIVE' as const,
-      orb: {
-        timestamp: new Date(),
-        dayType: 'BREAKOUT' as const,
-        openingRangeHigh: 4665,
-        openingRangeLow: 4620,
-        openingRangeWidth: 45,
-        vwap: 4642.5,
-        ema20: 4640,
-        adrConsumption: 65,
-        adrConsumptionLevel: 'HIGH' as const,
-        gapStatus: 'UP_GAP' as const,
-        timeOfDayQuality: 'PRIME' as const,
-        relativeVolume: 'SURGE' as const,
-        currentSignal: null,
-        signals: [],
-      },
-      raschke: {
-        timestamp: new Date(),
-        trend: 'BULL' as const,
-        bullScore: 10,
-        bearScore: 2,
-        ruleStatus: [],
-        ema9: 4645,
-        ema20: 4640,
-        ema50: 4630,
-        emaStackAlignment: 'ALIGNED' as const,
-        rsi: 65,
-        atr: 8.5,
-        currentSignal: null,
-        signals: [],
-      },
-    };
-
-    setDashboard(mockDashboard as any);
-  }, [settings.symbol, settings.timeframe, setDashboard]);
-
-  const toggleTheme = () => {
-    const html = document.documentElement;
-    if (isDark) {
-      html.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      setIsDark(false);
-    } else {
-      html.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-      setIsDark(true);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950">
-      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-        <div className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0E0A04] text-[#F5EDD8]">
+      {/* Nav */}
+      <header className="sticky top-0 z-40 border-b border-[#B87333]/30 bg-[#0E0A04]/95 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-600 text-white font-bold">
-              ♛
-            </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-              SireIndicators
-            </h1>
+            <span className="text-2xl text-[#B87333]">♛</span>
+            <span className="text-lg font-bold tracking-wide">SireIndicators</span>
           </div>
-          <button
-            onClick={toggleTheme}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-lg"
-            aria-label="Toggle dark mode"
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded border border-[#B87333] px-4 py-1.5 text-sm text-[#E8C46A] transition-colors hover:bg-[#B87333] hover:text-[#0E0A04]"
           >
-            {isDark ? '☀️' : '🌙'}
-          </button>
+            GitHub
+          </a>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
-        {isLoading ? (
-          <div className="flex h-96 items-center justify-center">
-            <div className="text-center">
-              <div className="mb-4 inline-block h-12 w-12 rounded-full border-4 border-slate-300 border-t-amber-600 animate-spin" />
-              <p className="text-slate-600 dark:text-slate-400">Loading...</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-4">
-              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4">
-                <p className="text-xs uppercase text-slate-600 dark:text-slate-400">
-                  Symbol
-                </p>
-                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {settings.symbol}
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4">
-                <p className="text-xs uppercase text-slate-600 dark:text-slate-400">
-                  Timeframe
-                </p>
-                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {settings.timeframe}m
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4">
-                <p className="text-xs uppercase text-slate-600 dark:text-slate-400">
-                  ADR Used
-                </p>
-                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {dashboard?.orb.adrConsumption.toFixed(0)}%
-                </p>
-              </div>
-              <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-4">
-                <p className="text-xs uppercase text-slate-600 dark:text-slate-400">
-                  Day Type
-                </p>
-                <p className="mt-2 text-2xl font-bold text-slate-900 dark:text-white">
-                  {dashboard?.orb.dayType}
-                </p>
-              </div>
-            </div>
+      {/* Hero */}
+      <section className="border-b border-[#B87333]/20">
+        <div className="mx-auto max-w-5xl px-6 py-16 text-center">
+          <p className="mb-3 text-xs uppercase tracking-[0.3em] text-[#B87333]">
+            Free Pine Script Indicators
+          </p>
+          <h1 className="text-4xl font-bold md:text-5xl">
+            Trade Price Action.\u00A0
+            <span className="text-[#E8C46A]">Not Hope.</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-[#F5EDD8]/70">
+            Battle-tested TradingView indicators for ES, NQ, MES and MNQ futures —
+            built on Al Brooks price action, opening range structure, and objective
+            rule-based scoring. Free, always. By SireMammat.
+          </p>
+        </div>
+      </section>
 
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 p-6 text-center">
-              <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                ✓ Dashboard Ready
+      {/* Indicator grid */}
+      <main className="mx-auto max-w-5xl px-6 py-12">
+        <h2 className="mb-6 text-sm uppercase tracking-[0.25em] text-[#B87333]">
+          The Library · {indicators.length} indicator{indicators.length === 1 ? '' : 's'}
+        </h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          {indicators.map((ind) => (
+            <Link
+              key={ind.slug}
+              href={`/indicators/${ind.slug}`}
+              className="group rounded-lg border border-[#B87333]/30 bg-[#16100a] p-6 transition-all hover:border-[#E8C46A] hover:shadow-[0_0_30px_rgba(184,115,51,0.15)]"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <span className="rounded bg-[#B87333]/15 px-2 py-0.5 text-xs text-[#E8C46A]">
+                  {ind.category}
+                </span>
+                <span className="text-xs text-[#F5EDD8]/50">
+                  {ind.version} · {ind.status}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-[#F5EDD8] group-hover:text-[#E8C46A]">
+                {ind.name}
+              </h3>
+              <p className="mt-2 text-sm text-[#F5EDD8]/70">{ind.tagline}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {ind.markets.map((m) => (
+                  <span
+                    key={m}
+                    className="rounded border border-[#B87333]/40 px-2 py-0.5 text-xs text-[#F5EDD8]/60"
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-5 text-sm font-semibold text-[#B87333] group-hover:text-[#E8C46A]">
+                View guide →
               </p>
-              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Replace mock data with your API endpoint
-              </p>
-            </div>
-          </div>
-        )}
+            </Link>
+          ))}
+        </div>
+
+        {/* Coming soon */}
+        <div className="mt-8 rounded-lg border border-dashed border-[#B87333]/30 p-6 text-center text-sm text-[#F5EDD8]/50">
+          More indicators in development — follow{' '}
+          <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-[#E8C46A] underline">
+            the repo
+          </a>{' '}
+          for new releases.
+        </div>
       </main>
 
-      <footer className="border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 py-4 text-center text-xs text-slate-600 dark:text-slate-400">
-        <p>SireIndicators v1.0 • Production Ready</p>
+      {/* Footer */}
+      <footer className="border-t border-[#B87333]/20 py-6 text-center text-xs text-[#F5EDD8]/50">
+        <p>♛ SireIndicators · by SireMammat (MightyOx Ventures) · Learn to read price — free, always.</p>
+        <p className="mt-1">Educational tools only. Not financial advice. Trading futures involves substantial risk.</p>
       </footer>
     </div>
   );

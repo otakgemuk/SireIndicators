@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SireIndicators Dashboard',
-  description: 'Trading Dashboard',
+  title: 'SireIndicators — Free Pine Script Indicators for Futures Traders',
+  description:
+    'Free TradingView indicators for ES, NQ, MES, MNQ futures. Opening range breakout systems, rule-based scoring engines, and price action tools by SireMammat.',
 };
 
 export default function RootLayout({
@@ -12,22 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                const theme = localStorage.getItem('theme') || 'dark';
-                if (theme === 'dark') document.documentElement.classList.add('dark');
-              } catch (e) {}
-            `,
-          }}
-        />
-      </head>
-      <body className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white">
-        {children}
-      </body>
+    <html lang="en">
+      <body>{children}</body>
     </html>
   );
 }
