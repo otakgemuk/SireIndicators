@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { indicators, getIndicator } from '@/data/indicators';
-
-const REPO_URL = 'https://github.com/otakgemuk/SireIndicators';
+import { TickerBar, SiteNav, SiteFooter, Callout, REPO_URL } from '@/components/SiteChrome';
 
 export function generateStaticParams() {
   return indicators.map((i) => ({ slug: i.slug }));
@@ -16,45 +15,35 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
   return (
     <div className="min-h-screen bg-[#0E0A04] text-[#F5EDD8]">
-      {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-[#B87333]/30 bg-[#0E0A04]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3 hover:opacity-80">
-            <span className="text-2xl text-[#B87333]">♛</span>
-            <span className="text-lg font-bold tracking-wide">SireIndicators</span>
-          </Link>
-          <Link href="/" className="text-sm text-[#E8C46A] hover:underline">
-            ← All indicators
-          </Link>
-        </div>
-      </header>
+      <TickerBar />
+      <SiteNav />
 
-      <main className="mx-auto max-w-4xl px-6 py-10">
-        {/* Title */}
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          <span className="rounded bg-[#B87333]/15 px-2 py-0.5 text-xs text-[#E8C46A]">{ind.category}</span>
-          <span className="text-xs text-[#F5EDD8]/50">{ind.version} · {ind.status} · {ind.timeframes}</span>
-        </div>
-        <h1 className="text-3xl font-bold md:text-4xl">{ind.name}</h1>
-        <p className="mt-2 text-[#F5EDD8]/70">{ind.tagline}</p>
+      <main className="mx-auto max-w-4xl px-6 py-12">
+        {/* Eyebrow + title */}
+        <p className="mb-3 font-mono text-xs uppercase tracking-[0.35em] text-[#B87333]">
+          {ind.category} · {ind.version} · {ind.status}
+        </p>
+        <h1 className="font-display text-4xl font-semibold md:text-5xl">{ind.name}</h1>
+        <p className="mt-3 text-lg leading-relaxed text-[#F5EDD8]/70">{ind.tagline}</p>
+        <p className="mt-2 font-mono text-xs text-[#F5EDD8]/50">Timeframes: {ind.timeframes}</p>
 
-        {/* Get the source CTA */}
-        <div className="mt-6 flex flex-wrap gap-3">
+        {/* CTA */}
+        <div className="mt-7 flex flex-wrap gap-3">
           <a
             href={sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded bg-[#B87333] px-5 py-2.5 font-semibold text-[#0E0A04] transition-colors hover:bg-[#E8C46A]"
+            className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0E0A04] transition-colors hover:bg-[#E8C46A]"
           >
-            Get Pine Script Source →
+            GET PINE SCRIPT SOURCE →
           </a>
           <a
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-[#B87333] px-5 py-2.5 text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
+            className="rounded border border-[#B87333] px-6 py-3 font-mono text-sm tracking-wide text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
           >
-            View Repo
+            VIEW REPO
           </a>
         </div>
 
@@ -63,16 +52,16 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
           <p className="leading-relaxed text-[#F5EDD8]/80">{ind.description}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {ind.markets.map((m) => (
-              <span key={m} className="rounded border border-[#B87333]/40 px-2 py-0.5 text-xs text-[#F5EDD8]/60">{m}</span>
+              <span key={m} className="rounded border border-[#B87333]/40 px-2 py-0.5 font-mono text-xs text-[#F5EDD8]/60">{m}</span>
             ))}
           </div>
         </Section>
 
         {/* Features */}
         <Section title="Features">
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {ind.features.map((f) => (
-              <li key={f} className="flex gap-3 text-[#F5EDD8]/80">
+              <li key={f} className="flex gap-3 leading-relaxed text-[#F5EDD8]/80">
                 <span className="text-[#B87333]">▸</span>
                 <span>{f}</span>
               </li>
@@ -86,10 +75,10 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             {ind.signals.map((s, i) => (
               <div
                 key={s.name}
-                className={`flex flex-col gap-1 px-4 py-3 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
+                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
               >
-                <span className="w-44 shrink-0 font-mono text-sm font-semibold text-[#E8C46A]">{s.name}</span>
-                <span className="text-sm text-[#F5EDD8]/75">{s.meaning}</span>
+                <span className="w-48 shrink-0 font-mono text-sm font-semibold text-[#E8C46A]">{s.name}</span>
+                <span className="text-sm leading-relaxed text-[#F5EDD8]/75">{s.meaning}</span>
               </div>
             ))}
           </div>
@@ -101,25 +90,25 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             {ind.settings.map((s, i) => (
               <div
                 key={s.name}
-                className={`flex flex-col gap-1 px-4 py-3 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
+                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
               >
                 <span className="w-44 shrink-0 text-sm font-semibold text-[#F5EDD8]">{s.name}</span>
                 <span className="w-20 shrink-0 font-mono text-sm text-[#E8C46A]">{s.defaultValue}</span>
-                <span className="text-sm text-[#F5EDD8]/70">{s.description}</span>
+                <span className="text-sm leading-relaxed text-[#F5EDD8]/70">{s.description}</span>
               </div>
             ))}
           </div>
         </Section>
 
-        {/* How to install / use */}
+        {/* How to use */}
         <Section title="How To Use">
-          <ol className="space-y-3">
+          <ol className="space-y-4">
             {ind.howToUse.map((step, i) => (
               <li key={step} className="flex gap-4">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B87333] text-sm font-bold text-[#0E0A04]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B87333] font-mono text-sm font-bold text-[#0E0A04]">
                   {i + 1}
                 </span>
-                <span className="pt-0.5 text-[#F5EDD8]/80">{step}</span>
+                <span className="pt-0.5 leading-relaxed text-[#F5EDD8]/80">{step}</span>
               </li>
             ))}
           </ol>
@@ -127,36 +116,33 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
         {/* Best practices */}
         <Section title="Best Practices">
-          <div className="rounded-lg border border-[#B87333]/40 bg-[#16100a] p-5">
-            <p className="mb-3 text-sm font-semibold text-[#E8C46A]">♛ From the desk of SireMammat</p>
-            <ul className="space-y-2">
+          <Callout>
+            <ul className="space-y-2.5">
               {ind.bestPractices.map((b) => (
-                <li key={b} className="flex gap-3 text-sm text-[#F5EDD8]/80">
+                <li key={b} className="flex gap-3">
                   <span className="text-[#B87333]">•</span>
                   <span>{b}</span>
                 </li>
               ))}
             </ul>
-          </div>
+          </Callout>
         </Section>
 
-        <div className="mt-12 text-center">
-          <Link href="/" className="text-sm text-[#E8C46A] hover:underline">← Back to all indicators</Link>
+        {/* Back link */}
+        <div className="mt-14 text-center">
+          <Link href="/" className="font-mono text-sm text-[#E8C46A] hover:underline">← BACK TO ALL INDICATORS</Link>
         </div>
       </main>
 
-      <footer className="border-t border-[#B87333]/20 py-6 text-center text-xs text-[#F5EDD8]/50">
-        <p>♛ SireIndicators · by SireMammat (MightyOx Ventures)</p>
-        <p className="mt-1">Educational tools only. Not financial advice. Trading futures involves substantial risk.</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-12">
-      <h2 className="mb-4 text-sm uppercase tracking-[0.25em] text-[#B87333]">{title}</h2>
+    <section className="mt-14">
+      <h2 className="mb-5 font-mono text-xs uppercase tracking-[0.3em] text-[#B87333]">— {title}</h2>
       {children}
     </section>
   );
