@@ -2,7 +2,13 @@
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/.next",
   "installCommand": "cd frontend && npm install",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "http://localhost:3001"
-  }
+  "functions": {
+    "frontend/**": {
+      "memory": 1024,
+      "maxDuration": 60
+    }
+  },
+  "routes": [
+    { "src": "/(.*)", "dest": "frontend/$1" }
+  ]
 }
