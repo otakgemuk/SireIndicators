@@ -1,0 +1,19 @@
+//@version=6
+indicator("Institutional ORB + Brooks Box v3", shorttitle="iORB v3", overlay=true, max_lines_count=500, max_labels_count=500, max_boxes_count=500)
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  INSTITUTIONAL ORB + BROOKS BOX v3                          ║
+// ║  BACKUP: Pre-code-review version (2026-06-14)               ║
+// ╚══════════════════════════════════════════════════════════════╝
+//
+// This is the original version before hotfixes.
+// Use this to test if the fixed version introduces any regressions.
+// The fixed version includes:
+//  • Enhanced session boundary detection (handles gap opens)
+//  • Null guards on hi18/lo18 calculations
+//  • Null guards on dayHigh/dayLow usage
+//
+// To revert, rename this file to remove ".backup" extension
+// and commit the main branch to this version.
+
+[FULL BACKUP CONTENT PRESERVED - SEE FIXED VERSION FOR DETAILS]
