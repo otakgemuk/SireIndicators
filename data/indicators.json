@@ -98,5 +98,59 @@
       "Score 8 is the floor, not the target. 10\u201312 readings are where the real trades live."
     ],
     "sourceFile": "Raschke 12 Rules-SireMammatEdition"
+  },
+  {
+    "slug": "sire-trade-qualification",
+    "name": "Sire Trade Qualification",
+    "version": "v1",
+    "tagline": "Eight-point pre-trade gate \u2014 only fires when institutional context lines up",
+    "category": "Qualification",
+    "status": "Stable",
+    "markets": ["ES", "NQ", "MES", "MNQ"],
+    "timeframes": "1m \u2013 15m (intraday)",
+    "description": "A pre-trade qualification engine, not a signal generator. Every bar is run through eight institutional checks \u2014 EMA 20/50/200 trend stack, volume against its MA, proximity to prior swing levels, session timing, strong-bar confirmation, ATR-bounded stop distance, minimum R:R, and higher-timeframe context. A setup only qualifies when at least 6 of 8 pass. The live scorecard shows you exactly which checks failed in real time, so you can read context \u2014 not just signals. Designed to be paired with the Brooks Box framework on the same chart for the highest-conviction entries.",
+    "features": [
+      "Eight institutional checks scored 0\u20138 with live pass/fail scorecard",
+      "\u22656/8 gate threshold \u2014 only qualified setups print FIRE labels",
+      "Long and Short scores tracked independently in real time",
+      "Prior day high/low and overnight range with midpoint plotted",
+      "Point of Control, Value Area High/Low, and Session POC overlays",
+      "Configurable bar numbering for RTH and ETH session structure",
+      "Configurable scorecard position (4 corners) and line styles",
+      "Built-in alerts for both LONG and SHORT gate passes"
+    ],
+    "signals": [
+      { "name": "\u25b2 FIRE", "meaning": "LONG gate passed \u2014 \u22656/8 checks aligned with volume confirmation. Score is included in the label." },
+      { "name": "\u25bc FIRE", "meaning": "SHORT gate passed \u2014 \u22656/8 checks aligned with volume confirmation. Score is included in the label." },
+      { "name": "Gate OPEN", "meaning": "The scorecard reports the 6/8 threshold is currently met \u2014 the bar is qualified for entry" },
+      { "name": "Gate CLOSED", "meaning": "Below threshold \u2014 stand aside, no qualified setup right now" },
+      { "name": "R:R readout", "meaning": "Live risk-reward ratio for both directions, highlighted green when above your minimum" }
+    ],
+    "settings": [
+      { "name": "Volume MA Length", "defaultValue": "20", "description": "Lookback for the volume baseline" },
+      { "name": "Min Volume Multiplier", "defaultValue": "1.0x", "description": "Volume must clear MA \u00d7 this multiple to pass the Liquidity check" },
+      { "name": "SR Swing Length", "defaultValue": "20", "description": "Lookback used to define the prior swing high and low" },
+      { "name": "Primary Session", "defaultValue": "0830-1100", "description": "First high-quality window for the Timing check" },
+      { "name": "Secondary Session", "defaultValue": "1300-1500", "description": "Second high-quality window for the Timing check" },
+      { "name": "Max Stop \u00d7 ATR", "defaultValue": "1.5", "description": "Stop must be within ATR \u00d7 this multiple to pass the Risk check" },
+      { "name": "Min R:R", "defaultValue": "2.0", "description": "Minimum projected risk-reward for the Reward check to pass" },
+      { "name": "Higher Timeframe", "defaultValue": "D", "description": "Higher timeframe used for the Context check (default daily)" }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Set the chart to a 1m\u201315m intraday timeframe on ES/NQ/MES/MNQ.",
+      "Watch the scorecard \u2014 it shows exactly which of the 8 checks are passing or failing on the current bar.",
+      "Only take trades when \u25b2 FIRE or \u25bc FIRE prints. The label includes the live score.",
+      "Tune the volume multiplier, ATR stop multiple, and minimum R:R to your instrument and timeframe."
+    ],
+    "bestPractices": [
+      "Use this as a gate, not as a trigger \u2014 if the gate is closed, you have no business in the trade.",
+      "8/8 setups are rare and the highest-quality. 6/8 is the floor, not the target \u2014 hunt for 7s and 8s when starting out.",
+      "Read the failed checks \u2014 they tell you what's missing from the setup, not just that the setup is weak.",
+      "The lunch-chop window (1130\u20131330 NY) actively penalises the Timing check. Respect the session windows.",
+      "Pair with Institutional ORB + Brooks Box on the same chart \u2014 qualification \u00d7 structure is the highest-conviction trade."
+    ],
+    "sourceFile": "Sire Trade Qualification v1"
   }
 ]
