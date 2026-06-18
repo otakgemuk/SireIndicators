@@ -4,7 +4,7 @@ import { TickerBar, SiteNav, SiteFooter, Callout, REPO_URL } from '@/components/
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-[#0E0A04] text-[#F5EDD8]">
+    <div className="min-h-screen bg-[#0B0F19] text-[#F5EDD8]">
       <TickerBar />
       <SiteNav />
 
@@ -27,7 +27,7 @@ export default function Home() {
       </section>
 
       {/* Stat cards bar */}
-      <section className="border-b border-[#B87333]/20 bg-[#0a0703]">
+      <section className="border-b border-[#B87333]/20 bg-[#080b12]">
         <div className="mx-auto grid max-w-5xl grid-cols-2 gap-px md:grid-cols-4">
           <Stat label="Indicators" value={String(indicators.length)} />
           <Stat label="Markets" value="ES · NQ · MES · MNQ" />
@@ -46,7 +46,7 @@ export default function Home() {
             <Link
               key={ind.slug}
               href={`/indicators/${ind.slug}`}
-              className="group rounded-lg border border-[#B87333]/30 bg-[#16100a] p-6 transition-all hover:border-[#E8C46A] hover:shadow-[0_0_30px_rgba(184,115,51,0.15)]"
+              className="group rounded-lg border border-[#B87333]/30 bg-[#111827] p-6 transition-all hover:border-[#E8C46A] hover:shadow-[0_0_30px_rgba(184,115,51,0.15)]"
             >
               <div className="mb-3 flex items-center justify-between">
                 <span className="rounded bg-[#B87333]/15 px-2 py-0.5 font-mono text-xs text-[#E8C46A]">
@@ -97,7 +97,7 @@ export default function Home() {
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-[#0E0A04] px-6 py-5 text-center">
+    <div className="bg-[#0B0F19] px-6 py-5 text-center">
       <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-[#B87333]">{label}</p>
       <p className="mt-1 font-display text-lg font-semibold text-[#F5EDD8]">{value}</p>
     </div>

@@ -17,7 +17,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0E0A04] text-[#F5EDD8]">
+    <div className="min-h-screen bg-[#0B0F19] text-[#F5EDD8]">
       <TickerBar />
       <SiteNav />
 
@@ -37,7 +37,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
               href={sourceUrl!}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0E0A04] transition-colors hover:bg-[#E8C46A]"
+              className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0B0F19] transition-colors hover:bg-[#E8C46A]"
             >
               GET PINE SCRIPT SOURCE →
             </a>
@@ -84,7 +84,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             {ind.signals.map((s, i) => (
               <div
                 key={s.name}
-                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
+                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#111827]' : 'bg-[#0B0F19]'}`}
               >
                 <span className="w-48 shrink-0 font-mono text-sm font-semibold text-[#E8C46A]">{s.name}</span>
                 <span className="text-sm leading-relaxed text-[#F5EDD8]/75">{s.meaning}</span>
@@ -99,7 +99,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             {ind.settings.map((s, i) => (
               <div
                 key={s.name}
-                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#16100a]' : 'bg-[#0E0A04]'}`}
+                className={`flex flex-col gap-1 px-4 py-3.5 md:flex-row md:items-center md:gap-6 ${i % 2 === 0 ? 'bg-[#111827]' : 'bg-[#0B0F19]'}`}
               >
                 <span className="w-44 shrink-0 text-sm font-semibold text-[#F5EDD8]">{s.name}</span>
                 <span className="w-20 shrink-0 font-mono text-sm text-[#E8C46A]">{s.defaultValue}</span>
@@ -114,7 +114,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
           <ol className="space-y-4">
             {ind.howToUse.map((step, i) => (
               <li key={step} className="flex gap-4">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B87333] font-mono text-sm font-bold text-[#0E0A04]">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#B87333] font-mono text-sm font-bold text-[#0B0F19]">
                   {i + 1}
                 </span>
                 <span className="pt-0.5 leading-relaxed text-[#F5EDD8]/80">{step}</span>

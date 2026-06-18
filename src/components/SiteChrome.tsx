@@ -7,7 +7,7 @@ export const DISCORD_URL = 'http://bit.ly/motdisc';
 
 export function TickerBar() {
   return (
-    <div className="border-b border-[#B87333]/25 bg-[#0a0703] py-1.5">
+    <div className="border-b border-[#B87333]/25 bg-[#080b12] py-1.5">
       <p className="text-center font-mono text-[11px] tracking-[0.2em] text-[#E8C46A]/80">
         ES · NQ · MES · MNQ — FREE PINE SCRIPT TOOLS — LEARN TO READ PRICE
       </p>
@@ -17,7 +17,7 @@ export function TickerBar() {
 
 export function SiteNav() {
   return (
-    <header className="sticky top-0 z-40 border-b border-[#B87333]/30 bg-[#0E0A04]/95 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-[#B87333]/30 bg-[#0B0F19]/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
         <Link href="/" className="flex items-center gap-3 transition-opacity hover:opacity-80">
           <CrownedCandleLogo size="sm" />
@@ -33,7 +33,7 @@ export function SiteNav() {
             href={REPO_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border border-[#B87333] px-4 py-1.5 font-mono text-xs tracking-wider text-[#E8C46A] transition-colors hover:bg-[#B87333] hover:text-[#0E0A04]"
+            className="rounded border border-[#B87333] px-4 py-1.5 font-mono text-xs tracking-wider text-[#E8C46A] transition-colors hover:bg-[#B87333] hover:text-[#0B0F19]"
           >
             GITHUB
           </a>
@@ -45,7 +45,7 @@ export function SiteNav() {
 
 export function Callout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[#B87333]/40 bg-[#16100a] p-6">
+    <div className="rounded-lg border border-[#B87333]/40 bg-[#111827] p-6">
       <p className="mb-3 font-display text-sm font-semibold tracking-wide text-[#E8C46A]">♛ From the desk of SireMammat</p>
       <div className="text-sm leading-relaxed text-[#F5EDD8]/80">{children}</div>
     </div>
@@ -54,7 +54,7 @@ export function Callout({ children }: { children: React.ReactNode }) {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-[#B87333]/25 bg-[#0a0703]">
+    <footer className="border-t border-[#B87333]/25 bg-[#080b12]">
       <div className="mx-auto grid max-w-5xl gap-8 px-6 py-10 sm:grid-cols-3">
         <div>
           <h4 className="mb-3 font-display text-sm font-semibold tracking-widest text-[#B87333]">EDUCATION</h4>
