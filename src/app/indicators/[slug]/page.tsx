@@ -11,7 +11,10 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
   const ind = getIndicator(params.slug);
   if (!ind) notFound();
 
-  const sourceUrl = `${REPO_URL}/blob/main/${encodeURIComponent(ind.sourceFile)}`;
+  const hasSource = ind.sourceFile.trim().length > 0;
+  const sourceUrl = hasSource
+    ? `${REPO_URL}/blob/main/${encodeURIComponent(ind.sourceFile)}`
+    : null;
 
   return (
     <div className="min-h-screen bg-[#0E0A04] text-[#F5EDD8]">
@@ -29,14 +32,20 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
         {/* CTA */}
         <div className="mt-7 flex flex-wrap gap-3">
-          <a
-            href={sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0E0A04] transition-colors hover:bg-[#E8C46A]"
-          >
-            GET PINE SCRIPT SOURCE →
-          </a>
+          {hasSource ? (
+            <a
+              href={sourceUrl!}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0E0A04] transition-colors hover:bg-[#E8C46A]"
+            >
+              GET PINE SCRIPT SOURCE →
+            </a>
+          ) : (
+            <span className="rounded border border-[#B87333]/40 px-6 py-3 font-mono text-sm tracking-wide text-[#F5EDD8]/50">
+              SOURCE COMING SOON
+            </span>
+          )}
           <a
             href={REPO_URL}
             target="_blank"
