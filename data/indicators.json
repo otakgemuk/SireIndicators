@@ -411,5 +411,405 @@
       "This is a context HUD, not a mechanical signal system — combine the modules, don't trade any one in isolation."
     ],
     "sourceFile": "Sire Cockpit"
+  },
+  {
+    "slug": "sire-greenlight-core",
+    "name": "Sire-GreenLight Core",
+    "version": "v1",
+    "tagline": "Trend-continuation momentum with a 4-filter system and three conviction-tiered signals",
+    "category": "Trend Continuation",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "5m – 1H (intraday)",
+    "description": "A trend-continuation momentum indicator built for index futures. It tracks consecutive directional bars against a 20 EMA bias through a four-layer filter system, then prints three signal tiers at different conviction levels: L8/B8 PRO (highest), L4/B4 (early warning), and Gap 20 EMA (continuation alert). Works best during RTH when volume and liquidity are highest.",
+    "features": [
+      "L8/B8 PRO signals — highest conviction, 8 consecutive directional bars",
+      "L4/B4 early warnings — 4 consecutive bars, prepare for entry",
+      "Gap 20 EMA continuation alerts",
+      "4-filter system: EMA direction, consecutive bars, volume, price position",
+      "20 EMA bias tracking with stop and target levels on every signal"
+    ],
+    "signals": [
+      {
+        "name": "L8/B8 PRO",
+        "meaning": "8 consecutive directional bars — highest conviction, full position entry"
+      },
+      {
+        "name": "L4/B4",
+        "meaning": "4 consecutive bars — early warning, prepare for entry and reduce size"
+      },
+      {
+        "name": "Gap 20 EMA",
+        "meaning": "Price gaps away from the EMA — continuation alert, monitor for follow-through"
+      }
+    ],
+    "settings": [
+      {
+        "name": "EMA Period",
+        "defaultValue": "20",
+        "description": "Standard trend anchor"
+      },
+      {
+        "name": "Consecutive Bars (PRO)",
+        "defaultValue": "8",
+        "description": "Full signal — highest conviction"
+      },
+      {
+        "name": "Consecutive Bars (Early)",
+        "defaultValue": "4",
+        "description": "Warning signal — prepare for entry"
+      },
+      {
+        "name": "Timeframe",
+        "defaultValue": "5m – 1H",
+        "description": "Lower TF = more signals and more noise"
+      },
+      {
+        "name": "Best Session",
+        "defaultValue": "RTH",
+        "description": "9:30–16:00 ET — highest volume and liquidity"
+      },
+      {
+        "name": "Instruments",
+        "defaultValue": "ES/NQ",
+        "description": "Optimized for ES, NQ, MES, MNQ"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Set a 5m–1H intraday chart on ES/NQ/MES/MNQ during RTH.",
+      "Treat L8/B8 PRO as your primary entry; use L4/B4 as a heads-up to get ready.",
+      "Confirm the 20 EMA bias agrees with the signal direction before committing.",
+      "Use the stop and target levels printed with each signal — don't widen the stop."
+    ],
+    "bestPractices": [
+      "Strong Trend — best when price is trending away from the 20 EMA with consecutive directional bars.",
+      "High Volume — volume must confirm momentum; low-volume signals are weaker.",
+      "RTH Session — strongest when institutions are active during regular hours.",
+      "Aligned Timeframes — take signals where the 5m and 15m agree on direction."
+    ],
+    "sourceFile": ""
+  },
+  {
+    "slug": "sire-schoolfishing",
+    "name": "Sire-SchoolFishing",
+    "version": "v1",
+    "tagline": "Three Tom Hougaard modules — opening-range School Run, Fishing stop-runs, and a 9/20 EMA bias",
+    "category": "Multi-Strategy",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "5m – 15m (intraday)",
+    "description": "A multi-strategy overlay built around three methodologies from Tom Hougaard's price-action playbook. School Run brackets the first 30 minutes of RTH and classifies the day. The Fishing Technique catches stop-runs at swing highs and lows for mean-reversion entries. A 9/20 EMA foundation sets directional bias. Each module runs independently but they're designed to stack for confluence on the NY cash session.",
+    "features": [
+      "School Run — brackets the first 30 minutes of RTH and classifies Trend / Range / Failed days",
+      "Fishing Technique — stop-run reclaim and rejection entries at swing levels",
+      "9/20 EMA foundation for directional bias",
+      "Three independent modules that combine for confluence",
+      "Optimized for 5-minute and 15-minute index-futures charts"
+    ],
+    "signals": [
+      {
+        "name": "School Run BRK",
+        "meaning": "Opening-range bracket breakout in the first 30 min — trade the hold or fade the failure"
+      },
+      {
+        "name": "Fishing Buy",
+        "meaning": "Price dips below a swing low and closes back above — stop-run reclaim long"
+      },
+      {
+        "name": "Fishing Sell",
+        "meaning": "Price spikes above a swing high and closes back below — stop-run rejection short"
+      },
+      {
+        "name": "EMA Bias",
+        "meaning": "9/20 EMA stack sets direction — 9 over 20 is bullish, 9 under 20 is bearish"
+      }
+    ],
+    "settings": [
+      {
+        "name": "School Run",
+        "defaultValue": "5m",
+        "description": "First 30 min of RTH — bracket breakout or fade"
+      },
+      {
+        "name": "Fishing",
+        "defaultValue": "5m",
+        "description": "Any time in RTH — stop-run reclaim or rejection"
+      },
+      {
+        "name": "EMA Foundation",
+        "defaultValue": "9/20",
+        "description": "All RTH — trend direction bias"
+      },
+      {
+        "name": "Combined",
+        "defaultValue": "5m",
+        "description": "All three modules aligned = highest conviction"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Use a 5m or 15m chart on index futures during the NY cash session.",
+      "Check the 9/20 EMA bias first, then look for School Run or Fishing setups in that direction.",
+      "School Run is strongest in the first 30 minutes; Fishing works best in balanced/range days.",
+      "Treat agreement across all three modules as the highest-conviction trade."
+    ],
+    "bestPractices": [
+      "RTH Open — School Run works best in the first 30 minutes of the NY cash session.",
+      "Range Market — the Fishing Technique excels on balanced days with clear swing levels.",
+      "EMA Aligned — every signal is stronger when the 9/20 EMA confirms direction.",
+      "Volume Present — low volume means weak signals; wait for institutional participation."
+    ],
+    "sourceFile": ""
+  },
+  {
+    "slug": "m2b-m2s-setup",
+    "name": "M2B/M2S Setup",
+    "version": "v1",
+    "tagline": "Two-legged pullback to the 20 EMA with price-action confirmation — disciplined entries, not chasing",
+    "category": "Mean Reversion",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "5m – 1H",
+    "description": "A mean-reversion entry system that waits for a two-legged pullback to the 20 EMA, then confirms a rejection with a candle closing back on the trend side. Built on Al Brooks' methodology — the two-legged pullback to the EMA is one of the highest-probability setups in a trending market. M2B fires longs in uptrends, M2S fires shorts in downtrends.",
+    "features": [
+      "Two-legged pullback detection (A-B-C structure)",
+      "20 EMA touch confirmation on the second leg",
+      "M2B long in uptrends / M2S short in downtrends",
+      "Precise entry, stop, and target rules on every signal",
+      "Works on 5-minute through 1-hour charts"
+    ],
+    "signals": [
+      {
+        "name": "M2B Long",
+        "meaning": "Two-legged pullback to the 20 EMA in an uptrend — buy stop above the signal bar"
+      },
+      {
+        "name": "M2S Short",
+        "meaning": "Two-legged rally to the 20 EMA in a downtrend — sell stop below the signal bar"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Trend",
+        "defaultValue": "HH/HL",
+        "description": "M2B needs a strong uptrend; M2S needs a strong downtrend (LL/LH)"
+      },
+      {
+        "name": "EMA",
+        "defaultValue": "20",
+        "description": "M2B: price above the 20 EMA. M2S: price below it"
+      },
+      {
+        "name": "Pullback",
+        "defaultValue": "2 legs",
+        "description": "Two legs down to the EMA (M2B) or two legs up (M2S)"
+      },
+      {
+        "name": "Entry",
+        "defaultValue": "±1 tick",
+        "description": "Buy/sell stop 1 tick beyond the signal bar"
+      },
+      {
+        "name": "Stop",
+        "defaultValue": "±1 tick",
+        "description": "1 tick beyond the 2nd-leg pullback extreme"
+      },
+      {
+        "name": "Targets",
+        "defaultValue": "50% / 25%",
+        "description": "Prior swing (scale 50%) then measured move (25%)"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Best on 5m–1H charts in a clearly trending market.",
+      "Wait for the SECOND leg — never enter on the first test of the EMA.",
+      "Place the entry stop 1 tick beyond the signal bar; cancel if not triggered within 2 bars.",
+      "Move to breakeven once 50% to the first target is reached, and never widen the stop."
+    ],
+    "bestPractices": [
+      "Strong Trend — the EMA must be rising (long) or falling (short); a flat EMA means skip.",
+      "Clean Two-Leg Pullback — the A-B-C structure must be clear; messy pullbacks are a skip.",
+      "EMA Touch — the second leg must reach or come within 1–2 ticks of the EMA.",
+      "No News — skip if FOMC, CPI, or NFP is within 30 minutes."
+    ],
+    "sourceFile": ""
+  },
+  {
+    "slug": "td-sequential",
+    "name": "TD Sequential",
+    "version": "v1",
+    "tagline": "Tom DeMark momentum-exhaustion system — Setup 9 and Countdown 13 for reversal detection",
+    "category": "Momentum Exhaustion",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "15m – 1D",
+    "description": "A momentum-exhaustion indicator developed by Tom DeMark in the 1990s, used by institutional desks worldwide. It works in two phases: Setup (1–9) counts consecutive directional bars relative to the close four bars earlier, and Countdown (1–13) confirms exhaustion. A completed Setup 9 is a caution flag; a Countdown 13 is the highest-conviction reversal signal in the system. Best used to call exhaustion at the end of an extended trend, never as a standalone.",
+    "features": [
+      "Setup phase (1–9) flags potential trend exhaustion",
+      "Countdown phase (1–13) confirms the reversal zone",
+      "Recycling detection when a new setup interrupts the countdown",
+      "Most reliable on 15-minute and higher timeframes",
+      "Institutional-grade methodology used across major platforms"
+    ],
+    "signals": [
+      {
+        "name": "Setup 9",
+        "meaning": "9 consecutive bars meeting criteria — trend-exhaustion warning, watch for a turn"
+      },
+      {
+        "name": "Countdown 13",
+        "meaning": "13 bars confirming exhaustion — highest-conviction reversal zone"
+      },
+      {
+        "name": "Recycling",
+        "meaning": "A new setup interrupts the countdown — the trend may be resuming"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Setup",
+        "defaultValue": "1–9",
+        "description": "Trend-exhaustion warning — prepare for a potential reversal"
+      },
+      {
+        "name": "Setup 9",
+        "defaultValue": "9",
+        "description": "Setup complete — watch for reversal confirmation"
+      },
+      {
+        "name": "Countdown",
+        "defaultValue": "1–13",
+        "description": "Exhaustion building — monitor toward Countdown 13"
+      },
+      {
+        "name": "Countdown 13",
+        "defaultValue": "13",
+        "description": "Highest conviction — high-probability reversal zone"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Most reliable on 15m, 1H, and daily charts.",
+      "Treat Setup 9 as caution and Countdown 13 as a high-probability reversal zone.",
+      "Never trade it standalone — confirm with price action and key support/resistance.",
+      "Focus on exhaustion at the END of an extended trend, not during choppy ranges."
+    ],
+    "bestPractices": [
+      "Extended Trend — works best after a prolonged trend, not during choppy ranges.",
+      "Higher Timeframe — most reliable on 15-min, 1H, and daily charts.",
+      "At S/R Levels — a Countdown 13 at a key level is the strongest signal.",
+      "With Price Action — always confirm with reversal bars or failed breakouts."
+    ],
+    "sourceFile": ""
+  },
+  {
+    "slug": "sire-pye",
+    "name": "Sire-PYE",
+    "version": "v1",
+    "tagline": "HTF-anchored scalp system with a chop filter and a strict daily kill switch — +34.19% backtested (MNQ)",
+    "category": "Trend-Following Scalp",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "5m entry · 30m anchor",
+    "description": "A trend-following scalp system for index futures. A 30-minute 20 EMA \"anchor\" sets direction and execution happens on the 5-minute on pullbacks to that anchor — never counter-trend. A real-time chop-ratio filter cuts size or stands aside when the market is ranging, and a strict daily kill switch ends the session once a loss threshold is hit, killing revenge trades. Backtested +34.19% on MNQ over 12 months with a 1.83 profit factor.",
+    "features": [
+      "30-minute 20 EMA anchor for higher-timeframe direction",
+      "Chop-ratio filter that cuts size or skips in ranging markets",
+      "Strict daily kill switch — no override once the loss threshold is hit",
+      "Aggressive capital-preservation risk model",
+      "+34.19% backtested on MNQ over 12 months (1.83 profit factor)"
+    ],
+    "signals": [
+      {
+        "name": "Long Entry",
+        "meaning": "Pullback to the 30m EMA in an uptrend with the chop filter confirming a trend"
+      },
+      {
+        "name": "Short Entry",
+        "meaning": "Rally to the 30m EMA in a downtrend with the chop filter confirming a trend"
+      },
+      {
+        "name": "Kill Switch",
+        "meaning": "Daily loss threshold hit — no more trades, capital preserved"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Anchor EMA",
+        "defaultValue": "30m 20",
+        "description": "Higher-timeframe trend direction"
+      },
+      {
+        "name": "Entry TF",
+        "defaultValue": "5m",
+        "description": "Pullback entries on the lower timeframe"
+      },
+      {
+        "name": "Chop Filter",
+        "defaultValue": "Active",
+        "description": "Reduces size or skips in ranging markets"
+      },
+      {
+        "name": "Kill Switch",
+        "defaultValue": "Daily",
+        "description": "No override — the day ends when the loss threshold triggers"
+      },
+      {
+        "name": "Backtested Return",
+        "defaultValue": "+34.19%",
+        "description": "MNQ over 12 months"
+      },
+      {
+        "name": "Profit Factor",
+        "defaultValue": "1.83",
+        "description": "Gross profit / gross loss"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". Run the 30m anchor and execute on a 5m chart on MNQ/MES/NQ/ES.",
+      "Only trade in the direction of the 30m anchor — no counter-trend entries.",
+      "Respect the chop filter: reduce size or stand aside when it flags a range.",
+      "If the kill switch fires, you're done for the day — do not override it."
+    ],
+    "bestPractices": [
+      "Trending Market — the chop filter must confirm trend; ranging markets are a skip.",
+      "Clear Anchor — the 30m EMA needs a clear slope; a flat anchor means no trade.",
+      "Kill Switch Clear — only trade while the daily loss threshold hasn't been hit.",
+      "RTH Session — best during regular hours with institutional volume."
+    ],
+    "sourceFile": ""
   }
 ]
