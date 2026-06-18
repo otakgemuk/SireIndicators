@@ -6,62 +6,111 @@
     "tagline": "Opening Range Breakout with confluence scoring and Al Brooks price action context",
     "category": "Breakout",
     "status": "Stable",
-    "markets": ["ES", "NQ", "MES", "MNQ"],
-    "timeframes": "1m \u2013 15m (intraday)",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "1m – 15m (intraday)",
     "description": "A complete opening-range trading system. It builds the opening range, classifies the day type (Coil, Breakout, Trading Range), then grades every breakout with a confluence score from A+ to C using gap analysis, VWAP positioning, relative volume, time-of-day quality, and ADR consumption. Brooks Box logic frames the session in Al Brooks price action context so you only take breakouts with institutional participation behind them.",
     "features": [
-      "Confluence scoring engine (0\u20138 points) graded A+ / A / B / C",
+      "Confluence scoring engine (0–8 points) graded A+ / A / B / C",
       "Automatic day-type classification: COIL, BREAKOUT, TRADING RANGE",
       "Initial Balance extensions with measured-move targets",
       "Gap analysis: up gap, down gap, gap fill tracking",
-      "Relative volume gate \u2014 signals suppressed without volume confirmation",
+      "Relative volume gate — signals suppressed without volume confirmation",
       "ADR consumption meter to avoid late-day chasing",
       "Time-of-day quality filter (prime / neutral / caution windows)",
       "Optional suppression of trading-range days and lunch chop"
     ],
     "signals": [
-      { "name": "BRK \u25b2 / BRK \u25bc", "meaning": "Opening range breakout up / down with confluence grade attached" },
-      { "name": "FAIL \u25b2 / FAIL \u25bc", "meaning": "Failed breakout \u2014 fade opportunity back into the range" },
-      { "name": "RT \u25b2 / RT \u25bc", "meaning": "Successful retest of the broken range edge \u2014 second-entry opportunity" },
-      { "name": "A+ / A grade", "meaning": "Full confluence \u2014 highest probability, full size" },
-      { "name": "B / C grade", "meaning": "Partial confluence \u2014 reduced size or skip" }
+      {
+        "name": "BRK ▲ / BRK ▼",
+        "meaning": "Opening range breakout up / down with confluence grade attached"
+      },
+      {
+        "name": "FAIL ▲ / FAIL ▼",
+        "meaning": "Failed breakout — fade opportunity back into the range"
+      },
+      {
+        "name": "RT ▲ / RT ▼",
+        "meaning": "Successful retest of the broken range edge — second-entry opportunity"
+      },
+      {
+        "name": "A+ / A grade",
+        "meaning": "Full confluence — highest probability, full size"
+      },
+      {
+        "name": "B / C grade",
+        "meaning": "Partial confluence — reduced size or skip"
+      }
     ],
     "settings": [
-      { "name": "OR Time Period", "defaultValue": "30 min", "description": "Length of the opening range window from session open" },
-      { "name": "Volume Gate", "defaultValue": "1.2x", "description": "Minimum relative volume multiple required to print a signal" },
-      { "name": "Target Percent", "defaultValue": "50%", "description": "Measured-move target as a percentage of OR width" },
-      { "name": "Suppress TR Days", "defaultValue": "On", "description": "Hide breakout signals when the day classifies as Trading Range" },
-      { "name": "Contracts", "defaultValue": "10", "description": "Position size used for the dollar P/L readout" },
-      { "name": "Tick Value", "defaultValue": "12.50", "description": "Per-tick dollar value (ES default)" }
+      {
+        "name": "OR Time Period",
+        "defaultValue": "30 min",
+        "description": "Length of the opening range window from session open"
+      },
+      {
+        "name": "Volume Gate",
+        "defaultValue": "1.2x",
+        "description": "Minimum relative volume multiple required to print a signal"
+      },
+      {
+        "name": "Target Percent",
+        "defaultValue": "50%",
+        "description": "Measured-move target as a percentage of OR width"
+      },
+      {
+        "name": "Suppress TR Days",
+        "defaultValue": "On",
+        "description": "Hide breakout signals when the day classifies as Trading Range"
+      },
+      {
+        "name": "Contracts",
+        "defaultValue": "10",
+        "description": "Position size used for the dollar P/L readout"
+      },
+      {
+        "name": "Tick Value",
+        "defaultValue": "12.50",
+        "description": "Per-tick dollar value (ES default)"
+      }
     ],
     "howToUse": [
       "Open TradingView and go to Pine Editor (bottom panel).",
       "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Set your chart to a 1m\u201315m intraday timeframe on ES/NQ/MES/MNQ.",
+      "Click \"Add to chart\". Set your chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.",
       "Wait for the opening range to complete (default first 30 minutes of the session).",
-      "Only consider signals graded A or A+ when starting out \u2014 the grade prints with each signal.",
+      "Only consider signals graded A or A+ when starting out — the grade prints with each signal.",
       "Use the dashboard panel to check day type, ADR consumption, and volume status before entry."
     ],
     "bestPractices": [
       "A+ breakouts on BREAKOUT-classified days are the bread-and-butter trade.",
-      "Skip signals after 70% ADR consumption \u2014 the move is mostly done.",
+      "Skip signals after 70% ADR consumption — the move is mostly done.",
       "FAIL signals work best on COIL days that trap early breakout traders.",
-      "Respect the volume gate. No volume, no trade \u2014 that is the institutional footprint filter."
+      "Respect the volume gate. No volume, no trade — that is the institutional footprint filter."
     ],
     "sourceFile": "Institutional ORB + Brooks Box v3"
   },
   {
     "slug": "raschke-12-rules",
-    "name": "Raschke 12 Rules \u2014 SireMammat Edition",
+    "name": "Raschke 12 Rules — SireMammat Edition",
     "version": "v1",
     "tagline": "Linda Raschke's classic playbook converted into a 12-rule scoring engine",
     "category": "Trend",
     "status": "Stable",
-    "markets": ["ES", "NQ", "MES", "MNQ"],
-    "timeframes": "5m \u2013 1H",
-    "description": "Linda Raschke's trading principles encoded into an objective bull/bear scoring engine. Each of the 12 rules is checked in real time \u2014 EMA stack alignment, momentum, volume, range expansion and more \u2014 and produces a live Bull Score and Bear Score from 0\u201312. When a side reaches the minimum threshold with volume confirmation, the indicator prints a graded signal: from full trend entries to pullback continuations, failed-breakout fades, and exhaustion warnings.",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "5m – 1H",
+    "description": "Linda Raschke's trading principles encoded into an objective bull/bear scoring engine. Each of the 12 rules is checked in real time — EMA stack alignment, momentum, volume, range expansion and more — and produces a live Bull Score and Bear Score from 0–12. When a side reaches the minimum threshold with volume confirmation, the indicator prints a graded signal: from full trend entries to pullback continuations, failed-breakout fades, and exhaustion warnings.",
     "features": [
-      "Live Bull Score and Bear Score (0\u201312) with rule-by-rule checklist",
+      "Live Bull Score and Bear Score (0–12) with rule-by-rule checklist",
       "Triple EMA stack analysis (9 / 20 / 50) with alignment states",
       "Signal quality grading: STRONG, SOLID, MODERATE, WEAK",
       "Six signal types covering trend, pullback, fade, and exhaustion setups",
@@ -69,33 +118,72 @@
       "RSI and ATR context in the dashboard panel"
     ],
     "signals": [
-      { "name": "LONG / SHORT", "meaning": "Bull or Bear score reached threshold with full confirmation \u2014 trend entry" },
-      { "name": "PULLBACK", "meaning": "Continuation entry after a retrace to the EMA stack within an active trend" },
-      { "name": "FAILED BREAKOUT", "meaning": "Breakout failed and reversed \u2014 fade signal against trapped traders" },
-      { "name": "EXHAUSTION", "meaning": "Trend over-extended \u2014 take profits or tighten stops, do not initiate" },
-      { "name": "DIVERGENCE", "meaning": "Price/momentum divergence detected \u2014 early reversal warning" }
+      {
+        "name": "LONG / SHORT",
+        "meaning": "Bull or Bear score reached threshold with full confirmation — trend entry"
+      },
+      {
+        "name": "PULLBACK",
+        "meaning": "Continuation entry after a retrace to the EMA stack within an active trend"
+      },
+      {
+        "name": "FAILED BREAKOUT",
+        "meaning": "Breakout failed and reversed — fade signal against trapped traders"
+      },
+      {
+        "name": "EXHAUSTION",
+        "meaning": "Trend over-extended — take profits or tighten stops, do not initiate"
+      },
+      {
+        "name": "DIVERGENCE",
+        "meaning": "Price/momentum divergence detected — early reversal warning"
+      }
     ],
     "settings": [
-      { "name": "Fast EMA", "defaultValue": "9", "description": "Fast moving average of the stack" },
-      { "name": "Mid EMA", "defaultValue": "20", "description": "Mid moving average of the stack" },
-      { "name": "Slow EMA", "defaultValue": "50", "description": "Slow moving average / trend filter" },
-      { "name": "Min Bull Score", "defaultValue": "8", "description": "Minimum score (of 12) required to print a LONG signal" },
-      { "name": "Min Bear Score", "defaultValue": "8", "description": "Minimum score (of 12) required to print a SHORT signal" },
-      { "name": "Volume Multiplier", "defaultValue": "1.2x", "description": "Relative volume required for signal confirmation" }
+      {
+        "name": "Fast EMA",
+        "defaultValue": "9",
+        "description": "Fast moving average of the stack"
+      },
+      {
+        "name": "Mid EMA",
+        "defaultValue": "20",
+        "description": "Mid moving average of the stack"
+      },
+      {
+        "name": "Slow EMA",
+        "defaultValue": "50",
+        "description": "Slow moving average / trend filter"
+      },
+      {
+        "name": "Min Bull Score",
+        "defaultValue": "8",
+        "description": "Minimum score (of 12) required to print a LONG signal"
+      },
+      {
+        "name": "Min Bear Score",
+        "defaultValue": "8",
+        "description": "Minimum score (of 12) required to print a SHORT signal"
+      },
+      {
+        "name": "Volume Multiplier",
+        "defaultValue": "1.2x",
+        "description": "Relative volume required for signal confirmation"
+      }
     ],
     "howToUse": [
       "Open TradingView and go to Pine Editor (bottom panel).",
       "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Works best on 5m\u20131H charts on index futures.",
-      "Watch the rule checklist panel \u2014 a score of 8+ on either side arms that direction.",
+      "Click \"Add to chart\". Works best on 5m–1H charts on index futures.",
+      "Watch the rule checklist panel — a score of 8+ on either side arms that direction.",
       "Enter on the printed signal, not on the score alone. The signal includes volume confirmation.",
       "Use EXHAUSTION and DIVERGENCE prints as exit management, not as entries."
     ],
     "bestPractices": [
       "STRONG-grade signals with a PERFECT EMA stack are the highest-probability entries.",
       "PULLBACK signals in an established trend outperform fresh breakout entries.",
-      "When both Bull and Bear scores are below 6, stand aside \u2014 the market has no edge.",
-      "Score 8 is the floor, not the target. 10\u201312 readings are where the real trades live."
+      "When both Bull and Bear scores are below 6, stand aside — the market has no edge.",
+      "Score 8 is the floor, not the target. 10–12 readings are where the real trades live."
     ],
     "sourceFile": "Raschke 12 Rules-SireMammatEdition"
   },
@@ -103,15 +191,20 @@
     "slug": "sire-trade-qualification",
     "name": "Sire Trade Qualification",
     "version": "v1",
-    "tagline": "Eight-point pre-trade gate \u2014 only fires when institutional context lines up",
+    "tagline": "Eight-point pre-trade gate — only fires when institutional context lines up",
     "category": "Qualification",
     "status": "Stable",
-    "markets": ["ES", "NQ", "MES", "MNQ"],
-    "timeframes": "1m \u2013 15m (intraday)",
-    "description": "A pre-trade qualification engine, not a signal generator. Every bar is run through eight institutional checks \u2014 EMA 20/50/200 trend stack, volume against its MA, proximity to prior swing levels, session timing, strong-bar confirmation, ATR-bounded stop distance, minimum R:R, and higher-timeframe context. A setup only qualifies when at least 6 of 8 pass. The live scorecard shows you exactly which checks failed in real time, so you can read context \u2014 not just signals. Designed to be paired with the Brooks Box framework on the same chart for the highest-conviction entries.",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "1m – 15m (intraday)",
+    "description": "A pre-trade qualification engine, not a signal generator. Every bar is run through eight institutional checks — EMA 20/50/200 trend stack, volume against its MA, proximity to prior swing levels, session timing, strong-bar confirmation, ATR-bounded stop distance, minimum R:R, and higher-timeframe context. A setup only qualifies when at least 6 of 8 pass. The live scorecard shows you exactly which checks failed in real time, so you can read context — not just signals. Designed to be paired with the Brooks Box framework on the same chart for the highest-conviction entries.",
     "features": [
-      "Eight institutional checks scored 0\u20138 with live pass/fail scorecard",
-      "\u22656/8 gate threshold \u2014 only qualified setups print FIRE labels",
+      "Eight institutional checks scored 0–8 with live pass/fail scorecard",
+      "≥6/8 gate threshold — only qualified setups print FIRE labels",
       "Long and Short scores tracked independently in real time",
       "Prior day high/low and overnight range with midpoint plotted",
       "Point of Control, Value Area High/Low, and Session POC overlays",
@@ -120,37 +213,203 @@
       "Built-in alerts for both LONG and SHORT gate passes"
     ],
     "signals": [
-      { "name": "\u25b2 FIRE", "meaning": "LONG gate passed \u2014 \u22656/8 checks aligned with volume confirmation. Score is included in the label." },
-      { "name": "\u25bc FIRE", "meaning": "SHORT gate passed \u2014 \u22656/8 checks aligned with volume confirmation. Score is included in the label." },
-      { "name": "Gate OPEN", "meaning": "The scorecard reports the 6/8 threshold is currently met \u2014 the bar is qualified for entry" },
-      { "name": "Gate CLOSED", "meaning": "Below threshold \u2014 stand aside, no qualified setup right now" },
-      { "name": "R:R readout", "meaning": "Live risk-reward ratio for both directions, highlighted green when above your minimum" }
+      {
+        "name": "▲ FIRE",
+        "meaning": "LONG gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."
+      },
+      {
+        "name": "▼ FIRE",
+        "meaning": "SHORT gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."
+      },
+      {
+        "name": "Gate OPEN",
+        "meaning": "The scorecard reports the 6/8 threshold is currently met — the bar is qualified for entry"
+      },
+      {
+        "name": "Gate CLOSED",
+        "meaning": "Below threshold — stand aside, no qualified setup right now"
+      },
+      {
+        "name": "R:R readout",
+        "meaning": "Live risk-reward ratio for both directions, highlighted green when above your minimum"
+      }
     ],
     "settings": [
-      { "name": "Volume MA Length", "defaultValue": "20", "description": "Lookback for the volume baseline" },
-      { "name": "Min Volume Multiplier", "defaultValue": "1.0x", "description": "Volume must clear MA \u00d7 this multiple to pass the Liquidity check" },
-      { "name": "SR Swing Length", "defaultValue": "20", "description": "Lookback used to define the prior swing high and low" },
-      { "name": "Primary Session", "defaultValue": "0830-1100", "description": "First high-quality window for the Timing check" },
-      { "name": "Secondary Session", "defaultValue": "1300-1500", "description": "Second high-quality window for the Timing check" },
-      { "name": "Max Stop \u00d7 ATR", "defaultValue": "1.5", "description": "Stop must be within ATR \u00d7 this multiple to pass the Risk check" },
-      { "name": "Min R:R", "defaultValue": "2.0", "description": "Minimum projected risk-reward for the Reward check to pass" },
-      { "name": "Higher Timeframe", "defaultValue": "D", "description": "Higher timeframe used for the Context check (default daily)" }
+      {
+        "name": "Volume MA Length",
+        "defaultValue": "20",
+        "description": "Lookback for the volume baseline"
+      },
+      {
+        "name": "Min Volume Multiplier",
+        "defaultValue": "1.0x",
+        "description": "Volume must clear MA × this multiple to pass the Liquidity check"
+      },
+      {
+        "name": "SR Swing Length",
+        "defaultValue": "20",
+        "description": "Lookback used to define the prior swing high and low"
+      },
+      {
+        "name": "Primary Session",
+        "defaultValue": "0830-1100",
+        "description": "First high-quality window for the Timing check"
+      },
+      {
+        "name": "Secondary Session",
+        "defaultValue": "1300-1500",
+        "description": "Second high-quality window for the Timing check"
+      },
+      {
+        "name": "Max Stop × ATR",
+        "defaultValue": "1.5",
+        "description": "Stop must be within ATR × this multiple to pass the Risk check"
+      },
+      {
+        "name": "Min R:R",
+        "defaultValue": "2.0",
+        "description": "Minimum projected risk-reward for the Reward check to pass"
+      },
+      {
+        "name": "Higher Timeframe",
+        "defaultValue": "D",
+        "description": "Higher timeframe used for the Context check (default daily)"
+      }
     ],
     "howToUse": [
       "Open TradingView and go to Pine Editor (bottom panel).",
       "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Set the chart to a 1m\u201315m intraday timeframe on ES/NQ/MES/MNQ.",
-      "Watch the scorecard \u2014 it shows exactly which of the 8 checks are passing or failing on the current bar.",
-      "Only take trades when \u25b2 FIRE or \u25bc FIRE prints. The label includes the live score.",
+      "Click \"Add to chart\". Set the chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.",
+      "Watch the scorecard — it shows exactly which of the 8 checks are passing or failing on the current bar.",
+      "Only take trades when ▲ FIRE or ▼ FIRE prints. The label includes the live score.",
       "Tune the volume multiplier, ATR stop multiple, and minimum R:R to your instrument and timeframe."
     ],
     "bestPractices": [
-      "Use this as a gate, not as a trigger \u2014 if the gate is closed, you have no business in the trade.",
-      "8/8 setups are rare and the highest-quality. 6/8 is the floor, not the target \u2014 hunt for 7s and 8s when starting out.",
-      "Read the failed checks \u2014 they tell you what's missing from the setup, not just that the setup is weak.",
-      "The lunch-chop window (1130\u20131330 NY) actively penalises the Timing check. Respect the session windows.",
-      "Pair with Institutional ORB + Brooks Box on the same chart \u2014 qualification \u00d7 structure is the highest-conviction trade."
+      "Use this as a gate, not as a trigger — if the gate is closed, you have no business in the trade.",
+      "8/8 setups are rare and the highest-quality. 6/8 is the floor, not the target — hunt for 7s and 8s when starting out.",
+      "Read the failed checks — they tell you what's missing from the setup, not just that the setup is weak.",
+      "The lunch-chop window (1130–1330 NY) actively penalises the Timing check. Respect the session windows.",
+      "Pair with Institutional ORB + Brooks Box on the same chart — qualification × structure is the highest-conviction trade."
     ],
     "sourceFile": "Sire Trade Qualification v1"
+  },
+  {
+    "slug": "sire-cockpit",
+    "name": "Sire Cockpit",
+    "version": "v1",
+    "tagline": "All-in-one price-action HUD — structure, timing, bias and ICT zones on a single chart",
+    "category": "All-in-One",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ"
+    ],
+    "timeframes": "1m – 1H (intraday)",
+    "description": "A full chart command center that layers seven modules into one overlay so you can read structure, timing, bias and institutional zones at a glance. Market structure is mapped with automatic HH / HL / LH / LL pivots and self-extending support/resistance. A TD Sequential engine counts setups and prints 9s and 13s. A fast/slow EMA pair plus a higher-timeframe 200 EMA give trend bias. Inside-bar and IOI (inside-outside-inside) compression patterns are flagged, and a session bar-counter keeps you oriented inside the RTH window. The ICT layer draws Fair Value Gaps, Implied FVGs, Liquidity Voids, Volume Imbalances and true Gaps with full mitigation tracking. Standard FVG zones are detected on a selectable higher timeframe (30-minute by default) using only closed candles, so the zones are non-repainting and drawn cleanly on your execution chart. ICT zone engine adapted from open-source work by Vulnerable_human_x under the Mozilla Public License 2.0.",
+    "features": [
+      "Auto market structure: HH / HL / LH / LL pivots with self-extending support & resistance",
+      "TD Sequential setup counter with 9 and 13 prints plus optional pulse trails",
+      "EMA stack (fast/slow) plus higher-timeframe 200 EMA with slope coloring",
+      "Multi-timeframe FVG detection — pick any timeframe, 30m default, non-repainting",
+      "Full ICT zone engine: FVG, Implied FVG, Liquidity Void, Volume Imbalance, true Gaps",
+      "Mitigation tracking with Engulf / Mitigate / Rebalance modes and live highlight on tag",
+      "Inside-bar coloring (on by default) and IOI compression pattern flags",
+      "Session bar-counter for RTH structure with configurable interval and hourly markers",
+      "On-chart SireMammat's Cockpit watermark with full position and styling control"
+    ],
+    "signals": [
+      {
+        "name": "HH / HL",
+        "meaning": "Higher high / higher low — bullish structure confirmed at a swing pivot"
+      },
+      {
+        "name": "LH / LL",
+        "meaning": "Lower high / lower low — bearish structure confirmed at a swing pivot"
+      },
+      {
+        "name": "TD 9",
+        "meaning": "TD setup completed — momentum exhaustion warning, watch for a turn"
+      },
+      {
+        "name": "TD 13",
+        "meaning": "TD countdown completed — higher-conviction exhaustion / reversal zone"
+      },
+      {
+        "name": "FVG+ / FVG-",
+        "meaning": "Bullish / bearish Fair Value Gap from the selected timeframe — imbalance likely to be revisited"
+      },
+      {
+        "name": "VI+ / VI- · GAP+ / GAP-",
+        "meaning": "Volume Imbalance and true Gap zones, tracked until mitigated"
+      },
+      {
+        "name": "ioi",
+        "meaning": "Inside-Outside-Inside compression — coiled energy ahead of an expansion move"
+      },
+      {
+        "name": "Inside-bar color",
+        "meaning": "Bar painted on an inside bar — pending breakout of the prior bar's range"
+      }
+    ],
+    "settings": [
+      {
+        "name": "FVG Detection Timeframe",
+        "defaultValue": "30m",
+        "description": "Timeframe the standard FVG zones are detected on. Set equal to or higher than your chart timeframe."
+      },
+      {
+        "name": "FVG Type",
+        "defaultValue": "Normal",
+        "description": "Normal FVG zones, Liquidity Void chaining, or None"
+      },
+      {
+        "name": "MTF EMA Length / Timeframe",
+        "defaultValue": "200 / 30m",
+        "description": "Higher-timeframe trend EMA, off by default — toggle Show 200 MTF EMA to enable"
+      },
+      {
+        "name": "Session",
+        "defaultValue": "0830-1455",
+        "description": "RTH window used by the bar-counter and structure tools"
+      },
+      {
+        "name": "Change Bar Color (HH/LL trend)",
+        "defaultValue": "Off",
+        "description": "Trend-based bar coloring. Off by default so only inside-bar coloring shows."
+      },
+      {
+        "name": "Left / Right Bars",
+        "defaultValue": "5 / 5",
+        "description": "Pivot strength for the HH/HL/LH/LL structure engine"
+      },
+      {
+        "name": "Mitigation Type",
+        "defaultValue": "Engulf",
+        "description": "How FVG / VI / Gap zones are considered mitigated: Engulf, Mitigate or Rebalance"
+      },
+      {
+        "name": "Max Lookback for Pivots",
+        "defaultValue": "200",
+        "description": "How far back the structure engine searches for prior pivots"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView and go to Pine Editor (bottom panel).",
+      "Copy the full source from the file linked below and paste it into the editor.",
+      "Click \"Add to chart\". It works on any market but is tuned for ES/NQ/MES/MNQ intraday.",
+      "Set the FVG Detection Timeframe equal to or higher than your chart timeframe — a 5m chart with 30m FVG zones is the intended setup.",
+      "Use the EMA bias and TD 9/13 prints for context, structure pivots for the trend, and FVG/VI/Gap zones as entry and target reference.",
+      "Toggle modules you don't need from the settings to keep the chart clean."
+    ],
+    "bestPractices": [
+      "Trade with the higher-timeframe FVG zones, not against them — they mark where price is most likely to react.",
+      "A TD 13 landing inside an unmitigated HTF FVG is a high-conviction confluence to fade.",
+      "Inside-bar and IOI flags mark compression — let the breakout confirm before committing.",
+      "Keep the FVG timeframe above your chart timeframe; requesting a lower timeframe produces unreliable zones.",
+      "This is a context HUD, not a mechanical signal system — combine the modules, don't trade any one in isolation."
+    ],
+    "sourceFile": "Sire Cockpit"
   }
 ]
