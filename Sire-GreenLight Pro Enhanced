@@ -1,0 +1,893 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © SireMammat
+// Site: https://siremammat.vercel.app/
+// Indicator: GreenLight Pro Enhanced
+//@version=6
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+// DISCLAIMER:
+// This software is for educational and informational purposes only. Trading futures (MNQ/MES)
+// involves significant risk of loss and is not suitable for all investors. Past performance
+// is not indicative of future results. The author (SireMammat) is not a financial advisor
+// and assumes no liability for financial losses incurred through the use of this script.
+// Use at your own risk.
+// ───────────────────────────────────────────────────────────────────────────────────────────────
+indicator('Sire-GreenLight Pro Enhanced', overlay = true, max_labels_count = 500, max_lines_count = 500, max_boxes_count = 1000)
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION A — GREENLIGHT PRO INPUTS
+// ═══════════════════════════════════════════════════════════════
+var g_cave   = 'GL: GreenLight Core Settings'
+var g_struct = 'GL: Structure Detection'
+var g_gap    = 'GL: Brooks Gap 20 Bar'
+var g_dash   = 'GL: Dashboard Settings'
+var g_count  = 'GL: Bar Counter'
+var g_18bar  = 'GL: 18-Bar RTH Box'
+var g_score  = 'GL: Signal Quality Scoring'
+var g_risk   = 'GL: Risk/Reward Overlay'
+var g_alerts = 'GL: Alert Conditions'
+
+// Core
+gl_emaLen   = input.int(20,    'EMA Length',            group = g_cave)
+gl_atrLen   = input.int(14,    'ATR Length',            group = g_cave)
+gl_distMult = input.float(0.75,'Max Distance from EMA', group = g_cave, step = 0.1)
+gl_volMult  = input.float(1.2, 'Volume Multiplier',     group = g_cave, step = 0.1)
+gl_trigLvl  = input.int(8,     'Trigger Level (L8/B8)', group = g_cave)
+
+// Structure Detection
+gl_swingLen   = input.int(10,   'Swing Lookback (bars)',     group = g_struct, minval = 3)
+gl_trRangeATR = input.float(3.0,'TR Range (x ATR)',          group = g_struct, step = 0.5)
+
+// Gap 20
+gl_showGap = input.bool(true, 'Enable Gap 20 Bar Tracker', group = g_gap)
+
+// Dashboard
+gl_showDash = input.bool(true, 'Show Momentum Dashboard', group = g_dash)
+gl_dashPos  = input.string('bottom_right', 'Dashboard Position', group = g_dash, options = ['top_right','bottom_right','top_left','bottom_left'])
+gl_textSize = input.string('normal',       'Text Size',          group = g_dash, options = ['tiny','small','normal','large','huge'])
+gl_showSessionStats = input.bool(true, 'Show Session Stats', group = g_dash)
+
+// Bar Counter
+gl_showCnt  = input.bool(true,  'Show RTH Bar Numbers',  group = g_count)
+gl_enableBC = input.bool(true,  'Enable Bar Counter',    group = g_count)
+gl_showETH  = input.bool(true,  'Show ETH Bar Numbers',  group = g_count, tooltip = 'Labels pre/post market bars as E1, E2, E3... Resets each RTH open.')
+gl_ethColor = input.color(color.new(color.gray, 40), 'ETH Label Color', group = g_count)
+
+// 18-Bar RTH Box
+gl_showBox   = input.bool(true,          'Show 18-Bar Box',  group = g_18bar)
+gl_boxColor  = input.color(color.orange, 'Box Color',        group = g_18bar)
+gl_boxTrans  = input.int(80,             'Box Transparency', group = g_18bar, minval = 0)
+gl_showLabel = input.bool(true,          'Show Range Label', group = g_18bar)
+gl_coilColor = input.color(color.yellow, 'Coil (<30% ADR)',  group = g_18bar)
+gl_boColor   = input.color(color.green,  'BO (30–50% ADR)',  group = g_18bar)
+gl_trColor   = input.color(color.red,    'TR (>50% ADR)',    group = g_18bar)
+
+// Signal Quality Scoring
+gl_scoreEma    = input.bool(true, 'Score: EMA Agreement',      group = g_score)
+gl_scoreVol    = input.bool(true, 'Score: Volume Confirmation', group = g_score)
+gl_scoreStruct = input.bool(true, 'Score: Structure Alignment', group = g_score)
+gl_scoreGap    = input.bool(true, 'Score: Gap 20 Context',      group = g_score)
+gl_minScore    = input.int(3,    'Min Confluence Score (0-4)',   group = g_score, minval = 0, maxval = 4)
+
+// Risk/Reward Overlay
+gl_showRR   = input.bool(true,  'Show R:R on Signals', group = g_risk)
+gl_rrRatio  = input.float(2.0,  'Target R:R Ratio',    group = g_risk, step = 0.5)
+
+// Alerts
+gl_alertL8   = input.bool(true, 'Alert on L8 Signal',   group = g_alerts)
+gl_alertB8   = input.bool(true, 'Alert on B8 Signal',   group = g_alerts)
+gl_alertL4   = input.bool(true, 'Alert on L4 Signal',   group = g_alerts)
+gl_alertB4   = input.bool(true, 'Alert on B4 Signal',   group = g_alerts)
+gl_alertGap  = input.bool(true, 'Alert on Gap 20 Close', group = g_alerts)
+gl_alertWedge = input.bool(true, 'Alert on Wedge Pattern', group = g_alerts)
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION B — SIRETACTICS v3.3 INPUTS
+// ═══════════════════════════════════════════════════════════════
+var G_STATS   = '📊 Opening Range Stats'
+var G_EMA     = '📈 EMA Overlay'
+var G_GAPS    = '⚪ Gap Detection'
+var G_TD      = '🔴 TD Sequential'
+var G_PATTERNS= '🕯 Candle Patterns'
+var G_VOL     = '📊 ATR / ABR'
+var G_BO      = '🚀 Breakout Bar'
+var G_LEG     = '📐 Two-Leg Structure'
+var G_WM      = '🖊 Watermark'
+var G_WMPOS   = '📌 Watermark Position'
+var G_STYLE   = '🎨 Global Styling'
+var G_BARCOL  = '🎨 Bar Color Toggles'
+var G_MTF     = '📊 Multi-Timeframe'
+
+// Opening Range Stats
+showTrendFilter = input.bool(true,  'Enable Trend vs. Chop Filter', group = G_STATS)
+openingBarLimit = input.int(8,      'Opening Range Bar Count',      group = G_STATS, minval = 1, maxval = 20)
+useTimeFilter   = input.bool(true,  'RTH Only (9:30–16:00)',        group = G_STATS)
+chopThreshold   = input.float(0.35, 'Chop Threshold (0–1)',         group = G_STATS, minval = 0.1, maxval = 0.9, step = 0.05)
+
+// Global Styling
+colorEMAUp   = input.color(color.green, 'EMA Up Color',         group = G_STYLE)
+colorEMADown = input.color(color.red,   'EMA Down Color',        group = G_STYLE)
+lbl_offset   = input.float(0.05,        'Global Label Offset %', group = G_STYLE, minval = 0.0, maxval = 5.0, step = 0.01)
+
+// Bar Color Toggles
+enableInsideBarColor  = input.bool(true,  'Inside Bar Colors',       group = G_BARCOL)
+enableBOColor         = input.bool(true,  'Breakout Bar Colors',     group = G_BARCOL)
+enableLateLegColor    = input.bool(true,  'Late Leg Bar Colors',     group = G_BARCOL)
+enableTrendBarColor   = input.bool(true,  'HH/HL/LH/LL Bar Colors', group = G_BARCOL)
+
+// ATR / ABR
+abrLen    = input.int(8, 'ABR Lookback', group = G_VOL, minval = 1)
+abr       = ta.sma(high - low, abrLen)
+atrLen_st = input.int(8,   'ATR Length',     group = G_VOL, minval = 1)
+atrSmooth = input.string('RMA', 'ATR Smoothing', group = G_VOL, options = ['RMA','SMA','EMA','WMA'])
+
+// EMA Overlay
+showFastEMA = input.bool(false, 'Show Fast EMA (9)',  group = G_EMA)
+showMTFEMA  = input.bool(false, 'Show MTF EMA (200)', group = G_EMA)
+showEMAcloud = input.bool(false,'Show EMA Cloud',     group = G_EMA)
+emaLenFast  = input.int(9,   'Fast EMA Length',  group = G_EMA, minval = 2)
+emaLenMTF   = input.int(200, 'MTF EMA Length',   group = G_EMA, minval = 1)
+emaTF       = input.timeframe('30', 'MTF Timeframe', group = G_EMA)
+colorFast   = input.color(color.rgb(221, 110, 19), 'Fast Color', group = G_EMA)
+
+// Multi-Timeframe Structure
+showMTFStruct   = input.bool(false, 'Show MTF Structure Filter', group = G_MTF)
+mtfStructLookback = input.int(20,    'MTF Structure Lookback',   group = G_MTF, minval = 5)
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION C — SHARED CALCULATIONS
+// ═══════════════════════════════════════════════════════════════
+
+if barstate.isfirst and timeframe.in_seconds(timeframe.period) >= timeframe.in_seconds('D')
+    runtime.error('Timeframe too high — use a sub-daily timeframe.')
+
+// ── Helper Functions ──────────────────────────────────────────
+f_size(s) => s == 'tiny' ? size.tiny : s == 'small' ? size.small : s == 'normal' ? size.normal : s == 'large' ? size.large : size.huge
+f_pos(p)  => p == 'top_right' ? position.top_right : p == 'bottom_right' ? position.bottom_right : p == 'top_left' ? position.top_left : position.bottom_left
+f_statePos(p) => p == 'top_right' ? position.top_right : p == 'top_left' ? position.top_left : p == 'bottom_right' ? position.bottom_right : position.bottom_left
+
+// ── GL Core ──────────────────────────────────────────────────
+gl_emaVal     = ta.ema(close, gl_emaLen)
+gl_atr        = ta.atr(gl_atrLen)
+gl_avgVol     = ta.sma(volume, 20)
+gl_emaRising  = gl_emaVal > gl_emaVal[1]
+gl_emaFalling = gl_emaVal < gl_emaVal[1]
+gl_isNearEma  = math.abs(close - gl_emaVal) < gl_atr * gl_distMult
+gl_highVol    = volume > gl_avgVol * gl_volMult
+
+gl_swingHigh = ta.pivothigh(high, gl_swingLen, gl_swingLen)
+gl_swingLow  = ta.pivotlow(low,  gl_swingLen, gl_swingLen)
+
+var float gl_lastH1 = na
+var float gl_lastH2 = na
+var float gl_lastL1 = na
+var float gl_lastL2 = na
+
+if not na(gl_swingHigh)
+    gl_lastH2 := gl_lastH1
+    gl_lastH1 := gl_swingHigh
+if not na(gl_swingLow)
+    gl_lastL2 := gl_lastL1
+    gl_lastL1 := gl_swingLow
+
+bool gl_swingUp = not na(gl_lastH1) and not na(gl_lastH2) and not na(gl_lastL1) and not na(gl_lastL2) and gl_lastH1 > gl_lastH2 and gl_lastL1 > gl_lastL2
+bool gl_swingDn = not na(gl_lastH1) and not na(gl_lastH2) and not na(gl_lastL1) and not na(gl_lastL2) and gl_lastH1 < gl_lastH2 and gl_lastL1 < gl_lastL2
+
+gl_rangeSize  = ta.highest(high, gl_swingLen) - ta.lowest(low, gl_swingLen)
+bool gl_isTR  = gl_rangeSize < gl_atr * gl_trRangeATR
+
+bool gl_inUp    = gl_emaRising  and gl_swingUp and not gl_isTR
+bool gl_inDn    = gl_emaFalling and gl_swingDn and not gl_isTR
+bool gl_inTrend = gl_inUp or gl_inDn
+bool gl_inTR    = gl_isTR or (not gl_swingUp and not gl_swingDn)
+
+gl_structLbl = gl_inUp ? 'UPTREND' : gl_inDn ? 'DOWNTREND' : gl_inTR ? 'TRADING RANGE' : 'MIXED'
+gl_structCol = gl_inUp ? color.green : gl_inDn ? color.red : color.orange
+
+var int gl_bearStr = 0
+var int gl_bullStr = 0
+bool gl_bearMom = close < open and close < close[1]
+bool gl_bullMom = close > open and close > close[1]
+if gl_bearMom
+    gl_bearStr := gl_bearStr + 1
+    gl_bullStr := 0
+else if gl_bullMom
+    gl_bullStr := gl_bullStr + 1
+    gl_bearStr := 0
+else
+    gl_bearStr := 0
+    gl_bullStr := 0
+
+// ── GL Gap-20 ────────────────────────────────────────────────
+var int gl_gapCnt = 0
+bool gl_touchEma  = low <= gl_emaVal and high >= gl_emaVal
+gl_gapCnt        := gl_touchEma ? 0 : gl_gapCnt + 1
+bool gl_gapClosed = gl_showGap and gl_touchEma and gl_gapCnt[1] >= 20
+
+// ── Signal Quality Scoring ────────────────────────────────────
+gl_signalScore(int dir) =>
+    int s = 0
+    if dir == 1
+        s += (gl_scoreEma    and gl_emaRising)  ? 1 : 0
+        s += (gl_scoreVol    and gl_highVol)    ? 1 : 0
+        s += (gl_scoreStruct and gl_inUp)       ? 1 : 0
+        s += (gl_scoreGap    and gl_gapCnt >= 20) ? 1 : 0
+    else
+        s += (gl_scoreEma    and gl_emaFalling) ? 1 : 0
+        s += (gl_scoreVol    and gl_highVol)    ? 1 : 0
+        s += (gl_scoreStruct and gl_inDn)       ? 1 : 0
+        s += (gl_scoreGap    and gl_gapCnt >= 20) ? 1 : 0
+    s
+
+gl_longScore  = gl_signalScore(1)
+gl_shortScore = gl_signalScore(-1)
+
+gl_baseLong  = gl_bullStr == gl_trigLvl and close > gl_emaVal and gl_emaRising  and gl_isNearEma and gl_highVol
+gl_baseShort = gl_bearStr == gl_trigLvl and close < gl_emaVal and gl_emaFalling and gl_isNearEma and gl_highVol
+
+// ── Multi-Timeframe Structure Filter ──────────────────────────
+float mtfHigh = request.security(syminfo.tickerid, emaTF, ta.highest(high, mtfStructLookback))
+float mtfLow  = request.security(syminfo.tickerid, emaTF, ta.lowest(low, mtfStructLookback))
+bool  mtfBullStruct = close > mtfHigh
+bool  mtfBearStruct = close < mtfLow
+
+gl_longTrig  = gl_baseLong  and gl_inTrend and not gl_inTR and gl_longScore  >= gl_minScore
+gl_shortTrig = gl_baseShort and gl_inTrend and not gl_inTR and gl_shortScore >= gl_minScore
+
+if showMTFStruct
+    gl_longTrig  := gl_longTrig  and mtfBullStruct
+    gl_shortTrig := gl_shortTrig and mtfBearStruct
+
+// ── Unified Session / Bar Counter ────────────────────────────
+gl_isRTHStart = not na(time('', '0930-0931', 'America/New_York')) and na(time('', '0930-0931', 'America/New_York')[1])
+gl_isInRTH    = not na(time('', '0930-1600', 'America/New_York'))
+gl_isInETH    = not gl_isInRTH and not na(time)
+
+var int gl_rthBarNum = 0
+if gl_isRTHStart
+    gl_rthBarNum := 1
+else if gl_isInRTH
+    gl_rthBarNum := gl_rthBarNum + 1
+else
+    gl_rthBarNum := 0
+
+var int gl_ethBarNum = 0
+if gl_isRTHStart
+    gl_ethBarNum := 0
+else if gl_isInETH
+    gl_ethBarNum := gl_ethBarNum + 1
+
+// ── GL 18-Bar RTH Box ────────────────────────────────────────
+gl_rthOpen      = timestamp('America/New_York', year, month, dayofmonth, 9, 30)
+gl_barsSinceRTH = ta.barssince(time >= gl_rthOpen and time[1] < gl_rthOpen)
+gl_adr          = ta.sma(ta.highest(high, 20) - ta.lowest(low, 20), 8)
+
+var float gl_hi18 = na
+var float gl_lo18 = na
+
+if gl_barsSinceRTH == 0
+    gl_hi18 := high
+    gl_lo18 := low
+else if gl_barsSinceRTH < 18
+    gl_hi18 := math.max(gl_hi18, high)
+    gl_lo18 := math.min(gl_lo18, low)
+
+if gl_barsSinceRTH == 17
+    gl_range18 = gl_hi18 - gl_lo18
+    gl_pctADR  = gl_range18 / gl_adr * 100
+    gl_col18   = gl_pctADR < 30 ? gl_coilColor : gl_pctADR <= 50 ? gl_boColor : gl_trColor
+    if gl_showBox
+        box.new(bar_index - 17, gl_hi18, bar_index, gl_lo18, border_color = gl_boxColor, bgcolor = color.new(gl_boxColor, gl_boxTrans))
+    if gl_showLabel
+        label.new(bar_index, gl_hi18, str.tostring(math.round(gl_range18, 2)) + ' pts (' + str.tostring(math.round(gl_pctADR)) + '%)', style = label.style_label_down, color = gl_col18, textcolor = color.black)
+
+// ── Session Statistics ────────────────────────────────────────
+var int   gl_sessionSignals = 0
+var float gl_sessionScore   = 0.0
+
+if gl_isRTHStart
+    gl_sessionSignals := 0
+    gl_sessionScore   := 0.0
+
+if gl_longTrig
+    gl_sessionSignals += 1
+    gl_sessionScore   += gl_longScore
+if gl_shortTrig
+    gl_sessionSignals += 1
+    gl_sessionScore   += gl_shortScore
+
+gl_sessionAvgScore = gl_sessionSignals > 0 ? gl_sessionScore / gl_sessionSignals : 0.0
+
+// ── ST Session ───────────────────────────────────────────────
+st_is_rth    = not useTimeFilter or time(timeframe.period, '0930-1600:23456') != 0
+st_is_new_day = ta.change(time('D')) != 0
+
+var int   st_bar_count = 0
+var float s_open       = na
+var float s_high       = 0.0
+var float s_low        = 999999.0
+
+if st_is_new_day
+    st_bar_count := 1
+    s_open       := open
+    s_high       := high
+    s_low        := low
+else
+    st_bar_count := st_bar_count + 1
+    s_high       := math.max(s_high, high)
+    s_low        := math.min(s_low,  low)
+
+trend_ratio = s_high - s_low != 0 ? math.abs(close - s_open) / (s_high - s_low) : 0
+is_choppy   = showTrendFilter and st_bar_count >= openingBarLimit and trend_ratio <= chopThreshold
+
+// ── ST Bar Metrics ───────────────────────────────────────────
+barRange = high - low
+
+// ── ST EMAs (supplementary) ───────────────────────────────────
+emaFast   = ta.ema(close, emaLenFast)
+ema200raw = request.security(syminfo.tickerid, emaTF, ta.ema(close, emaLenMTF), lookahead = barmerge.lookahead_off, gaps = barmerge.gaps_off)
+ema200Color = ema200raw > ema200raw[1] ? colorEMAUp : colorEMADown
+
+// ── ST ATR ───────────────────────────────────────────────────
+true_range = math.max(barRange, math.max(math.abs(high - close[1]), math.abs(low - close[1])))
+atr_val    = switch atrSmooth
+    'RMA' => ta.rma(true_range, atrLen_st)
+    'SMA' => ta.sma(true_range, atrLen_st)
+    'EMA' => ta.ema(true_range, atrLen_st)
+    'WMA' => ta.wma(true_range, atrLen_st)
+    =>       ta.rma(true_range, atrLen_st)
+atr_pct = close != 0 ? atr_val / close * 100 : 0.0
+abr_pct = close != 0 ? abr     / close * 100 : 0.0
+
+// ── ST Breakout Bar ──────────────────────────────────────────
+boMultiplier = input.float(1.5, 'BO Size (x ABR)', group = G_BO, minval = 1.0, maxval = 4.0, step = 0.1)
+showBO       = input.bool(true, 'Highlight BO Bars', group = G_BO)
+
+bullBO     = barRange > abr * boMultiplier and close > high[1] and high - close < barRange * 0.25
+bearBO     = barRange > abr * boMultiplier and close < low[1]  and close - low  < barRange * 0.25
+
+// ── ST Two-Leg ───────────────────────────────────────────────
+legPivotLen = input.int(5,    'Pivot Length',     group = G_LEG, minval = 3, maxval = 20)
+showLegs    = input.bool(true,'Show Leg Labels',  group = G_LEG)
+
+pivHigh = ta.pivothigh(high, legPivotLen, legPivotLen)
+pivLow  = ta.pivotlow(low,  legPivotLen, legPivotLen)
+
+var float pH1 = na
+var float pH2 = na
+var float pL1 = na
+var float pL2 = na
+
+if not na(pivHigh)
+    pH2 := pH1
+    pH1 := pivHigh
+if not na(pivLow)
+    pL2 := pL1
+    pL1 := pivLow
+
+// ── ST Late Leg / 3-Push ─────────────────────────────────────
+var int trendUp = 0
+var int trendDn = 0
+trendUp := close > close[1] ? trendUp + 1 : close < close[1] ? 0 : trendUp
+trendDn := close < close[1] ? trendDn + 1 : close > close[1] ? 0 : trendDn
+
+lateLegUp = trendUp >= 5
+lateLegDn = trendDn >= 5
+
+var int pushUp = 0
+var int pushDn = 0
+if not na(pivHigh)
+    pushUp := not na(pH2) and pH1 > pH2 ? pushUp + 1 : 0
+if not na(pivLow)
+    pushDn := not na(pL2) and pL1 < pL2 ? pushDn + 1 : 0
+
+wedgeUp = pushUp >= 3
+wedgeDn = pushDn >= 3
+
+// ── ST TD Sequential ─────────────────────────────────────────
+show_td       = input.bool(true,   'Show TD Sequential',            group = G_TD)
+td_size       = input.string('small','Label Size',                  group = G_TD, options = ['tiny','small','normal','large','huge'])
+show_td_line  = input.bool(true,   'Show TD Lines',                 group = G_TD)
+show_td_trail = input.bool(true,   'TD Pulse on Countdown',         group = G_TD)
+td_ext        = input.int(20,      'Extend Lines Forward',          group = G_TD, minval = 2)
+show_td_inter = input.bool(false,  'Show Intermediate Counts (1–8)', group = G_TD)
+show_cd_inter = input.bool(false,  'Show Countdown Counts (1–12)',  group = G_TD)
+
+C_TD_BULL    = color.new(#20a249, 0)
+C_TD_BEAR    = color.new(#fc0c0c, 0)
+C_TD_CD_BULL = color.new(color.green, 0)
+C_TD_CD_BEAR = color.new(color.red,   0)
+C_TD_TRAIL   = color.new(color.yellow, 80)
+
+f_td_label(x, y, txt, bg)  => label.new(x, y, txt, color = bg, textcolor = color.white, style = label.style_label_center, size = td_size)
+f_td_line(x, y, isBull)    => line.new(x, y, x + td_ext, y, color = isBull ? color.green : color.red, style = line.style_solid, width = 2)
+f_td_inter(x, y, txt, bg)  => label.new(x, y, txt, color = color.new(bg, 60), textcolor = color.new(color.white, 20), style = label.style_label_center, size = size.tiny)
+
+var int  td_up      = 0
+var int  td_dn      = 0
+var int  td_buy_cd  = 0
+var int  td_sell_cd = 0
+var bool perf_up    = false
+var bool perf_dn    = false
+
+bull_cond = close > close[4]
+bear_cond = close < close[4]
+
+if bull_cond
+    td_up := bull_cond[1] ? td_up + 1 : 1
+    td_dn := 0
+else if bear_cond
+    td_dn := bear_cond[1] ? td_dn + 1 : 1
+    td_up := 0
+
+if show_td and show_td_inter and barstate.isconfirmed
+    if td_up > 0 and td_up < 9
+        f_td_inter(bar_index, high * (1 + lbl_offset / 100), str.tostring(td_up), C_TD_BULL)
+    if td_dn > 0 and td_dn < 9
+        f_td_inter(bar_index, low  * (1 - lbl_offset / 100), str.tostring(td_dn), C_TD_BEAR)
+
+td_up9 = show_td and td_up == 9 and barstate.isconfirmed
+td_dn9 = show_td and td_dn == 9 and barstate.isconfirmed
+
+if td_up9
+    f_td_label(bar_index, high * (1 + lbl_offset / 100), '9', C_TD_BULL)
+    if show_td_line
+        f_td_line(bar_index, high, true)
+    perf_up    := true
+    td_buy_cd  := 0
+    perf_dn    := false
+
+if td_dn9
+    f_td_label(bar_index, low * (1 - lbl_offset / 100), '9', C_TD_BEAR)
+    if show_td_line
+        f_td_line(bar_index, low, false)
+    perf_dn    := true
+    td_sell_cd := 0
+    perf_up    := false
+
+buy_cd_cond  = perf_dn and close <= low[2]
+sell_cd_cond = perf_up and close >= high[2]
+
+if buy_cd_cond  and td_buy_cd  < 13
+    td_buy_cd  := td_buy_cd  + 1
+if sell_cd_cond and td_sell_cd < 13
+    td_sell_cd := td_sell_cd + 1
+
+if td_buy_cd >= 13
+    td_buy_cd := 0
+    perf_dn := false
+if td_sell_cd >= 13
+    td_sell_cd := 0
+    perf_up := false
+
+if show_td and show_cd_inter and barstate.isconfirmed
+    if td_buy_cd  > 0 and td_buy_cd  < 13
+        f_td_inter(bar_index, low  * (1 - lbl_offset / 100), str.tostring(td_buy_cd),  C_TD_CD_BULL)
+    if td_sell_cd > 0 and td_sell_cd < 13
+        f_td_inter(bar_index, high * (1 + lbl_offset / 100), str.tostring(td_sell_cd), C_TD_CD_BEAR)
+
+// ── HH / HL / LH / LL Detection ─────────────────────────────
+lb           = input.int(5,   'Left Bars',              minval = 1)
+rb           = input.int(5,   'Right Bars',             minval = 1)
+search_limit = input.int(100, 'Max Lookback for Pivots', minval = 50, maxval = 500)
+showresline  = input.bool(true, 'Show Resistance Line', inline = 'rescol')
+rescol       = input.color(color.red,  '',              inline = 'rescol')
+showsupline  = input.bool(true, 'Show Support Line',    inline = 'supcol')
+supcol       = input.color(color.lime, '',              inline = 'supcol')
+srlinestyle  = input.string(line.style_dotted, 'Line Style/Width', options = [line.style_solid, line.style_dashed, line.style_dotted], inline = 'style')
+srlinewidth  = input.int(3, '', minval = 1, maxval = 5, inline = 'style')
+show_labels  = input.bool(true, 'Show HH/HL/LH/LL Labels')
+label_bg_transp = input.int(40, 'Label Background Transparency', minval = 0, maxval = 100)
+changebarcol    = input.bool(true, 'Change Bar Color', inline = 'bcol')
+bcolup          = input.color(color.blue,  '', inline = 'bcol')
+bcoldn          = input.color(color.black, '', inline = 'bcol')
+bcolflat        = input.color(color.gray,  'Sideways Color')
+
+ph = ta.pivothigh(high, lb, rb)
+pl = ta.pivotlow(low,  lb, rb)
+hl = na(ph) ? (na(pl) ? na : -1) : 1
+zz = na(ph) ? (na(pl) ? na : pl) : ph
+
+vw_hl_neg1_1 = ta.valuewhen(hl == -1, hl, 1)
+vw_zz_neg1_1 = ta.valuewhen(hl == -1, zz, 1)
+vw_hl_pos1_1 = ta.valuewhen(hl ==  1, hl, 1)
+vw_zz_pos1_1 = ta.valuewhen(hl ==  1, zz, 1)
+
+if not na(pl) and hl == -1 and vw_hl_neg1_1 == -1 and pl > vw_zz_neg1_1
+    zz := na
+if not na(ph) and hl ==  1 and vw_hl_pos1_1 ==  1 and ph < vw_zz_pos1_1
+    zz := na
+
+vw_hl_neg1_2 = ta.valuewhen(hl == -1, hl, 2)
+vw_zz_neg1_2 = ta.valuewhen(hl == -1, zz, 2)
+vw_hl_pos1_2 = ta.valuewhen(hl ==  1, hl, 2)
+vw_zz_pos1_2 = ta.valuewhen(hl ==  1, zz, 2)
+
+if hl == -1 and vw_hl_neg1_2 ==  1 and zz > vw_zz_neg1_2
+    hl := na
+if hl ==  1 and vw_hl_pos1_2 == -1 and zz < vw_zz_pos1_2
+    hl := na
+if na(hl)
+    zz := na
+
+findprevious() =>
+    ehl = hl == 1 ? -1 : 1
+    float loc1 = na
+    float loc2 = na
+    float loc3 = na
+    float loc4 = na
+    int xx = 0
+    int maxLookback = math.min(search_limit, bar_index)
+    for x = 1 to maxLookback
+        if hl[x] == ehl and not na(zz[x])
+            loc1 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl
+    for x = xx to maxLookback
+        if hl[x] == ehl and not na(zz[x])
+            loc2 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl == 1 ? -1 : 1
+    for x = xx to maxLookback
+        if hl[x] == ehl and not na(zz[x])
+            loc3 := zz[x]
+            xx := x + 1
+            break
+    ehl := hl
+    for x = xx to maxLookback
+        if hl[x] == ehl and not na(zz[x])
+            loc4 := zz[x]
+            break
+    [loc1, loc2, loc3, loc4]
+
+var float a = na
+var float b = na
+var float c = na
+var float d = na
+var float e = na
+
+[loc1, loc2, loc3, loc4] = findprevious()
+a := zz
+b := loc1
+c := loc2
+d := loc3
+e := loc4
+
+_hh = not na(zz) and (a > b and a > c and c > b and c > d)
+_ll = not na(zz) and (a < b and a < c and c < b and c < d)
+_hl = not na(zz) and ((a >= c and (b > c and b > d and d > c and d > e)) or (a < b and a > c and b < d))
+_lh = not na(zz) and ((a <= c and (b < c and b < d and d < c and d < e)) or (a > b and a < c and b > d))
+
+var float res   = na
+var float sup   = na
+var int   trend = na
+res   := _lh ? zz : nz(res[1])
+sup   := _hl ? zz : nz(sup[1])
+trend := close > res ? 1 : close < sup ? -1 : nz(trend[1])
+res   := (trend ==  1 and _hh) or (trend == -1 and _lh) ? zz : res
+sup   := (trend ==  1 and _hl) or (trend == -1 and _ll) ? zz : sup
+
+rechange = res != res[1]
+suchange = sup != sup[1]
+
+var line resline = na
+var line supline = na
+
+if showresline and rechange
+    if not na(resline)
+        line.set_x2(resline, bar_index)
+        line.set_extend(resline, extend.none)
+    resline := line.new(x1 = bar_index - rb, y1 = res, x2 = bar_index, y2 = res, color = rescol, extend = extend.right, style = srlinestyle, width = srlinewidth)
+
+if showsupline and suchange
+    if not na(supline)
+        line.set_x2(supline, bar_index)
+        line.set_extend(supline, extend.none)
+    supline := line.new(x1 = bar_index - rb, y1 = sup, x2 = bar_index, y2 = sup, color = supcol, extend = extend.right, style = srlinestyle, width = srlinewidth)
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION D — PLOTS & DISPLAY
+// ═══════════════════════════════════════════════════════════════
+
+// ── GL EMA (primary 20 EMA) ──────────────────────────────────
+plot(gl_emaVal, 'GL 20 EMA', color = gl_emaRising ? color.green : color.red, linewidth = 2)
+
+// ── GL L8/B8 Labels ──────────────────────────────────────────
+if gl_longTrig
+    string longLbl = 'L8 PRO'
+    if gl_minScore > 0
+        longLbl += ' (' + str.tostring(gl_longScore) + '/4)'
+    label.new(bar_index, low * (1 - lbl_offset / 100), longLbl, color = color.green, textcolor = color.black, style = label.style_label_up)
+    if gl_showRR
+        float stopPrice  = low - gl_atr * 0.5
+        float targetPrice = close + (close - stopPrice) * gl_rrRatio
+        line.new(bar_index, stopPrice, bar_index + 20, stopPrice, color = color.red, style = line.style_dashed)
+        line.new(bar_index, targetPrice, bar_index + 20, targetPrice, color = color.green, style = line.style_dashed)
+        label.new(bar_index + 20, targetPrice, 'T' + str.tostring(gl_rrRatio) + 'R', style = label.style_label_right, color = color.new(color.green, 80), textcolor = color.black, size = size.tiny)
+
+if gl_shortTrig
+    string shortLbl = 'B8 PRO'
+    if gl_minScore > 0
+        shortLbl += ' (' + str.tostring(gl_shortScore) + '/4)'
+    label.new(bar_index, high * (1 + lbl_offset / 100), shortLbl, color = color.red, textcolor = color.white, style = label.style_label_down)
+    if gl_showRR
+        float stopPrice  = high + gl_atr * 0.5
+        float targetPrice = close - (stopPrice - close) * gl_rrRatio
+        line.new(bar_index, stopPrice, bar_index + 20, stopPrice, color = color.red, style = line.style_dashed)
+        line.new(bar_index, targetPrice, bar_index + 20, targetPrice, color = color.green, style = line.style_dashed)
+        label.new(bar_index + 20, targetPrice, 'T' + str.tostring(gl_rrRatio) + 'R', style = label.style_label_right, color = color.new(color.green, 80), textcolor = color.black, size = size.tiny)
+
+// ── GL L4/B4 Dots ────────────────────────────────────────────
+plotshape(gl_bullStr == 4, 'L4 Signal', shape.circle, location.belowbar, color.blue,   size = size.tiny)
+plotshape(gl_bearStr == 4, 'B4 Signal', shape.circle, location.abovebar, color.orange, size = size.tiny)
+
+// ── GL Gap-20 Touch ──────────────────────────────────────────
+if gl_gapClosed
+    label.new(bar_index, gl_emaVal, 'GAP 20 TOUCH', color = color.white, textcolor = color.black, style = label.style_label_center, size = size.tiny)
+
+// ── Unified RTH Bar Labels ────────────────────────────────────
+if gl_enableBC and gl_showCnt and gl_isInRTH and gl_rthBarNum > 0
+    gl_lc = gl_rthBarNum ==  1 ? color.white  :
+             gl_rthBarNum ==  6 ? color.yellow :
+             gl_rthBarNum == 11 ? color.yellow :
+             gl_rthBarNum == 18 ? color.aqua   :
+             gl_rthBarNum == 24 ? color.orange :
+             gl_rthBarNum == 48 ? color.orange :
+             gl_rthBarNum == 66 ? color.yellow :
+             color.gray
+    string barText = str.tostring(gl_rthBarNum)
+    if gl_rthBarNum == 18
+        barText := barText + ' ⬡'
+    if gl_rthBarNum == 24
+        barText := barText + ' 🍽'
+    label.new(bar_index, low, barText, yloc = yloc.belowbar, style = label.style_none, textcolor = gl_lc, size = size.small)
+
+// ── ETH Bar Labels ────────────────────────────────────────────
+if gl_enableBC and gl_showCnt and gl_showETH and gl_isInETH and gl_ethBarNum > 0
+    label.new(bar_index, low, 'E' + str.tostring(gl_ethBarNum), yloc = yloc.belowbar, style = label.style_none, textcolor = gl_ethColor, size = size.tiny)
+
+// ── GL Dashboard ─────────────────────────────────────────────
+if gl_showDash and barstate.islast
+    int dashRows = gl_showSessionStats ? 6 : 5
+    var table gl_dash = table.new(f_pos(gl_dashPos), 2, dashRows, border_width = 1, frame_color = color.new(color.gray, 50), bgcolor = color.new(color.black, 20))
+    gl_sz     = f_size(gl_textSize)
+    gl_momStr = gl_bullStr > 0 ? 'BULL: ' + str.tostring(gl_bullStr) : gl_bearStr > 0 ? 'BEAR: ' + str.tostring(gl_bearStr) : 'NEUTRAL'
+    gl_momCol = gl_bullStr > 0 ? color.green : gl_bearStr > 0 ? color.red : color.white
+    gl_swStr  = gl_swingUp ? 'HH + HL  ▲' : gl_swingDn ? 'LH + LL  ▼' : 'MIXED  ↔'
+    gl_swCol  = gl_swingUp ? color.green   : gl_swingDn ? color.red    : color.orange
+    gl_box18St= gl_barsSinceRTH < 18 ? 'Building (' + str.tostring(gl_barsSinceRTH) + '/18)' : 'Complete'
+    gl_box18C = gl_barsSinceRTH < 18 ? color.yellow : color.aqua
+    
+    table.cell(gl_dash, 0, 0, 'GREENLIGHT PRO', text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 1, 0, 'STATUS',          text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 0, 1, 'Momentum',         text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 1, 1, gl_momStr,           text_color = gl_momCol,    text_size = gl_sz)
+    table.cell(gl_dash, 0, 2, 'Structure',         text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 1, 2, gl_structLbl,        text_color = gl_structCol, text_size = gl_sz)
+    table.cell(gl_dash, 0, 3, 'Swings',            text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 1, 3, gl_swStr,             text_color = gl_swCol,     text_size = gl_sz)
+    table.cell(gl_dash, 0, 4, 'EMA Gap',            text_color = color.white,  text_size = gl_sz)
+    table.cell(gl_dash, 1, 4, str.tostring(gl_gapCnt) + ' bars', text_color = gl_gapCnt >= 20 ? color.orange : color.white, text_size = gl_sz)
+    
+    if gl_showSessionStats
+        table.cell(gl_dash, 0, 5, 'Sessions Today', text_color = color.white,  text_size = gl_sz)
+        table.cell(gl_dash, 1, 5, str.tostring(gl_sessionSignals) + ' sigs (avg ' + str.tostring(gl_sessionAvgScore, '#.#') + ')', text_color = color.yellow, text_size = gl_sz)
+
+// ── ST Supplementary EMAs ────────────────────────────────────
+plot(showFastEMA ? emaFast   : na, 'Fast EMA (9)',  color = colorFast,   linewidth = 1)
+plot(showMTFEMA  ? ema200raw : na, 'MTF EMA (200)', color = ema200Color, linewidth = 2)
+
+// EMA Cloud
+emaFastCloud = showEMAcloud and showFastEMA ? emaFast : na
+emaSlowCloud = showEMAcloud ? gl_emaVal : na
+color cloudColorUp   = showEMAcloud and showFastEMA and emaFast > gl_emaVal ? color.new(color.green, 90) : na
+color cloudColorDown = showEMAcloud and showFastEMA and emaFast < gl_emaVal ? color.new(color.red, 90)   : na
+fill(plot(emaFastCloud, 'Fast EMA Cloud', color = na, editable = false), 
+     plot(emaSlowCloud, 'Slow EMA Cloud', color = na, editable = false), 
+     emaFast > gl_emaVal ? cloudColorUp : cloudColorDown)
+
+// ── ST Gap Detection ─────────────────────────────────────────
+showTradGap      = input.bool(true, 'Show Traditional Gap', group = G_GAPS)
+tradGapUpColor   = input.color(color.new(#089981, 60), 'Up Gap Color',   group = G_GAPS, inline = 'TG')
+tradGapDownColor = input.color(color.new(#F23645, 60), 'Down Gap Color', group = G_GAPS, inline = 'TG')
+showTailGap      = input.bool(true, 'Show Tail Gap',        group = G_GAPS)
+tailGapUpColor   = input.color(color.new(#089981, 70), 'Up Gap Color',   group = G_GAPS, inline = 'TAI')
+tailGapDownColor = input.color(color.new(#F23645, 70), 'Down Gap Color', group = G_GAPS, inline = 'TAI')
+
+if showTradGap
+    if low > high[1]
+        box.new(chart.point.from_index(bar_index[1], high[1]), chart.point.from_index(bar_index, low),  border_width = 0, bgcolor = tradGapUpColor)
+    else if high < low[1]
+        box.new(chart.point.from_index(bar_index[1], low[1]),  chart.point.from_index(bar_index, high), border_width = 0, bgcolor = tradGapDownColor)
+
+if showTailGap
+    if low > high[2] and low <= high[1] and low[1] <= high[2]
+        box.new(chart.point.from_index(bar_index[2], high[2]), chart.point.from_index(bar_index, low),  border_width = 0, bgcolor = tailGapUpColor)
+    else if high < low[2] and high >= low[1] and high[1] >= low[2]
+        box.new(chart.point.from_index(bar_index[2], low[2]),  chart.point.from_index(bar_index, high), border_width = 0, bgcolor = tailGapDownColor)
+
+// ── ST Candle Patterns (labels + bar colors only) ─────────────
+hideBreakout = input.bool(false, 'Hide OO/II/IOI in Breakout Mode', group = G_PATTERNS)
+strictIB     = input.bool(false, 'Strict Inside Bar',               group = G_PATTERNS)
+
+oo_cond  = high[1] >= high[2] and low[1] <= low[2] and high[2] >= high[3] and low[2] <= low[3]
+ii_cond  = high[1] <= high[2] and low[1] >= low[2] and high[2] <= high[3] and low[2] >= low[3]
+ioi_cond = high[1] <= high[2] and low[1] >= low[2] and high[2] >= high[3] and low[2] <= low[3]
+
+if barstate.isconfirmed and not hideBreakout
+    if oo_cond
+        label.new(bar_index - 1, 0, 'oo',  style = label.style_none, yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.blue, 100))
+    if ii_cond
+        label.new(bar_index - 1, 0, 'ii',  style = label.style_none, yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.blue, 100))
+    if ioi_cond
+        label.new(bar_index - 2, 0, 'ioi', style = label.style_none, yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.blue, 100))
+
+f_insideBar() =>
+    hCond = strictIB ? high < high[1] : high <= high[1]
+    lCond = strictIB ? low  > low[1]  : low  >= low[1]
+    hCond and lCond ? close >= open ? 1 : -1 : 0
+
+ibType   = f_insideBar()
+isBullIB = ibType ==  1
+isBearIB = ibType == -1
+
+barcolor(enableInsideBarColor and isBullIB ? color.rgb(255, 234,   0) : na, title = 'Inside Bar Bull')
+barcolor(enableInsideBarColor and isBearIB ? color.rgb(76,    0, 255) : na, title = 'Inside Bar Bear')
+
+// ── ST ATR/ABR Table ─────────────────────────────────────────
+showVolTable = input.bool(true, 'Show ATR/ABR Table', group = G_VOL)
+volTablePos  = input.string('Top Right', 'Table Position', group = G_VOL, options = ['Top Right','Top Left','Bottom Right','Bottom Left','Middle Right','Middle Left'])
+
+var volPos = position.top_right
+switch volTablePos
+    'Top Left'     => volPos := position.top_left
+    'Bottom Right' => volPos := position.bottom_right
+    'Bottom Left'  => volPos := position.bottom_left
+    'Middle Right' => volPos := position.middle_right
+    'Middle Left'  => volPos := position.middle_left
+
+var table volTable = table.new(volPos, 4, 3, bgcolor = color.new(color.gray, 80), border_width = 1)
+if barstate.islast and showVolTable
+    table.cell(volTable, 0, 0, 'Metric', bgcolor = color.navy,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 1, 0, 'Length', bgcolor = color.navy,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 2, 0, 'Value',  bgcolor = color.navy,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 3, 0, '%Price', bgcolor = color.navy,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 0, 1, 'ATR',    bgcolor = color.blue,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 1, 1, str.tostring(atrLen_st),              bgcolor = color.blue,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 2, 1, str.tostring(atr_val, '#.###'),       bgcolor = color.blue,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 3, 1, str.tostring(atr_pct, '#.##') + '%', bgcolor = color.blue,   text_color = color.white, text_size = size.small)
+    table.cell(volTable, 0, 2, 'ABR',    bgcolor = color.maroon, text_color = color.white, text_size = size.small)
+    table.cell(volTable, 1, 2, str.tostring(abrLen),                 bgcolor = color.maroon, text_color = color.white, text_size = size.small)
+    table.cell(volTable, 2, 2, str.tostring(abr, '#.###'),           bgcolor = color.maroon, text_color = color.white, text_size = size.small)
+    table.cell(volTable, 3, 2, str.tostring(abr_pct, '#.##') + '%', bgcolor = color.maroon, text_color = color.white, text_size = size.small)
+
+// ── ST Breakout Bar ──────────────────────────────────────────
+barcolor(enableBOColor and showBO and bullBO ? color.new(#6e90d8, 0) : na, title = 'Bull BO')
+barcolor(enableBOColor and showBO and bearBO ? color.new(#d7d1d8, 0) : na, title = 'Bear BO')
+
+// ── ST Two-Leg ────────────────────────────────────────────────
+if barstate.isconfirmed
+    if showLegs and not na(pivLow)
+        st_isLeg2 = not na(pH1) and not na(pL2) and pL1 > pL2
+        st_lbl    = st_isLeg2 ? '2' : '1'
+        st_lCol   = st_isLeg2 ? color.new(color.lime, 20) : color.new(color.blue, 30)
+        label.new(bar_index - legPivotLen, pivLow  * (1 - lbl_offset / 100), st_lbl, color = st_lCol, textcolor = color.white, style = label.style_label_up,   size = size.tiny)
+    if showLegs and not na(pivHigh)
+        st_isLeg2 = not na(pL1) and not na(pH2) and pH1 < pH2
+        st_lbl    = st_isLeg2 ? '2' : '1'
+        st_lCol   = st_isLeg2 ? color.new(color.red, 20) : color.new(color.red, 50)
+        label.new(bar_index - legPivotLen, pivHigh * (1 + lbl_offset / 100), st_lbl, color = st_lCol, textcolor = color.white, style = label.style_label_down, size = size.tiny)
+
+// ── ST Late Leg ───────────────────────────────────────────────
+barcolor(enableLateLegColor and lateLegUp and not wedgeUp ? color.new(color.yellow, 60) : na, title = 'Late Leg Up')
+barcolor(enableLateLegColor and lateLegDn and not wedgeDn ? color.new(#b83d3d,      60) : na, title = 'Late Leg Dn')
+
+if barstate.isconfirmed
+    if wedgeUp and not wedgeUp[1]
+        label.new(bar_index, high * (1 + lbl_offset / 100), 'WedgeUp', color = color.new(#38ad2d, 20), textcolor = color.white, style = label.style_label_down, size = size.small)
+    if wedgeDn and not wedgeDn[1]
+        label.new(bar_index, low  * (1 - lbl_offset / 100), 'WedgeDn', color = color.new(#e96342, 20), textcolor = color.white, style = label.style_label_up,   size = size.small)
+
+// ── HH / HL / LH / LL Labels ─────────────────────────────────
+plotshape(show_labels and _hl, text = 'HL', title = 'Higher Low',  style = shape.labelup,   color = color.new(color.lime, label_bg_transp), textcolor = color.black, location = location.belowbar, offset = -rb)
+plotshape(show_labels and _hh, text = 'HH', title = 'Higher High', style = shape.labeldown, color = color.new(color.lime, label_bg_transp), textcolor = color.black, location = location.abovebar, offset = -rb)
+plotshape(show_labels and _ll, text = 'LL', title = 'Lower Low',   style = shape.labelup,   color = color.new(color.red,  label_bg_transp), textcolor = color.white, location = location.belowbar, offset = -rb)
+plotshape(show_labels and _lh, text = 'LH', title = 'Lower High',  style = shape.labeldown, color = color.new(color.red,  label_bg_transp), textcolor = color.white, location = location.abovebar, offset = -rb)
+
+barcolor(enableTrendBarColor and changebarcol ? trend ==  1 ? bcolup : trend == -1 ? bcoldn : bcolflat : na, title = 'Trend Bar Color')
+
+// ── ST State Table ────────────────────────────────────────────
+stateTablePos = input.string('top_right', 'State Table Position', group = G_STATS, options = ['top_right','top_left','bottom_right','bottom_left'])
+
+var table stateInfo = table.new(f_statePos(stateTablePos), 1, 1)
+if barstate.islast
+    color  st_bg = is_choppy ? color.orange : color.green
+    string st_tx = is_choppy ? 'STATE: CHOP (Avoid)' : 'STATE: TREND (Trade)'
+    table.cell(stateInfo, 0, 0, st_tx, bgcolor = st_bg, text_color = color.white)
+
+// ── ST Opening Range ──────────────────────────────────────────
+enableOpeningRange = input.bool(true,        'Enable Opening Range',             group = 'Opening Range')
+orDuration         = input.int(5,            'Opening Range Duration (minutes)', group = 'Opening Range', options = [1, 5, 15, 30])
+rangeColor         = input.color(color.gray, 'Range Line Color',                 group = 'Opening Range')
+rangeFillColor     = input.color(color.new(color.gray, 85), 'Range Fill Color',  group = 'Opening Range')
+rangeStyle         = input.string('Solid',   'Range Line Style',                 group = 'Opening Range', options = ['Solid','Dashed','Dotted'])
+rangeWidth         = input.int(2,            'Range Line Width',                 group = 'Opening Range', minval = 1, maxval = 4)
+
+getLineStyle(style) =>
+    switch style
+        'Solid'  => line.style_solid
+        'Dashed' => line.style_dashed
+        'Dotted' => line.style_dotted
+
+rth_start = timestamp('America/New_York', year, month, dayofmonth, 9, 30)
+rth_end   = timestamp('America/New_York', year, month, dayofmonth, 9, 30 + orDuration)
+rth_close = timestamp('America/New_York', year, month, dayofmonth, 16, 0)
+
+var float orHigh     = na
+var float orLow      = na
+var bool  orBoxDrawn = false
+
+if bool(ta.change(time('D')))
+    orHigh     := na
+    orLow      := na
+    orBoxDrawn := false
+
+inOpeningRange = time >= rth_start and time < rth_end
+
+if inOpeningRange
+    orHigh := na(orHigh) ? high : math.max(orHigh, high)
+    orLow  := na(orLow)  ? low  : math.min(orLow,  low)
+
+if enableOpeningRange and not inOpeningRange and not orBoxDrawn and not na(orHigh) and not na(orLow)
+    box.new(left = rth_start, top = orHigh, right = rth_close, bottom = orLow, xloc = xloc.bar_time, bgcolor = rangeFillColor, border_color = color.new(color.white, 100))
+    line.new(x1 = rth_start, y1 = orHigh, x2 = rth_close, y2 = orHigh, xloc = xloc.bar_time, color = rangeColor, style = getLineStyle(rangeStyle), width = rangeWidth)
+    line.new(x1 = rth_start, y1 = orLow,  x2 = rth_close, y2 = orLow,  xloc = xloc.bar_time, color = rangeColor, style = getLineStyle(rangeStyle), width = rangeWidth)
+    orBoxDrawn := true
+
+// ── ST Watermark ─────────────────────────────────────────────
+wmTitle      = input.string('Sire Mammat', 'Title',          group = G_WM)
+wmSubtitle   = input.string('PATIENCE  |  DISCIPLINE  |  FEARLESS  |  EXECUTION', 'Subtitle', group = G_WM)
+showSubtitle = input.bool(true,            'Show Subtitle',  group = G_WM)
+c_title      = input.color(color.new(#b2b5be,   0), 'Title Color',    group = G_WM)
+c_subtitle   = input.color(color.new(#b2b5be,  30), 'Subtitle Color', group = G_WM)
+s_title      = input.string('large',  'Title Size',    group = G_WM, options = ['tiny','small','normal','large','huge','auto'])
+s_subtitle   = input.string('normal', 'Subtitle Size', group = G_WM, options = ['tiny','small','normal','large','huge','auto'])
+c_bg         = input.color(color.new(#b2b5be, 100), 'Background',     group = G_WM)
+textVPos     = input.string('bottom', 'Vertical Position',   group = G_WMPOS, options = ['top','middle','bottom'])
+textHPos     = input.string('center', 'Horizontal Position', group = G_WMPOS, options = ['left','center','right'])
+
+f_getAnchor(vPos, hPos) =>
+    switch vPos + '_' + hPos
+        'top_left'      => position.top_left
+        'top_center'    => position.top_center
+        'top_right'     => position.top_right
+        'middle_left'   => position.middle_left
+        'middle_center' => position.middle_center
+        'middle_right'  => position.middle_right
+        'bottom_left'   => position.bottom_left
+        'bottom_center' => position.bottom_center
+        'bottom_right'  => position.bottom_right
+        =>                 position.middle_center
+
+var table textWatermark = table.new(f_getAnchor(textVPos, textHPos), 1, 2)
+if barstate.islast
+    table.cell(textWatermark, 0, 0, wmTitle, text_color = c_title, text_size = s_title, bgcolor = c_bg)
+    if showSubtitle
+        table.cell(textWatermark, 0, 1, wmSubtitle, text_color = c_subtitle, text_size = s_subtitle, bgcolor = c_bg)
+
+// ═══════════════════════════════════════════════════════════════
+// SECTION E — ALERT CONDITIONS
+// ═══════════════════════════════════════════════════════════════
+
+alertcondition(gl_longTrig and gl_alertL8,   'L8 Signal',    'GreenLight Pro: LONG L8 signal triggered')
+alertcondition(gl_shortTrig and gl_alertB8,  'B8 Signal',    'GreenLight Pro: SHORT B8 signal triggered')
+alertcondition(gl_bullStr == 4 and gl_alertL4, 'L4 Signal',  'GreenLight Pro: Bullish momentum building (L4)')
+alertcondition(gl_bearStr == 4 and gl_alertB4, 'B4 Signal',  'GreenLight Pro: Bearish momentum building (B4)')
+alertcondition(gl_gapClosed and gl_alertGap, 'Gap 20 Close', 'GreenLight Pro: 20-bar EMA gap closed')
+alertcondition(wedgeUp and gl_alertWedge,    'Wedge Up',     'GreenLight Pro: 3-push wedge top detected')
+alertcondition(wedgeDn and gl_alertWedge,    'Wedge Down',   'GreenLight Pro: 3-push wedge bottom detected')
+alertcondition(td_up9,    'TD Buy Setup',    'GreenLight Pro: TD Sequential Buy Setup (9)')
+alertcondition(td_dn9,    'TD Sell Setup',   'GreenLight Pro: TD Sequential Sell Setup (9)')
+alertcondition(td_buy_cd == 13,  'TD Buy CD13',  'GreenLight Pro: TD Countdown Buy Complete (13)')
+alertcondition(td_sell_cd == 13, 'TD Sell CD13', 'GreenLight Pro: TD Countdown Sell Complete (13)')
