@@ -413,88 +413,138 @@
     "sourceFile": "Sire Cockpit"
   },
   {
-    "slug": "sire-greenlight-core",
-    "name": "Sire-GreenLight Core",
-    "version": "v1",
-    "tagline": "Trend-continuation momentum with a 4-filter system and three conviction-tiered signals",
-    "category": "Trend Continuation",
+    "slug": "greenlight-pro-enhanced",
+    "name": "GreenLight Pro Enhanced",
+    "version": "v2.0",
+    "tagline": "Eight subsystems on one clean chart — L8/B8 momentum gated by EMA, volume, structure and a 0–4 confluence score",
+    "category": "Momentum Suite",
     "status": "Stable",
     "markets": [
-      "ES",
-      "NQ",
+      "MNQ",
       "MES",
-      "MNQ"
+      "NQ",
+      "ES"
     ],
-    "timeframes": "5m – 1H (intraday)",
-    "description": "A trend-continuation momentum indicator built for index futures. It tracks consecutive directional bars against a 20 EMA bias through a four-layer filter system, then prints three signal tiers at different conviction levels: L8/B8 PRO (highest), L4/B4 (early warning), and Gap 20 EMA (continuation alert). Works best during RTH when volume and liquidity are highest.",
+    "timeframes": "5m primary · 15m confirm (intraday)",
+    "description": "A streamlined multi-system trading suite that folds momentum signal generation, structural swing analysis, TD Sequential exhaustion, candlestick patterns and volume analysis into one clean overlay. The heart is the GreenLight Core: it counts consecutive momentum bars (L1–L8 / B1–B8) and only fires an L8/B8 PRO signal when six filters agree — EMA side, EMA slope, 0.75× ATR proximity, 1.2× volume, trending structure, and a configurable 0–4 confluence score. Around it sit Brooks' Gap 20 tracker, the 18-bar RTH opening-range box (Coil / BO / TR), TD Sequential, OO/II/IOI candle patterns, two-leg & 3-push wedge detection, and HH/HL/LH/LL swing structure with dynamic S/R. This Clean Edition strips the old PA-entry arrows, Always-In arrows, inside-bar breakout arrows and the duplicate slow EMA, leaving only high-conviction, actionable signals. Optimized for MNQ/MES futures; works on any instrument with volume.",
     "features": [
-      "L8/B8 PRO signals — highest conviction, 8 consecutive directional bars",
-      "L4/B4 early warnings — 4 consecutive bars, prepare for entry",
-      "Gap 20 EMA continuation alerts",
-      "4-filter system: EMA direction, consecutive bars, volume, price position",
-      "20 EMA bias tracking with stop and target levels on every signal"
+      "GreenLight Core L8/B8 PRO engine — momentum streak gated by six filters and a 0–4 confluence score",
+      "Signal quality scoring printed on every label (EMA agreement, volume, structure, Gap 20 context)",
+      "Structure engine classifies UPTREND / DOWNTREND / TRADING RANGE / MIXED and suppresses signals in chop",
+      "Brooks Gap 20 tracker — flags when price has run 20+ bars from the 20 EMA",
+      "18-bar RTH opening-range box with Coil / B-Trade BO / TR day-type classification",
+      "TD Sequential — Setup (1–9) and Countdown (1–13) with auto-reset, lines and optional counts",
+      "Two-leg structure and 3-push wedge reversal detection (Wedge Up / Down alerts)",
+      "HH/HL/LH/LL swing structure with dynamic support/resistance lines that extend until broken",
+      "Risk/Reward overlay auto-draws stop and target at your R:R ratio on each signal",
+      "Momentum dashboard, ATR/ABR table, RTH+ETH bar counter, session stats, and 11 alert conditions"
     ],
     "signals": [
       {
-        "name": "L8/B8 PRO",
-        "meaning": "8 consecutive directional bars — highest conviction, full position entry"
+        "name": "L8 PRO / B8 PRO",
+        "meaning": "Primary entry — 8-bar momentum streak with all filters passed; the label shows its 0–4 score (4/4 = max confluence)"
       },
       {
-        "name": "L4/B4",
-        "meaning": "4 consecutive bars — early warning, prepare for entry and reduce size"
+        "name": "L4 / B4 dot",
+        "meaning": "Early-warning dot — momentum has reached 4 bars; watch for development into a full L8/B8"
       },
       {
-        "name": "Gap 20 EMA",
-        "meaning": "Price gaps away from the EMA — continuation alert, monitor for follow-through"
+        "name": "GAP 20 TOUCH",
+        "meaning": "Price ran 20+ bars from the 20 EMA — extended trend, watch for mean reversion or continuation"
+      },
+      {
+        "name": "TD Setup 9",
+        "meaning": "DeMark setup complete — potential exhaustion, prepare for a turn"
+      },
+      {
+        "name": "TD Countdown 13",
+        "meaning": "Countdown complete — high-probability exhaustion / reversal zone"
+      },
+      {
+        "name": "Wedge Up / Down",
+        "meaning": "3-push wedge top or bottom — reversal alert, wait for confirmation from another system"
+      },
+      {
+        "name": "OO / II / IOI",
+        "meaning": "Outside-outside (expansion), inside-inside (compression) and inside-outside-inside (contraction) patterns"
+      },
+      {
+        "name": "Inside bar (yellow/purple)",
+        "meaning": "Bull inside bar (yellow) or bear inside bar (purple) — pending continuation of the prior range"
+      },
+      {
+        "name": "HH / HL / LH / LL",
+        "meaning": "Swing pivots defining structure; HH/HL = uptrend intact, LH/LL = downtrend intact"
       }
     ],
     "settings": [
       {
-        "name": "EMA Period",
+        "name": "EMA Length",
         "defaultValue": "20",
-        "description": "Standard trend anchor"
+        "description": "GreenLight trend EMA, plotted green/red by slope"
       },
       {
-        "name": "Consecutive Bars (PRO)",
+        "name": "ATR Length",
+        "defaultValue": "14",
+        "description": "Used by the proximity filter and the R:R overlay"
+      },
+      {
+        "name": "Max Distance from EMA",
+        "defaultValue": "0.75× ATR",
+        "description": "Maximum allowed distance from the EMA — prevents chasing extended moves"
+      },
+      {
+        "name": "Volume Multiplier",
+        "defaultValue": "1.2×",
+        "description": "Volume must exceed the 20-bar average by this multiple"
+      },
+      {
+        "name": "Trigger Level (L8/B8)",
         "defaultValue": "8",
-        "description": "Full signal — highest conviction"
+        "description": "Consecutive momentum bars required to fire a signal"
       },
       {
-        "name": "Consecutive Bars (Early)",
-        "defaultValue": "4",
-        "description": "Warning signal — prepare for entry"
+        "name": "Swing Lookback",
+        "defaultValue": "10 bars",
+        "description": "Lookback for swing high/low detection"
       },
       {
-        "name": "Timeframe",
-        "defaultValue": "5m – 1H",
-        "description": "Lower TF = more signals and more noise"
+        "name": "TR Range",
+        "defaultValue": "3.0× ATR",
+        "description": "Range below this multiple classifies the market as a Trading Range"
       },
       {
-        "name": "Best Session",
-        "defaultValue": "RTH",
-        "description": "9:30–16:00 ET — highest volume and liquidity"
+        "name": "Min Confluence Score",
+        "defaultValue": "3 / 4",
+        "description": "Minimum 0–4 score for an L8/B8 signal to fire"
       },
       {
-        "name": "Instruments",
-        "defaultValue": "ES/NQ",
-        "description": "Optimized for ES, NQ, MES, MNQ"
+        "name": "Target R:R Ratio",
+        "defaultValue": "2.0",
+        "description": "Risk multiple for the auto-drawn target line"
+      },
+      {
+        "name": "Fast EMA / MTF EMA / Cloud",
+        "defaultValue": "Off",
+        "description": "Optional 9-period fast EMA, 200 MTF EMA, and fill cloud between fast and GL 20"
       }
     ],
     "howToUse": [
       "Open TradingView and go to Pine Editor (bottom panel).",
       "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Set a 5m–1H intraday chart on ES/NQ/MES/MNQ during RTH.",
-      "Treat L8/B8 PRO as your primary entry; use L4/B4 as a heads-up to get ready.",
-      "Confirm the 20 EMA bias agrees with the signal direction before committing.",
-      "Use the stop and target levels printed with each signal — don't widen the stop."
+      "Click \"Add to chart\". Use a 5-minute chart (primary) on MNQ/MES/NQ/ES; add a 15-minute for confirmation.",
+      "Let the opening range form, then read the State Table — if it shows CHOP (orange), stand aside; if TREND (green), proceed.",
+      "Take L8/B8 PRO labels scoring 3/4 or 4/4 in the direction of the structure; treat L4/B4 dots as a heads-up only.",
+      "Confirm with the dashboard (structure matches direction), TD Sequential (no opposing exhaustion) and swing structure, then use the R:R overlay's stop and target to manage the trade."
     ],
     "bestPractices": [
-      "Strong Trend — best when price is trending away from the 20 EMA with consecutive directional bars.",
-      "High Volume — volume must confirm momentum; low-volume signals are weaker.",
-      "RTH Session — strongest when institutions are active during regular hours.",
-      "Aligned Timeframes — take signals where the 5m and 15m agree on direction."
+      "Trend only — L8/B8 fire just in UPTREND/DOWNTREND; in TRADING RANGE or CHOP the signals are suppressed, so don't force them.",
+      "Best window is the 10:00–11:30 ET morning session on above-average volume; the 11:30–13:30 lunch lull produces lower-probability signals.",
+      "Prioritize score 4/4 over 3/4, and weight setups where multiple systems agree (e.g. L8 PRO + UPTREND + HH/HL, or B8 PRO + TD Buy CD13 + Gap 20).",
+      "Respect the 18-bar box: COIL favors a patient breakout, BO favors trading with trend, TR favors fading the extremes.",
+      "A Countdown 13 or a 3-push wedge against your direction is a reason to tighten or wait — confirm exhaustion before countering a trend."
     ],
-    "sourceFile": ""
+    "sourceFile": "Sire-GreenLight Pro Enhanced"
   },
   {
     "slug": "sire-schoolfishing",
