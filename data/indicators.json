@@ -6,92 +6,14 @@
     "tagline": "Opening Range Breakout with confluence scoring and Al Brooks price action context",
     "category": "Breakout",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "1m – 15m (intraday)",
     "description": "A complete opening-range trading system. It builds the opening range, classifies the day type (Coil, Breakout, Trading Range), then grades every breakout with a confluence score from A+ to C using gap analysis, VWAP positioning, relative volume, time-of-day quality, and ADR consumption. Brooks Box logic frames the session in Al Brooks price action context so you only take breakouts with institutional participation behind them.",
-    "features": [
-      "Confluence scoring engine (0–8 points) graded A+ / A / B / C",
-      "Automatic day-type classification: COIL, BREAKOUT, TRADING RANGE",
-      "Initial Balance extensions with measured-move targets",
-      "Gap analysis: up gap, down gap, gap fill tracking",
-      "Relative volume gate — signals suppressed without volume confirmation",
-      "ADR consumption meter to avoid late-day chasing",
-      "Time-of-day quality filter (prime / neutral / caution windows)",
-      "Optional suppression of trading-range days and lunch chop"
-    ],
-    "signals": [
-      {
-        "name": "BRK ▲ / BRK ▼",
-        "meaning": "Opening range breakout up / down with confluence grade attached"
-      },
-      {
-        "name": "FAIL ▲ / FAIL ▼",
-        "meaning": "Failed breakout — fade opportunity back into the range"
-      },
-      {
-        "name": "RT ▲ / RT ▼",
-        "meaning": "Successful retest of the broken range edge — second-entry opportunity"
-      },
-      {
-        "name": "A+ / A grade",
-        "meaning": "Full confluence — highest probability, full size"
-      },
-      {
-        "name": "B / C grade",
-        "meaning": "Partial confluence — reduced size or skip"
-      }
-    ],
-    "settings": [
-      {
-        "name": "OR Time Period",
-        "defaultValue": "30 min",
-        "description": "Length of the opening range window from session open"
-      },
-      {
-        "name": "Volume Gate",
-        "defaultValue": "1.2x",
-        "description": "Minimum relative volume multiple required to print a signal"
-      },
-      {
-        "name": "Target Percent",
-        "defaultValue": "50%",
-        "description": "Measured-move target as a percentage of OR width"
-      },
-      {
-        "name": "Suppress TR Days",
-        "defaultValue": "On",
-        "description": "Hide breakout signals when the day classifies as Trading Range"
-      },
-      {
-        "name": "Contracts",
-        "defaultValue": "10",
-        "description": "Position size used for the dollar P/L readout"
-      },
-      {
-        "name": "Tick Value",
-        "defaultValue": "12.50",
-        "description": "Per-tick dollar value (ES default)"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Set your chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.",
-      "Wait for the opening range to complete (default first 30 minutes of the session).",
-      "Only consider signals graded A or A+ when starting out — the grade prints with each signal.",
-      "Use the dashboard panel to check day type, ADR consumption, and volume status before entry."
-    ],
-    "bestPractices": [
-      "A+ breakouts on BREAKOUT-classified days are the bread-and-butter trade.",
-      "Skip signals after 70% ADR consumption — the move is mostly done.",
-      "FAIL signals work best on COIL days that trap early breakout traders.",
-      "Respect the volume gate. No volume, no trade — that is the institutional footprint filter."
-    ],
+    "features": ["Confluence scoring engine (0–8 points) graded A+ / A / B / C", "Automatic day-type classification: COIL, BREAKOUT, TRADING RANGE", "Initial Balance extensions with measured-move targets", "Gap analysis: up gap, down gap, gap fill tracking", "Relative volume gate — signals suppressed without volume confirmation", "ADR consumption meter to avoid late-day chasing", "Time-of-day quality filter (prime / neutral / caution windows)", "Optional suppression of trading-range days and lunch chop"],
+    "signals": [{"name": "BRK ▲ / BRK ▼", "meaning": "Opening range breakout up / down with confluence grade attached"}, {"name": "FAIL ▲ / FAIL ▼", "meaning": "Failed breakout — fade opportunity back into the range"}, {"name": "RT ▲ / RT ▼", "meaning": "Successful retest of the broken range edge — second-entry opportunity"}, {"name": "A+ / A grade", "meaning": "Full confluence — highest probability, full size"}, {"name": "B / C grade", "meaning": "Partial confluence — reduced size or skip"}],
+    "settings": [{"name": "OR Time Period", "defaultValue": "30 min", "description": "Length of the opening range window from session open"}, {"name": "Volume Gate", "defaultValue": "1.2x", "description": "Minimum relative volume multiple required to print a signal"}, {"name": "Target Percent", "defaultValue": "50%", "description": "Measured-move target as a percentage of OR width"}, {"name": "Suppress TR Days", "defaultValue": "On", "description": "Hide breakout signals when the day classifies as Trading Range"}, {"name": "Contracts", "defaultValue": "10", "description": "Position size used for the dollar P/L readout"}, {"name": "Tick Value", "defaultValue": "12.50", "description": "Per-tick dollar value (ES default)"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Set your chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.", "Wait for the opening range to complete (default first 30 minutes of the session).", "Only consider signals graded A or A+ when starting out — the grade prints with each signal.", "Use the dashboard panel to check day type, ADR consumption, and volume status before entry."],
+    "bestPractices": ["A+ breakouts on BREAKOUT-classified days are the bread-and-butter trade.", "Skip signals after 70% ADR consumption — the move is mostly done.", "FAIL signals work best on COIL days that trap early breakout traders.", "Respect the volume gate. No volume, no trade — that is the institutional footprint filter."],
     "sourceFile": "Institutional ORB + Brooks Box v3"
   },
   {
@@ -101,90 +23,14 @@
     "tagline": "Linda Raschke's classic playbook converted into a 12-rule scoring engine",
     "category": "Trend",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "5m – 1H",
     "description": "Linda Raschke's trading principles encoded into an objective bull/bear scoring engine. Each of the 12 rules is checked in real time — EMA stack alignment, momentum, volume, range expansion and more — and produces a live Bull Score and Bear Score from 0–12. When a side reaches the minimum threshold with volume confirmation, the indicator prints a graded signal: from full trend entries to pullback continuations, failed-breakout fades, and exhaustion warnings.",
-    "features": [
-      "Live Bull Score and Bear Score (0–12) with rule-by-rule checklist",
-      "Triple EMA stack analysis (9 / 20 / 50) with alignment states",
-      "Signal quality grading: STRONG, SOLID, MODERATE, WEAK",
-      "Six signal types covering trend, pullback, fade, and exhaustion setups",
-      "Volume confirmation gate on every signal",
-      "RSI and ATR context in the dashboard panel"
-    ],
-    "signals": [
-      {
-        "name": "LONG / SHORT",
-        "meaning": "Bull or Bear score reached threshold with full confirmation — trend entry"
-      },
-      {
-        "name": "PULLBACK",
-        "meaning": "Continuation entry after a retrace to the EMA stack within an active trend"
-      },
-      {
-        "name": "FAILED BREAKOUT",
-        "meaning": "Breakout failed and reversed — fade signal against trapped traders"
-      },
-      {
-        "name": "EXHAUSTION",
-        "meaning": "Trend over-extended — take profits or tighten stops, do not initiate"
-      },
-      {
-        "name": "DIVERGENCE",
-        "meaning": "Price/momentum divergence detected — early reversal warning"
-      }
-    ],
-    "settings": [
-      {
-        "name": "Fast EMA",
-        "defaultValue": "9",
-        "description": "Fast moving average of the stack"
-      },
-      {
-        "name": "Mid EMA",
-        "defaultValue": "20",
-        "description": "Mid moving average of the stack"
-      },
-      {
-        "name": "Slow EMA",
-        "defaultValue": "50",
-        "description": "Slow moving average / trend filter"
-      },
-      {
-        "name": "Min Bull Score",
-        "defaultValue": "8",
-        "description": "Minimum score (of 12) required to print a LONG signal"
-      },
-      {
-        "name": "Min Bear Score",
-        "defaultValue": "8",
-        "description": "Minimum score (of 12) required to print a SHORT signal"
-      },
-      {
-        "name": "Volume Multiplier",
-        "defaultValue": "1.2x",
-        "description": "Relative volume required for signal confirmation"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Works best on 5m–1H charts on index futures.",
-      "Watch the rule checklist panel — a score of 8+ on either side arms that direction.",
-      "Enter on the printed signal, not on the score alone. The signal includes volume confirmation.",
-      "Use EXHAUSTION and DIVERGENCE prints as exit management, not as entries."
-    ],
-    "bestPractices": [
-      "STRONG-grade signals with a PERFECT EMA stack are the highest-probability entries.",
-      "PULLBACK signals in an established trend outperform fresh breakout entries.",
-      "When both Bull and Bear scores are below 6, stand aside — the market has no edge.",
-      "Score 8 is the floor, not the target. 10–12 readings are where the real trades live."
-    ],
+    "features": ["Live Bull Score and Bear Score (0–12) with rule-by-rule checklist", "Triple EMA stack analysis (9 / 20 / 50) with alignment states", "Signal quality grading: STRONG, SOLID, MODERATE, WEAK", "Six signal types covering trend, pullback, fade, and exhaustion setups", "Volume confirmation gate on every signal", "RSI and ATR context in the dashboard panel"],
+    "signals": [{"name": "LONG / SHORT", "meaning": "Bull or Bear score reached threshold with full confirmation — trend entry"}, {"name": "PULLBACK", "meaning": "Continuation entry after a retrace to the EMA stack within an active trend"}, {"name": "FAILED BREAKOUT", "meaning": "Breakout failed and reversed — fade signal against trapped traders"}, {"name": "EXHAUSTION", "meaning": "Trend over-extended — take profits or tighten stops, do not initiate"}, {"name": "DIVERGENCE", "meaning": "Price/momentum divergence detected — early reversal warning"}],
+    "settings": [{"name": "Fast EMA", "defaultValue": "9", "description": "Fast moving average of the stack"}, {"name": "Mid EMA", "defaultValue": "20", "description": "Mid moving average of the stack"}, {"name": "Slow EMA", "defaultValue": "50", "description": "Slow moving average / trend filter"}, {"name": "Min Bull Score", "defaultValue": "8", "description": "Minimum score (of 12) required to print a LONG signal"}, {"name": "Min Bear Score", "defaultValue": "8", "description": "Minimum score (of 12) required to print a SHORT signal"}, {"name": "Volume Multiplier", "defaultValue": "1.2x", "description": "Relative volume required for signal confirmation"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Works best on 5m–1H charts on index futures.", "Watch the rule checklist panel — a score of 8+ on either side arms that direction.", "Enter on the printed signal, not on the score alone. The signal includes volume confirmation.", "Use EXHAUSTION and DIVERGENCE prints as exit management, not as entries."],
+    "bestPractices": ["STRONG-grade signals with a PERFECT EMA stack are the highest-probability entries.", "PULLBACK signals in an established trend outperform fresh breakout entries.", "When both Bull and Bear scores are below 6, stand aside — the market has no edge.", "Score 8 is the floor, not the target. 10–12 readings are where the real trades live."],
     "sourceFile": "Raschke 12 Rules-SireMammatEdition"
   },
   {
@@ -194,103 +40,14 @@
     "tagline": "Eight-point pre-trade gate — only fires when institutional context lines up",
     "category": "Qualification",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "1m – 15m (intraday)",
     "description": "A pre-trade qualification engine, not a signal generator. Every bar is run through eight institutional checks — EMA 20/50/200 trend stack, volume against its MA, proximity to prior swing levels, session timing, strong-bar confirmation, ATR-bounded stop distance, minimum R:R, and higher-timeframe context. A setup only qualifies when at least 6 of 8 pass. The live scorecard shows you exactly which checks failed in real time, so you can read context — not just signals. Designed to be paired with the Brooks Box framework on the same chart for the highest-conviction entries.",
-    "features": [
-      "Eight institutional checks scored 0–8 with live pass/fail scorecard",
-      "≥6/8 gate threshold — only qualified setups print FIRE labels",
-      "Long and Short scores tracked independently in real time",
-      "Prior day high/low and overnight range with midpoint plotted",
-      "Point of Control, Value Area High/Low, and Session POC overlays",
-      "Configurable bar numbering for RTH and ETH session structure",
-      "Configurable scorecard position (4 corners) and line styles",
-      "Built-in alerts for both LONG and SHORT gate passes"
-    ],
-    "signals": [
-      {
-        "name": "▲ FIRE",
-        "meaning": "LONG gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."
-      },
-      {
-        "name": "▼ FIRE",
-        "meaning": "SHORT gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."
-      },
-      {
-        "name": "Gate OPEN",
-        "meaning": "The scorecard reports the 6/8 threshold is currently met — the bar is qualified for entry"
-      },
-      {
-        "name": "Gate CLOSED",
-        "meaning": "Below threshold — stand aside, no qualified setup right now"
-      },
-      {
-        "name": "R:R readout",
-        "meaning": "Live risk-reward ratio for both directions, highlighted green when above your minimum"
-      }
-    ],
-    "settings": [
-      {
-        "name": "Volume MA Length",
-        "defaultValue": "20",
-        "description": "Lookback for the volume baseline"
-      },
-      {
-        "name": "Min Volume Multiplier",
-        "defaultValue": "1.0x",
-        "description": "Volume must clear MA × this multiple to pass the Liquidity check"
-      },
-      {
-        "name": "SR Swing Length",
-        "defaultValue": "20",
-        "description": "Lookback used to define the prior swing high and low"
-      },
-      {
-        "name": "Primary Session",
-        "defaultValue": "0830-1100",
-        "description": "First high-quality window for the Timing check"
-      },
-      {
-        "name": "Secondary Session",
-        "defaultValue": "1300-1500",
-        "description": "Second high-quality window for the Timing check"
-      },
-      {
-        "name": "Max Stop × ATR",
-        "defaultValue": "1.5",
-        "description": "Stop must be within ATR × this multiple to pass the Risk check"
-      },
-      {
-        "name": "Min R:R",
-        "defaultValue": "2.0",
-        "description": "Minimum projected risk-reward for the Reward check to pass"
-      },
-      {
-        "name": "Higher Timeframe",
-        "defaultValue": "D",
-        "description": "Higher timeframe used for the Context check (default daily)"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Set the chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.",
-      "Watch the scorecard — it shows exactly which of the 8 checks are passing or failing on the current bar.",
-      "Only take trades when ▲ FIRE or ▼ FIRE prints. The label includes the live score.",
-      "Tune the volume multiplier, ATR stop multiple, and minimum R:R to your instrument and timeframe."
-    ],
-    "bestPractices": [
-      "Use this as a gate, not as a trigger — if the gate is closed, you have no business in the trade.",
-      "8/8 setups are rare and the highest-quality. 6/8 is the floor, not the target — hunt for 7s and 8s when starting out.",
-      "Read the failed checks — they tell you what's missing from the setup, not just that the setup is weak.",
-      "The lunch-chop window (1130–1330 NY) actively penalises the Timing check. Respect the session windows.",
-      "Pair with Institutional ORB + Brooks Box on the same chart — qualification × structure is the highest-conviction trade."
-    ],
+    "features": ["Eight institutional checks scored 0–8 with live pass/fail scorecard", "≥6/8 gate threshold — only qualified setups print FIRE labels", "Long and Short scores tracked independently in real time", "Prior day high/low and overnight range with midpoint plotted", "Point of Control, Value Area High/Low, and Session POC overlays", "Configurable bar numbering for RTH and ETH session structure", "Configurable scorecard position (4 corners) and line styles", "Built-in alerts for both LONG and SHORT gate passes"],
+    "signals": [{"name": "▲ FIRE", "meaning": "LONG gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."}, {"name": "▼ FIRE", "meaning": "SHORT gate passed — ≥6/8 checks aligned with volume confirmation. Score is included in the label."}, {"name": "Gate OPEN", "meaning": "The scorecard reports the 6/8 threshold is currently met — the bar is qualified for entry"}, {"name": "Gate CLOSED", "meaning": "Below threshold — stand aside, no qualified setup right now"}, {"name": "R:R readout", "meaning": "Live risk-reward ratio for both directions, highlighted green when above your minimum"}],
+    "settings": [{"name": "Volume MA Length", "defaultValue": "20", "description": "Lookback for the volume baseline"}, {"name": "Min Volume Multiplier", "defaultValue": "1.0x", "description": "Volume must clear MA × this multiple to pass the Liquidity check"}, {"name": "SR Swing Length", "defaultValue": "20", "description": "Lookback used to define the prior swing high and low"}, {"name": "Primary Session", "defaultValue": "0830-1100", "description": "First high-quality window for the Timing check"}, {"name": "Secondary Session", "defaultValue": "1300-1500", "description": "Second high-quality window for the Timing check"}, {"name": "Max Stop × ATR", "defaultValue": "1.5", "description": "Stop must be within ATR × this multiple to pass the Risk check"}, {"name": "Min R:R", "defaultValue": "2.0", "description": "Minimum projected risk-reward for the Reward check to pass"}, {"name": "Higher Timeframe", "defaultValue": "D", "description": "Higher timeframe used for the Context check (default daily)"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Set the chart to a 1m–15m intraday timeframe on ES/NQ/MES/MNQ.", "Watch the scorecard — it shows exactly which of the 8 checks are passing or failing on the current bar.", "Only take trades when ▲ FIRE or ▼ FIRE prints. The label includes the live score.", "Tune the volume multiplier, ATR stop multiple, and minimum R:R to your instrument and timeframe."],
+    "bestPractices": ["Use this as a gate, not as a trigger — if the gate is closed, you have no business in the trade.", "8/8 setups are rare and the highest-quality. 6/8 is the floor, not the target — hunt for 7s and 8s when starting out.", "Read the failed checks — they tell you what's missing from the setup, not just that the setup is weak.", "The lunch-chop window (1130–1330 NY) actively penalises the Timing check. Respect the session windows.", "Pair with Institutional ORB + Brooks Box on the same chart — qualification × structure is the highest-conviction trade."],
     "sourceFile": "Sire Trade Qualification v1"
   },
   {
@@ -300,116 +57,14 @@
     "tagline": "All-in-one price-action HUD — structure, timing, bias and ICT zones on a single chart",
     "category": "All-in-One",
     "status": "Beta",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "1m – 1H (intraday)",
     "description": "A full chart command center that layers seven modules into one overlay so you can read structure, timing, bias and institutional zones at a glance. Market structure is mapped with automatic HH / HL / LH / LL pivots and self-extending support/resistance. A TD Sequential engine counts setups and prints 9s and 13s. A fast/slow EMA pair plus a higher-timeframe 200 EMA give trend bias. Inside-bar and IOI (inside-outside-inside) compression patterns are flagged, and a session bar-counter keeps you oriented inside the RTH window. The ICT layer draws Fair Value Gaps, Implied FVGs, Liquidity Voids, Volume Imbalances and true Gaps with full mitigation tracking. Standard FVG zones are detected on a selectable higher timeframe (30-minute by default) using only closed candles, so the zones are non-repainting and drawn cleanly on your execution chart. ICT zone engine adapted from open-source work by Vulnerable_human_x under the Mozilla Public License 2.0.",
-    "features": [
-      "Auto market structure: HH / HL / LH / LL pivots with self-extending support & resistance",
-      "TD Sequential setup counter with 9 and 13 prints plus optional pulse trails",
-      "EMA stack (fast/slow) plus higher-timeframe 200 EMA with slope coloring",
-      "Multi-timeframe FVG detection — pick any timeframe, 30m default, non-repainting",
-      "Full ICT zone engine: FVG, Implied FVG, Liquidity Void, Volume Imbalance, true Gaps",
-      "Mitigation tracking with Engulf / Mitigate / Rebalance modes and live highlight on tag",
-      "Inside-bar coloring (on by default) and IOI compression pattern flags",
-      "Session bar-counter for RTH structure with configurable interval and hourly markers",
-      "On-chart SireMammat's Cockpit watermark with full position and styling control"
-    ],
-    "signals": [
-      {
-        "name": "HH / HL",
-        "meaning": "Higher high / higher low — bullish structure confirmed at a swing pivot"
-      },
-      {
-        "name": "LH / LL",
-        "meaning": "Lower high / lower low — bearish structure confirmed at a swing pivot"
-      },
-      {
-        "name": "TD 9",
-        "meaning": "TD setup completed — momentum exhaustion warning, watch for a turn"
-      },
-      {
-        "name": "TD 13",
-        "meaning": "TD countdown completed — higher-conviction exhaustion / reversal zone"
-      },
-      {
-        "name": "FVG+ / FVG-",
-        "meaning": "Bullish / bearish Fair Value Gap from the selected timeframe — imbalance likely to be revisited"
-      },
-      {
-        "name": "VI+ / VI- · GAP+ / GAP-",
-        "meaning": "Volume Imbalance and true Gap zones, tracked until mitigated"
-      },
-      {
-        "name": "ioi",
-        "meaning": "Inside-Outside-Inside compression — coiled energy ahead of an expansion move"
-      },
-      {
-        "name": "Inside-bar color",
-        "meaning": "Bar painted on an inside bar — pending breakout of the prior bar's range"
-      }
-    ],
-    "settings": [
-      {
-        "name": "FVG Detection Timeframe",
-        "defaultValue": "30m",
-        "description": "Timeframe the standard FVG zones are detected on. Set equal to or higher than your chart timeframe."
-      },
-      {
-        "name": "FVG Type",
-        "defaultValue": "Normal",
-        "description": "Normal FVG zones, Liquidity Void chaining, or None"
-      },
-      {
-        "name": "MTF EMA Length / Timeframe",
-        "defaultValue": "200 / 30m",
-        "description": "Higher-timeframe trend EMA, off by default — toggle Show 200 MTF EMA to enable"
-      },
-      {
-        "name": "Session",
-        "defaultValue": "0830-1455",
-        "description": "RTH window used by the bar-counter and structure tools"
-      },
-      {
-        "name": "Change Bar Color (HH/LL trend)",
-        "defaultValue": "Off",
-        "description": "Trend-based bar coloring. Off by default so only inside-bar coloring shows."
-      },
-      {
-        "name": "Left / Right Bars",
-        "defaultValue": "5 / 5",
-        "description": "Pivot strength for the HH/HL/LH/LL structure engine"
-      },
-      {
-        "name": "Mitigation Type",
-        "defaultValue": "Engulf",
-        "description": "How FVG / VI / Gap zones are considered mitigated: Engulf, Mitigate or Rebalance"
-      },
-      {
-        "name": "Max Lookback for Pivots",
-        "defaultValue": "200",
-        "description": "How far back the structure engine searches for prior pivots"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". It works on any market but is tuned for ES/NQ/MES/MNQ intraday.",
-      "Set the FVG Detection Timeframe equal to or higher than your chart timeframe — a 5m chart with 30m FVG zones is the intended setup.",
-      "Use the EMA bias and TD 9/13 prints for context, structure pivots for the trend, and FVG/VI/Gap zones as entry and target reference.",
-      "Toggle modules you don't need from the settings to keep the chart clean."
-    ],
-    "bestPractices": [
-      "Trade with the higher-timeframe FVG zones, not against them — they mark where price is most likely to react.",
-      "A TD 13 landing inside an unmitigated HTF FVG is a high-conviction confluence to fade.",
-      "Inside-bar and IOI flags mark compression — let the breakout confirm before committing.",
-      "Keep the FVG timeframe above your chart timeframe; requesting a lower timeframe produces unreliable zones.",
-      "This is a context HUD, not a mechanical signal system — combine the modules, don't trade any one in isolation."
-    ],
+    "features": ["Auto market structure: HH / HL / LH / LL pivots with self-extending support & resistance", "TD Sequential setup counter with 9 and 13 prints plus optional pulse trails", "EMA stack (fast/slow) plus higher-timeframe 200 EMA with slope coloring", "Multi-timeframe FVG detection — pick any timeframe, 30m default, non-repainting", "Full ICT zone engine: FVG, Implied FVG, Liquidity Void, Volume Imbalance, true Gaps", "Mitigation tracking with Engulf / Mitigate / Rebalance modes and live highlight on tag", "Inside-bar coloring (on by default) and IOI compression pattern flags", "Session bar-counter for RTH structure with configurable interval and hourly markers", "On-chart SireMammat's Cockpit watermark with full position and styling control"],
+    "signals": [{"name": "HH / HL", "meaning": "Higher high / higher low — bullish structure confirmed at a swing pivot"}, {"name": "LH / LL", "meaning": "Lower high / lower low — bearish structure confirmed at a swing pivot"}, {"name": "TD 9", "meaning": "TD setup completed — momentum exhaustion warning, watch for a turn"}, {"name": "TD 13", "meaning": "TD countdown completed — higher-conviction exhaustion / reversal zone"}, {"name": "FVG+ / FVG-", "meaning": "Bullish / bearish Fair Value Gap from the selected timeframe — imbalance likely to be revisited"}, {"name": "VI+ / VI- · GAP+ / GAP-", "meaning": "Volume Imbalance and true Gap zones, tracked until mitigated"}, {"name": "ioi", "meaning": "Inside-Outside-Inside compression — coiled energy ahead of an expansion move"}, {"name": "Inside-bar color", "meaning": "Bar painted on an inside bar — pending breakout of the prior bar's range"}],
+    "settings": [{"name": "FVG Detection Timeframe", "defaultValue": "30m", "description": "Timeframe the standard FVG zones are detected on. Set equal to or higher than your chart timeframe."}, {"name": "FVG Type", "defaultValue": "Normal", "description": "Normal FVG zones, Liquidity Void chaining, or None"}, {"name": "MTF EMA Length / Timeframe", "defaultValue": "200 / 30m", "description": "Higher-timeframe trend EMA, off by default — toggle Show 200 MTF EMA to enable"}, {"name": "Session", "defaultValue": "0830-1455", "description": "RTH window used by the bar-counter and structure tools"}, {"name": "Change Bar Color (HH/LL trend)", "defaultValue": "Off", "description": "Trend-based bar coloring. Off by default so only inside-bar coloring shows."}, {"name": "Left / Right Bars", "defaultValue": "5 / 5", "description": "Pivot strength for the HH/HL/LH/LL structure engine"}, {"name": "Mitigation Type", "defaultValue": "Engulf", "description": "How FVG / VI / Gap zones are considered mitigated: Engulf, Mitigate or Rebalance"}, {"name": "Max Lookback for Pivots", "defaultValue": "200", "description": "How far back the structure engine searches for prior pivots"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". It works on any market but is tuned for ES/NQ/MES/MNQ intraday.", "Set the FVG Detection Timeframe equal to or higher than your chart timeframe — a 5m chart with 30m FVG zones is the intended setup.", "Use the EMA bias and TD 9/13 prints for context, structure pivots for the trend, and FVG/VI/Gap zones as entry and target reference.", "Toggle modules you don't need from the settings to keep the chart clean."],
+    "bestPractices": ["Trade with the higher-timeframe FVG zones, not against them — they mark where price is most likely to react.", "A TD 13 landing inside an unmitigated HTF FVG is a high-conviction confluence to fade.", "Inside-bar and IOI flags mark compression — let the breakout confirm before committing.", "Keep the FVG timeframe above your chart timeframe; requesting a lower timeframe produces unreliable zones.", "This is a context HUD, not a mechanical signal system — combine the modules, don't trade any one in isolation."],
     "sourceFile": "Sire Cockpit"
   },
   {
@@ -419,131 +74,14 @@
     "tagline": "Eight subsystems on one clean chart — L8/B8 momentum gated by EMA, volume, structure and a 0–4 confluence score",
     "category": "Momentum Suite",
     "status": "Stable",
-    "markets": [
-      "MNQ",
-      "MES",
-      "NQ",
-      "ES"
-    ],
+    "markets": ["MNQ", "MES", "NQ", "ES"],
     "timeframes": "5m primary · 15m confirm (intraday)",
     "description": "A streamlined multi-system trading suite that folds momentum signal generation, structural swing analysis, TD Sequential exhaustion, candlestick patterns and volume analysis into one clean overlay. The heart is the GreenLight Core: it counts consecutive momentum bars (L1–L8 / B1–B8) and only fires an L8/B8 PRO signal when six filters agree — EMA side, EMA slope, 0.75× ATR proximity, 1.2× volume, trending structure, and a configurable 0–4 confluence score. Around it sit Brooks' Gap 20 tracker, the 18-bar RTH opening-range box (Coil / BO / TR), TD Sequential, OO/II/IOI candle patterns, two-leg & 3-push wedge detection, and HH/HL/LH/LL swing structure with dynamic S/R. This Clean Edition strips the old PA-entry arrows, Always-In arrows, inside-bar breakout arrows and the duplicate slow EMA, leaving only high-conviction, actionable signals. Optimized for MNQ/MES futures; works on any instrument with volume.",
-    "features": [
-      "GreenLight Core L8/B8 PRO engine — momentum streak gated by six filters and a 0–4 confluence score",
-      "Signal quality scoring printed on every label (EMA agreement, volume, structure, Gap 20 context)",
-      "Structure engine classifies UPTREND / DOWNTREND / TRADING RANGE / MIXED and suppresses signals in chop",
-      "Brooks Gap 20 tracker — flags when price has run 20+ bars from the 20 EMA",
-      "18-bar RTH opening-range box with Coil / B-Trade BO / TR day-type classification",
-      "TD Sequential — Setup (1–9) and Countdown (1–13) with auto-reset, lines and optional counts",
-      "Two-leg structure and 3-push wedge reversal detection (Wedge Up / Down alerts)",
-      "HH/HL/LH/LL swing structure with dynamic support/resistance lines that extend until broken",
-      "Risk/Reward overlay auto-draws stop and target at your R:R ratio on each signal",
-      "Momentum dashboard, ATR/ABR table, RTH+ETH bar counter, session stats, and 11 alert conditions"
-    ],
-    "signals": [
-      {
-        "name": "L8 PRO / B8 PRO",
-        "meaning": "Primary entry — 8-bar momentum streak with all filters passed; the label shows its 0–4 score (4/4 = max confluence)"
-      },
-      {
-        "name": "L4 / B4 dot",
-        "meaning": "Early-warning dot — momentum has reached 4 bars; watch for development into a full L8/B8"
-      },
-      {
-        "name": "GAP 20 TOUCH",
-        "meaning": "Price ran 20+ bars from the 20 EMA — extended trend, watch for mean reversion or continuation"
-      },
-      {
-        "name": "TD Setup 9",
-        "meaning": "DeMark setup complete — potential exhaustion, prepare for a turn"
-      },
-      {
-        "name": "TD Countdown 13",
-        "meaning": "Countdown complete — high-probability exhaustion / reversal zone"
-      },
-      {
-        "name": "Wedge Up / Down",
-        "meaning": "3-push wedge top or bottom — reversal alert, wait for confirmation from another system"
-      },
-      {
-        "name": "OO / II / IOI",
-        "meaning": "Outside-outside (expansion), inside-inside (compression) and inside-outside-inside (contraction) patterns"
-      },
-      {
-        "name": "Inside bar (yellow/purple)",
-        "meaning": "Bull inside bar (yellow) or bear inside bar (purple) — pending continuation of the prior range"
-      },
-      {
-        "name": "HH / HL / LH / LL",
-        "meaning": "Swing pivots defining structure; HH/HL = uptrend intact, LH/LL = downtrend intact"
-      }
-    ],
-    "settings": [
-      {
-        "name": "EMA Length",
-        "defaultValue": "20",
-        "description": "GreenLight trend EMA, plotted green/red by slope"
-      },
-      {
-        "name": "ATR Length",
-        "defaultValue": "14",
-        "description": "Used by the proximity filter and the R:R overlay"
-      },
-      {
-        "name": "Max Distance from EMA",
-        "defaultValue": "0.75× ATR",
-        "description": "Maximum allowed distance from the EMA — prevents chasing extended moves"
-      },
-      {
-        "name": "Volume Multiplier",
-        "defaultValue": "1.2×",
-        "description": "Volume must exceed the 20-bar average by this multiple"
-      },
-      {
-        "name": "Trigger Level (L8/B8)",
-        "defaultValue": "8",
-        "description": "Consecutive momentum bars required to fire a signal"
-      },
-      {
-        "name": "Swing Lookback",
-        "defaultValue": "10 bars",
-        "description": "Lookback for swing high/low detection"
-      },
-      {
-        "name": "TR Range",
-        "defaultValue": "3.0× ATR",
-        "description": "Range below this multiple classifies the market as a Trading Range"
-      },
-      {
-        "name": "Min Confluence Score",
-        "defaultValue": "3 / 4",
-        "description": "Minimum 0–4 score for an L8/B8 signal to fire"
-      },
-      {
-        "name": "Target R:R Ratio",
-        "defaultValue": "2.0",
-        "description": "Risk multiple for the auto-drawn target line"
-      },
-      {
-        "name": "Fast EMA / MTF EMA / Cloud",
-        "defaultValue": "Off",
-        "description": "Optional 9-period fast EMA, 200 MTF EMA, and fill cloud between fast and GL 20"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Use a 5-minute chart (primary) on MNQ/MES/NQ/ES; add a 15-minute for confirmation.",
-      "Let the opening range form, then read the State Table — if it shows CHOP (orange), stand aside; if TREND (green), proceed.",
-      "Take L8/B8 PRO labels scoring 3/4 or 4/4 in the direction of the structure; treat L4/B4 dots as a heads-up only.",
-      "Confirm with the dashboard (structure matches direction), TD Sequential (no opposing exhaustion) and swing structure, then use the R:R overlay's stop and target to manage the trade."
-    ],
-    "bestPractices": [
-      "Trend only — L8/B8 fire just in UPTREND/DOWNTREND; in TRADING RANGE or CHOP the signals are suppressed, so don't force them.",
-      "Best window is the 10:00–11:30 ET morning session on above-average volume; the 11:30–13:30 lunch lull produces lower-probability signals.",
-      "Prioritize score 4/4 over 3/4, and weight setups where multiple systems agree (e.g. L8 PRO + UPTREND + HH/HL, or B8 PRO + TD Buy CD13 + Gap 20).",
-      "Respect the 18-bar box: COIL favors a patient breakout, BO favors trading with trend, TR favors fading the extremes.",
-      "A Countdown 13 or a 3-push wedge against your direction is a reason to tighten or wait — confirm exhaustion before countering a trend."
-    ],
+    "features": ["GreenLight Core L8/B8 PRO engine — momentum streak gated by six filters and a 0–4 confluence score", "Signal quality scoring printed on every label (EMA agreement, volume, structure, Gap 20 context)", "Structure engine classifies UPTREND / DOWNTREND / TRADING RANGE / MIXED and suppresses signals in chop", "Brooks Gap 20 tracker — flags when price has run 20+ bars from the 20 EMA", "18-bar RTH opening-range box with Coil / B-Trade BO / TR day-type classification", "TD Sequential — Setup (1–9) and Countdown (1–13) with auto-reset, lines and optional counts", "Two-leg structure and 3-push wedge reversal detection (Wedge Up / Down alerts)", "HH/HL/LH/LL swing structure with dynamic support/resistance lines that extend until broken", "Risk/Reward overlay auto-draws stop and target at your R:R ratio on each signal", "Momentum dashboard, ATR/ABR table, RTH+ETH bar counter, session stats, and 11 alert conditions"],
+    "signals": [{"name": "L8 PRO / B8 PRO", "meaning": "Primary entry — 8-bar momentum streak with all filters passed; the label shows its 0–4 score (4/4 = max confluence)"}, {"name": "L4 / B4 dot", "meaning": "Early-warning dot — momentum has reached 4 bars; watch for development into a full L8/B8"}, {"name": "GAP 20 TOUCH", "meaning": "Price ran 20+ bars from the 20 EMA — extended trend, watch for mean reversion or continuation"}, {"name": "TD Setup 9", "meaning": "DeMark setup complete — potential exhaustion, prepare for a turn"}, {"name": "TD Countdown 13", "meaning": "Countdown complete — high-probability exhaustion / reversal zone"}, {"name": "Wedge Up / Down", "meaning": "3-push wedge top or bottom — reversal alert, wait for confirmation from another system"}, {"name": "OO / II / IOI", "meaning": "Outside-outside (expansion), inside-inside (compression) and inside-outside-inside (contraction) patterns"}, {"name": "Inside bar (yellow/purple)", "meaning": "Bull inside bar (yellow) or bear inside bar (purple) — pending continuation of the prior range"}, {"name": "HH / HL / LH / LL", "meaning": "Swing pivots defining structure; HH/HL = uptrend intact, LH/LL = downtrend intact"}],
+    "settings": [{"name": "EMA Length", "defaultValue": "20", "description": "GreenLight trend EMA, plotted green/red by slope"}, {"name": "ATR Length", "defaultValue": "14", "description": "Used by the proximity filter and the R:R overlay"}, {"name": "Max Distance from EMA", "defaultValue": "0.75× ATR", "description": "Maximum allowed distance from the EMA — prevents chasing extended moves"}, {"name": "Volume Multiplier", "defaultValue": "1.2×", "description": "Volume must exceed the 20-bar average by this multiple"}, {"name": "Trigger Level (L8/B8)", "defaultValue": "8", "description": "Consecutive momentum bars required to fire a signal"}, {"name": "Swing Lookback", "defaultValue": "10 bars", "description": "Lookback for swing high/low detection"}, {"name": "TR Range", "defaultValue": "3.0× ATR", "description": "Range below this multiple classifies the market as a Trading Range"}, {"name": "Min Confluence Score", "defaultValue": "3 / 4", "description": "Minimum 0–4 score for an L8/B8 signal to fire"}, {"name": "Target R:R Ratio", "defaultValue": "2.0", "description": "Risk multiple for the auto-drawn target line"}, {"name": "Fast EMA / MTF EMA / Cloud", "defaultValue": "Off", "description": "Optional 9-period fast EMA, 200 MTF EMA, and fill cloud between fast and GL 20"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Use a 5-minute chart (primary) on MNQ/MES/NQ/ES; add a 15-minute for confirmation.", "Let the opening range form, then read the State Table — if it shows CHOP (orange), stand aside; if TREND (green), proceed.", "Take L8/B8 PRO labels scoring 3/4 or 4/4 in the direction of the structure; treat L4/B4 dots as a heads-up only.", "Confirm with the dashboard (structure matches direction), TD Sequential (no opposing exhaustion) and swing structure, then use the R:R overlay's stop and target to manage the trade."],
+    "bestPractices": ["Trend only — L8/B8 fire just in UPTREND/DOWNTREND; in TRADING RANGE or CHOP the signals are suppressed, so don't force them.", "Best window is the 10:00–11:30 ET morning session on above-average volume; the 11:30–13:30 lunch lull produces lower-probability signals.", "Prioritize score 4/4 over 3/4, and weight setups where multiple systems agree (e.g. L8 PRO + UPTREND + HH/HL, or B8 PRO + TD Buy CD13 + Gap 20).", "Respect the 18-bar box: COIL favors a patient breakout, BO favors trading with trend, TR favors fading the extremes.", "A Countdown 13 or a 3-push wedge against your direction is a reason to tighten or wait — confirm exhaustion before countering a trend."],
     "sourceFile": "Sire-GreenLight Pro Enhanced"
   },
   {
@@ -553,76 +91,15 @@
     "tagline": "Three Tom Hougaard modules — opening-range School Run, Fishing stop-runs, and a 9/20 EMA bias",
     "category": "Multi-Strategy",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "5m – 15m (intraday)",
     "description": "A multi-strategy overlay built around three methodologies from Tom Hougaard's price-action playbook. School Run brackets the first 30 minutes of RTH and classifies the day. The Fishing Technique catches stop-runs at swing highs and lows for mean-reversion entries. A 9/20 EMA foundation sets directional bias. Each module runs independently but they're designed to stack for confluence on the NY cash session.",
-    "features": [
-      "School Run — brackets the first 30 minutes of RTH and classifies Trend / Range / Failed days",
-      "Fishing Technique — stop-run reclaim and rejection entries at swing levels",
-      "9/20 EMA foundation for directional bias",
-      "Three independent modules that combine for confluence",
-      "Optimized for 5-minute and 15-minute index-futures charts"
-    ],
-    "signals": [
-      {
-        "name": "School Run BRK",
-        "meaning": "Opening-range bracket breakout in the first 30 min — trade the hold or fade the failure"
-      },
-      {
-        "name": "Fishing Buy",
-        "meaning": "Price dips below a swing low and closes back above — stop-run reclaim long"
-      },
-      {
-        "name": "Fishing Sell",
-        "meaning": "Price spikes above a swing high and closes back below — stop-run rejection short"
-      },
-      {
-        "name": "EMA Bias",
-        "meaning": "9/20 EMA stack sets direction — 9 over 20 is bullish, 9 under 20 is bearish"
-      }
-    ],
-    "settings": [
-      {
-        "name": "School Run",
-        "defaultValue": "5m",
-        "description": "First 30 min of RTH — bracket breakout or fade"
-      },
-      {
-        "name": "Fishing",
-        "defaultValue": "5m",
-        "description": "Any time in RTH — stop-run reclaim or rejection"
-      },
-      {
-        "name": "EMA Foundation",
-        "defaultValue": "9/20",
-        "description": "All RTH — trend direction bias"
-      },
-      {
-        "name": "Combined",
-        "defaultValue": "5m",
-        "description": "All three modules aligned = highest conviction"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Use a 5m or 15m chart on index futures during the NY cash session.",
-      "Check the 9/20 EMA bias first, then look for School Run or Fishing setups in that direction.",
-      "School Run is strongest in the first 30 minutes; Fishing works best in balanced/range days.",
-      "Treat agreement across all three modules as the highest-conviction trade."
-    ],
-    "bestPractices": [
-      "RTH Open — School Run works best in the first 30 minutes of the NY cash session.",
-      "Range Market — the Fishing Technique excels on balanced days with clear swing levels.",
-      "EMA Aligned — every signal is stronger when the 9/20 EMA confirms direction.",
-      "Volume Present — low volume means weak signals; wait for institutional participation."
-    ],
-    "sourceFile": ""
+    "features": ["School Run — brackets the first 30 minutes of RTH and classifies Trend / Range / Failed days", "Fishing Technique — stop-run reclaim and rejection entries at swing levels", "9/20 EMA foundation for directional bias", "Three independent modules that combine for confluence", "Optimized for 5-minute and 15-minute index-futures charts"],
+    "signals": [{"name": "School Run BRK", "meaning": "Opening-range bracket breakout in the first 30 min — trade the hold or fade the failure"}, {"name": "Fishing Buy", "meaning": "Price dips below a swing low and closes back above — stop-run reclaim long"}, {"name": "Fishing Sell", "meaning": "Price spikes above a swing high and closes back below — stop-run rejection short"}, {"name": "EMA Bias", "meaning": "9/20 EMA stack sets direction — 9 over 20 is bullish, 9 under 20 is bearish"}],
+    "settings": [{"name": "School Run", "defaultValue": "5m", "description": "First 30 min of RTH — bracket breakout or fade"}, {"name": "Fishing", "defaultValue": "5m", "description": "Any time in RTH — stop-run reclaim or rejection"}, {"name": "EMA Foundation", "defaultValue": "9/20", "description": "All RTH — trend direction bias"}, {"name": "Combined", "defaultValue": "5m", "description": "All three modules aligned = highest conviction"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Use a 5m or 15m chart on index futures during the NY cash session.", "Check the 9/20 EMA bias first, then look for School Run or Fishing setups in that direction.", "School Run is strongest in the first 30 minutes; Fishing works best in balanced/range days.", "Treat agreement across all three modules as the highest-conviction trade."],
+    "bestPractices": ["RTH Open — School Run works best in the first 30 minutes of the NY cash session.", "Range Market — the Fishing Technique excels on balanced days with clear swing levels.", "EMA Aligned — every signal is stronger when the 9/20 EMA confirms direction.", "Volume Present — low volume means weak signals; wait for institutional participation."],
+    "sourceFile": "Sire-SchoolFishing"
   },
   {
     "slug": "m2b-m2s-setup",
@@ -631,78 +108,15 @@
     "tagline": "Two-legged pullback to the 20 EMA with price-action confirmation — disciplined entries, not chasing",
     "category": "Mean Reversion",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "5m – 1H",
     "description": "A mean-reversion entry system that waits for a two-legged pullback to the 20 EMA, then confirms a rejection with a candle closing back on the trend side. Built on Al Brooks' methodology — the two-legged pullback to the EMA is one of the highest-probability setups in a trending market. M2B fires longs in uptrends, M2S fires shorts in downtrends.",
-    "features": [
-      "Two-legged pullback detection (A-B-C structure)",
-      "20 EMA touch confirmation on the second leg",
-      "M2B long in uptrends / M2S short in downtrends",
-      "Precise entry, stop, and target rules on every signal",
-      "Works on 5-minute through 1-hour charts"
-    ],
-    "signals": [
-      {
-        "name": "M2B Long",
-        "meaning": "Two-legged pullback to the 20 EMA in an uptrend — buy stop above the signal bar"
-      },
-      {
-        "name": "M2S Short",
-        "meaning": "Two-legged rally to the 20 EMA in a downtrend — sell stop below the signal bar"
-      }
-    ],
-    "settings": [
-      {
-        "name": "Trend",
-        "defaultValue": "HH/HL",
-        "description": "M2B needs a strong uptrend; M2S needs a strong downtrend (LL/LH)"
-      },
-      {
-        "name": "EMA",
-        "defaultValue": "20",
-        "description": "M2B: price above the 20 EMA. M2S: price below it"
-      },
-      {
-        "name": "Pullback",
-        "defaultValue": "2 legs",
-        "description": "Two legs down to the EMA (M2B) or two legs up (M2S)"
-      },
-      {
-        "name": "Entry",
-        "defaultValue": "±1 tick",
-        "description": "Buy/sell stop 1 tick beyond the signal bar"
-      },
-      {
-        "name": "Stop",
-        "defaultValue": "±1 tick",
-        "description": "1 tick beyond the 2nd-leg pullback extreme"
-      },
-      {
-        "name": "Targets",
-        "defaultValue": "50% / 25%",
-        "description": "Prior swing (scale 50%) then measured move (25%)"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Best on 5m–1H charts in a clearly trending market.",
-      "Wait for the SECOND leg — never enter on the first test of the EMA.",
-      "Place the entry stop 1 tick beyond the signal bar; cancel if not triggered within 2 bars.",
-      "Move to breakeven once 50% to the first target is reached, and never widen the stop."
-    ],
-    "bestPractices": [
-      "Strong Trend — the EMA must be rising (long) or falling (short); a flat EMA means skip.",
-      "Clean Two-Leg Pullback — the A-B-C structure must be clear; messy pullbacks are a skip.",
-      "EMA Touch — the second leg must reach or come within 1–2 ticks of the EMA.",
-      "No News — skip if FOMC, CPI, or NFP is within 30 minutes."
-    ],
-    "sourceFile": ""
+    "features": ["Two-legged pullback detection (A-B-C structure)", "20 EMA touch confirmation on the second leg", "M2B long in uptrends / M2S short in downtrends", "Precise entry, stop, and target rules on every signal", "Works on 5-minute through 1-hour charts"],
+    "signals": [{"name": "M2B Long", "meaning": "Two-legged pullback to the 20 EMA in an uptrend — buy stop above the signal bar"}, {"name": "M2S Short", "meaning": "Two-legged rally to the 20 EMA in a downtrend — sell stop below the signal bar"}],
+    "settings": [{"name": "Trend", "defaultValue": "HH/HL", "description": "M2B needs a strong uptrend; M2S needs a strong downtrend (LL/LH)"}, {"name": "EMA", "defaultValue": "20", "description": "M2B: price above the 20 EMA. M2S: price below it"}, {"name": "Pullback", "defaultValue": "2 legs", "description": "Two legs down to the EMA (M2B) or two legs up (M2S)"}, {"name": "Entry", "defaultValue": "±1 tick", "description": "Buy/sell stop 1 tick beyond the signal bar"}, {"name": "Stop", "defaultValue": "±1 tick", "description": "1 tick beyond the 2nd-leg pullback extreme"}, {"name": "Targets", "defaultValue": "50% / 25%", "description": "Prior swing (scale 50%) then measured move (25%)"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Best on 5m–1H charts in a clearly trending market.", "Wait for the SECOND leg — never enter on the first test of the EMA.", "Place the entry stop 1 tick beyond the signal bar; cancel if not triggered within 2 bars.", "Move to breakeven once 50% to the first target is reached, and never widen the stop."],
+    "bestPractices": ["Strong Trend — the EMA must be rising (long) or falling (short); a flat EMA means skip.", "Clean Two-Leg Pullback — the A-B-C structure must be clear; messy pullbacks are a skip.", "EMA Touch — the second leg must reach or come within 1–2 ticks of the EMA.", "No News — skip if FOMC, CPI, or NFP is within 30 minutes."],
+    "sourceFile": "M2B-M2S"
   },
   {
     "slug": "td-sequential",
@@ -711,72 +125,15 @@
     "tagline": "Tom DeMark momentum-exhaustion system — Setup 9 and Countdown 13 for reversal detection",
     "category": "Momentum Exhaustion",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "15m – 1D",
     "description": "A momentum-exhaustion indicator developed by Tom DeMark in the 1990s, used by institutional desks worldwide. It works in two phases: Setup (1–9) counts consecutive directional bars relative to the close four bars earlier, and Countdown (1–13) confirms exhaustion. A completed Setup 9 is a caution flag; a Countdown 13 is the highest-conviction reversal signal in the system. Best used to call exhaustion at the end of an extended trend, never as a standalone.",
-    "features": [
-      "Setup phase (1–9) flags potential trend exhaustion",
-      "Countdown phase (1–13) confirms the reversal zone",
-      "Recycling detection when a new setup interrupts the countdown",
-      "Most reliable on 15-minute and higher timeframes",
-      "Institutional-grade methodology used across major platforms"
-    ],
-    "signals": [
-      {
-        "name": "Setup 9",
-        "meaning": "9 consecutive bars meeting criteria — trend-exhaustion warning, watch for a turn"
-      },
-      {
-        "name": "Countdown 13",
-        "meaning": "13 bars confirming exhaustion — highest-conviction reversal zone"
-      },
-      {
-        "name": "Recycling",
-        "meaning": "A new setup interrupts the countdown — the trend may be resuming"
-      }
-    ],
-    "settings": [
-      {
-        "name": "Setup",
-        "defaultValue": "1–9",
-        "description": "Trend-exhaustion warning — prepare for a potential reversal"
-      },
-      {
-        "name": "Setup 9",
-        "defaultValue": "9",
-        "description": "Setup complete — watch for reversal confirmation"
-      },
-      {
-        "name": "Countdown",
-        "defaultValue": "1–13",
-        "description": "Exhaustion building — monitor toward Countdown 13"
-      },
-      {
-        "name": "Countdown 13",
-        "defaultValue": "13",
-        "description": "Highest conviction — high-probability reversal zone"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Most reliable on 15m, 1H, and daily charts.",
-      "Treat Setup 9 as caution and Countdown 13 as a high-probability reversal zone.",
-      "Never trade it standalone — confirm with price action and key support/resistance.",
-      "Focus on exhaustion at the END of an extended trend, not during choppy ranges."
-    ],
-    "bestPractices": [
-      "Extended Trend — works best after a prolonged trend, not during choppy ranges.",
-      "Higher Timeframe — most reliable on 15-min, 1H, and daily charts.",
-      "At S/R Levels — a Countdown 13 at a key level is the strongest signal.",
-      "With Price Action — always confirm with reversal bars or failed breakouts."
-    ],
-    "sourceFile": ""
+    "features": ["Setup phase (1–9) flags potential trend exhaustion", "Countdown phase (1–13) confirms the reversal zone", "Recycling detection when a new setup interrupts the countdown", "Most reliable on 15-minute and higher timeframes", "Institutional-grade methodology used across major platforms"],
+    "signals": [{"name": "Setup 9", "meaning": "9 consecutive bars meeting criteria — trend-exhaustion warning, watch for a turn"}, {"name": "Countdown 13", "meaning": "13 bars confirming exhaustion — highest-conviction reversal zone"}, {"name": "Recycling", "meaning": "A new setup interrupts the countdown — the trend may be resuming"}],
+    "settings": [{"name": "Setup", "defaultValue": "1–9", "description": "Trend-exhaustion warning — prepare for a potential reversal"}, {"name": "Setup 9", "defaultValue": "9", "description": "Setup complete — watch for reversal confirmation"}, {"name": "Countdown", "defaultValue": "1–13", "description": "Exhaustion building — monitor toward Countdown 13"}, {"name": "Countdown 13", "defaultValue": "13", "description": "Highest conviction — high-probability reversal zone"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Most reliable on 15m, 1H, and daily charts.", "Treat Setup 9 as caution and Countdown 13 as a high-probability reversal zone.", "Never trade it standalone — confirm with price action and key support/resistance.", "Focus on exhaustion at the END of an extended trend, not during choppy ranges."],
+    "bestPractices": ["Extended Trend — works best after a prolonged trend, not during choppy ranges.", "Higher Timeframe — most reliable on 15-min, 1H, and daily charts.", "At S/R Levels — a Countdown 13 at a key level is the strongest signal.", "With Price Action — always confirm with reversal bars or failed breakouts."],
+    "sourceFile": "TD Sequential"
   },
   {
     "slug": "sire-pye",
@@ -785,81 +142,14 @@
     "tagline": "HTF-anchored scalp system with a chop filter and a strict daily kill switch — +34.19% backtested (MNQ)",
     "category": "Trend-Following Scalp",
     "status": "Stable",
-    "markets": [
-      "ES",
-      "NQ",
-      "MES",
-      "MNQ"
-    ],
+    "markets": ["ES", "NQ", "MES", "MNQ"],
     "timeframes": "5m entry · 30m anchor",
     "description": "A trend-following scalp system for index futures. A 30-minute 20 EMA \"anchor\" sets direction and execution happens on the 5-minute on pullbacks to that anchor — never counter-trend. A real-time chop-ratio filter cuts size or stands aside when the market is ranging, and a strict daily kill switch ends the session once a loss threshold is hit, killing revenge trades. Backtested +34.19% on MNQ over 12 months with a 1.83 profit factor.",
-    "features": [
-      "30-minute 20 EMA anchor for higher-timeframe direction",
-      "Chop-ratio filter that cuts size or skips in ranging markets",
-      "Strict daily kill switch — no override once the loss threshold is hit",
-      "Aggressive capital-preservation risk model",
-      "+34.19% backtested on MNQ over 12 months (1.83 profit factor)"
-    ],
-    "signals": [
-      {
-        "name": "Long Entry",
-        "meaning": "Pullback to the 30m EMA in an uptrend with the chop filter confirming a trend"
-      },
-      {
-        "name": "Short Entry",
-        "meaning": "Rally to the 30m EMA in a downtrend with the chop filter confirming a trend"
-      },
-      {
-        "name": "Kill Switch",
-        "meaning": "Daily loss threshold hit — no more trades, capital preserved"
-      }
-    ],
-    "settings": [
-      {
-        "name": "Anchor EMA",
-        "defaultValue": "30m 20",
-        "description": "Higher-timeframe trend direction"
-      },
-      {
-        "name": "Entry TF",
-        "defaultValue": "5m",
-        "description": "Pullback entries on the lower timeframe"
-      },
-      {
-        "name": "Chop Filter",
-        "defaultValue": "Active",
-        "description": "Reduces size or skips in ranging markets"
-      },
-      {
-        "name": "Kill Switch",
-        "defaultValue": "Daily",
-        "description": "No override — the day ends when the loss threshold triggers"
-      },
-      {
-        "name": "Backtested Return",
-        "defaultValue": "+34.19%",
-        "description": "MNQ over 12 months"
-      },
-      {
-        "name": "Profit Factor",
-        "defaultValue": "1.83",
-        "description": "Gross profit / gross loss"
-      }
-    ],
-    "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Run the 30m anchor and execute on a 5m chart on MNQ/MES/NQ/ES.",
-      "Only trade in the direction of the 30m anchor — no counter-trend entries.",
-      "Respect the chop filter: reduce size or stand aside when it flags a range.",
-      "If the kill switch fires, you're done for the day — do not override it."
-    ],
-    "bestPractices": [
-      "Trending Market — the chop filter must confirm trend; ranging markets are a skip.",
-      "Clear Anchor — the 30m EMA needs a clear slope; a flat anchor means no trade.",
-      "Kill Switch Clear — only trade while the daily loss threshold hasn't been hit.",
-      "RTH Session — best during regular hours with institutional volume."
-    ],
-    "sourceFile": ""
+    "features": ["30-minute 20 EMA anchor for higher-timeframe direction", "Chop-ratio filter that cuts size or skips in ranging markets", "Strict daily kill switch — no override once the loss threshold is hit", "Aggressive capital-preservation risk model", "+34.19% backtested on MNQ over 12 months (1.83 profit factor)"],
+    "signals": [{"name": "Long Entry", "meaning": "Pullback to the 30m EMA in an uptrend with the chop filter confirming a trend"}, {"name": "Short Entry", "meaning": "Rally to the 30m EMA in a downtrend with the chop filter confirming a trend"}, {"name": "Kill Switch", "meaning": "Daily loss threshold hit — no more trades, capital preserved"}],
+    "settings": [{"name": "Anchor EMA", "defaultValue": "30m 20", "description": "Higher-timeframe trend direction"}, {"name": "Entry TF", "defaultValue": "5m", "description": "Pullback entries on the lower timeframe"}, {"name": "Chop Filter", "defaultValue": "Active", "description": "Reduces size or skips in ranging markets"}, {"name": "Kill Switch", "defaultValue": "Daily", "description": "No override — the day ends when the loss threshold triggers"}, {"name": "Backtested Return", "defaultValue": "+34.19%", "description": "MNQ over 12 months"}, {"name": "Profit Factor", "defaultValue": "1.83", "description": "Gross profit / gross loss"}],
+    "howToUse": ["Open TradingView and go to Pine Editor (bottom panel).", "Copy the full source from the file linked below and paste it into the editor.", "Click \"Add to chart\". Run the 30m anchor and execute on a 5m chart on MNQ/MES/NQ/ES.", "Only trade in the direction of the 30m anchor — no counter-trend entries.", "Respect the chop filter: reduce size or stand aside when it flags a range.", "If the kill switch fires, you're done for the day — do not override it."],
+    "bestPractices": ["Trending Market — the chop filter must confirm trend; ranging markets are a skip.", "Clear Anchor — the 30m EMA needs a clear slope; a flat anchor means no trade.", "Kill Switch Clear — only trade while the daily loss threshold hasn't been hit.", "RTH Session — best during regular hours with institutional volume."],
+    "sourceFile": "Sire-PYE"
   }
 ]
