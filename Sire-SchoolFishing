@@ -1,78 +1,138 @@
+// ═══════════════════════════════════════════════════════════════
+// Sire-SchoolFishing
+// © SireMammat
+// Site: https://siremammat.neocities.org/
+// Pine Script v6
+//
+// Combines 3 proven trading methodologies:
+//   1. EMA Foundation (9/20) — trend bias
+//   2. School Run — 30-minute opening range bracket
+//   3. Fishing Technique — mean reversion / liquidity grab
+//
+// Based on Tom Hougaard's Playbook
+//
+// DISCLAIMER:
+// This software is for educational and informational purposes only.
+// Trading futures involves significant risk of loss and is not suitable
+// for all investors. Past performance is not indicative of future results.
+// The author (SireMammat) is not a financial advisor and assumes no
+// liability for financial losses incurred through the use of this script.
+// Use at your own risk.
+// ═══════════════════════════════════════════════════════════════
+
 //@version=6
-indicator("Tom Hougaard - RTH Sync & Playbook", shorttitle="Hougaard Playbook", overlay=true)
+indicator('Sire-SchoolFishing', shorttitle='Sire-SF', overlay = true, max_labels_count = 500)
 
-// Inputs
-emaLenFast = input.int(9, "Fast EMA Length")
-emaLenSlow = input.int(20, "Slow EMA Length")
+// ═══════════════════════════════════════════════════════════════
+// MODULE 1: EMA FOUNDATION
+// ═══════════════════════════════════════════════════════════════
+g_ema = '1. EMA Settings'
+showEma    = input.bool(true,          'Show EMA Lines',       group = g_ema)
+emaLenFast = input.int(9,              'Fast EMA Length',      group = g_ema, tooltip = 'Default 9. Short-term trend direction.')
+emaLenSlow = input.int(20,             'Slow EMA Length',      group = g_ema, tooltip = 'Default 20. Long-term trend direction. Price above = bullish, below = bearish.')
+emaFastCol = input.color(color.orange, 'Fast EMA Color',       group = g_ema, inline = 'ema')
+emaSlowCol = input.color(color.blue,   'Slow EMA Color',       group = g_ema, inline = 'ema')
 
-// Calculations
 emaFast = ta.ema(close, emaLenFast)
 emaSlow = ta.ema(close, emaLenSlow)
 
-// Plots
-plot(emaFast, color = color.orange, linewidth = 2, title = "9 EMA")
-plot(emaSlow, color = color.blue, linewidth = 2, title = "20 EMA")
+plot(showEma ? emaFast : na, 'Fast EMA', color = emaFastCol, linewidth = 2)
+plot(showEma ? emaSlow : na, 'Slow EMA', color = emaSlowCol, linewidth = 2)
 
-// ===============================================
-// 📌 STRATEGY NOTES (INTEGRATED TOOLTIPS)
-// ===============================================
-string DESC_SR   = "SCHOOL RUN (15m RTH):\n- Brackets the 2nd 15m bar of the cash open.\n- 09:30-09:45 (NY) or 08:00-08:15 (DAX).\n- BUY breakout of high / SELL breakdown of low.\n- Best for identifying Trend Days vs Range Days."
-string DESC_FISH = "FISHING TECHNIQUE (10m):\n- Mean Reversion / Liquidity Grab.\n- Look for stop-run of a pivot high/low.\n- ENTRY: Price closes back inside the previous range.\n- 'The best fish are caught in ranges.'"
-string DESC_72W  = "72-WEEK CYCLE (Daily/Weekly):\n- 500 Calendar Day intervals.\n- Macro trend-change warning system.\n- Use for 'Big Picture' direction, not entries."
+emaBias = emaFast > emaSlow ? 'BULLISH' : emaFast < emaSlow ? 'BEARISH' : 'NEUTRAL'
+emaBiasCol = emaFast > emaSlow ? color.green : emaFast < emaSlow ? color.red : color.gray
 
-var G_SES = "📊 Session Settings"
-var G_TF = "⏱ Timeframe Settings"
-rthSession  = input.session("0930-1600", "RTH Session Time", group=G_SES)
-timeZone    = input.string("America/New_York", "Exchange Timezone", group=G_SES)
-useCustomTF = input.bool(true, "Use Custom Timeframe for Signals?", group=G_TF)
-chosenTF    = input.timeframe("15", "Select Signal Timeframe", group=G_TF)
+// ═══════════════════════════════════════════════════════════════
+// MODULE 2: SCHOOL RUN (30-MIN OPENING RANGE)
+//
+// Brackets the HIGHEST HIGH and LOWEST LOW of the first
+// 30 minutes of RTH (09:30 - 10:00 ET).
+//
+// Auto-detects bars needed based on chart timeframe:
+//   5-min chart  = bars 1-6
+//   15-min chart = bars 1-2
+//   1-min chart  = bars 1-30
+// ═══════════════════════════════════════════════════════════════
+g_sr = '2. School Run'
+showSR      = input.bool(true,       'Show School Run Brackets', group = g_sr, tooltip = 'Brackets the highest high and lowest low of the first 30 minutes at RTH open (09:30-10:00 ET). Breakout above = trend day. Breakdown below = range/reversal day.')
+rthSession  = input.session('0930-1600', 'RTH Session Time',     group = g_sr)
+timeZone    = input.string('America/New_York', 'Exchange Timezone', group = g_sr)
+srColor     = input.color(color.rgb(172, 140, 0), 'Bracket Color', group = g_sr)
+srWidth     = input.int(2, 'Bracket Width', group = g_sr, minval = 1, maxval = 5)
 
+inSession     = not na(time(timeframe.period, rthSession, timeZone))
+isNewSession  = inSession and not inSession[1]
+
+var int   barsInSession = 0
 var float srHigh = na
 var float srLow  = na
-var int barsInSession = 0
 
-inSession = not na(time(timeframe.period, rthSession, timeZone))
-isNewSession = inSession and not inSession[1]
+// Calculate how many bars fit in 30 minutes
+// 1800 seconds = 30 minutes
+barsIn30Min = math.ceil(1800.0 / timeframe.in_seconds(timeframe.period))
 
 if isNewSession
     barsInSession := 1
-    srHigh := na 
-    srLow  := na
+    srHigh := high
+    srLow  := low
 else if inSession
     barsInSession := barsInSession + 1
 
-if inSession and barsInSession == 2
-    srHigh := high
-    srLow  := low
+// Track the highest high and lowest low across the 30-minute window
+if inSession and barsInSession <= barsIn30Min
+    if high > srHigh
+        srHigh := high
+    if low < srLow
+        srLow := low
 
-showSR = input.bool(true, "Show School Run Brackets", group="1. School Run", tooltip=DESC_SR)
-plot(showSR ? srHigh : na, "RTH SR High", color.rgb(172, 140, 0), 2, plot.style_linebr)
-plot(showSR ? srLow : na,  "RTH SR Low",  color.rgb(172, 140, 0), 2, plot.style_linebr)
+plot(showSR ? srHigh : na, 'SR High', color = srColor, style = plot.style_linebr, linewidth = srWidth)
+plot(showSR ? srLow  : na, 'SR Low',  color = srColor, style = plot.style_linebr, linewidth = srWidth)
 
-showFish = input.bool(true, "Show Fishing Signals", group="2. Fishing Technique", tooltip=DESC_FISH)
-fishLookback = input.int(20, "Swing Lookback", group="2. Fishing Technique")
+// ═══════════════════════════════════════════════════════════════
+// MODULE 3: FISHING TECHNIQUE
+// ═══════════════════════════════════════════════════════════════
+g_fish = '3. Fishing Technique'
+showFish     = input.bool(true,  'Show Fishing Signals',  group = g_fish, tooltip = 'Mean reversion / liquidity grab. Catches stop-runs that reverse back into the range.')
+fishLookback = input.int(20,     'Swing Lookback',        group = g_fish, tooltip = 'How many bars back to find the pivot high/low for stop-run detection.')
+fishColBuy   = input.color(color.green, 'Buy Signal Color',  group = g_fish, inline = 'fishc')
+fishColSell  = input.color(color.red,   'Sell Signal Color', group = g_fish, inline = 'fishc')
 
-f_get_tf_data(_src) => request.security(syminfo.tickerid, useCustomTF ? chosenTF : timeframe.period, _src, lookahead=barmerge.lookahead_on)
+pivotLow  = ta.lowest(low[1],  fishLookback)
+pivotHigh = ta.highest(high[1], fishLookback)
 
-tf_high  = f_get_tf_data(high)
-tf_low   = f_get_tf_data(low)
-tf_close = f_get_tf_data(close)
+fishBuy  = low < pivotLow  and close > high[1]
+fishSell = high > pivotHigh and close < low[1]
 
-pivotLow  = ta.lowest(tf_low[1], fishLookback)
-pivotHigh = ta.highest(tf_high[1], fishLookback)
+plotshape(showFish and fishBuy,  'Fishing Buy',  shape.triangleup,   location.belowbar, fishColBuy,  size = size.small)
+plotshape(showFish and fishSell, 'Fishing Sell', shape.triangledown, location.abovebar, fishColSell, size = size.small)
 
-fishBuy  = tf_low < pivotLow and tf_close > tf_high[1]
-fishSell = tf_high > pivotHigh and tf_close < tf_low[1]
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+g_dash = 'Dashboard'
+showDash  = input.bool(true, 'Show Dashboard', group = g_dash)
+dashPos   = input.string('bottom_right', 'Dashboard Position', group = g_dash, options = ['top_right','top_left','top_center','bottom_right','bottom_left','bottom_center','middle_right','middle_left'])
+textSize  = input.string('normal', 'Text Size', group = g_dash, options = ['tiny','small','normal','large','huge'])
 
-plotshape(showFish and fishBuy, "Fishing Buy", shape.triangleup, location.belowbar, color.green, size=size.small)
-plotshape(showFish and fishSell, "Fishing Sell", shape.triangledown, location.abovebar, color.red, size=size.small)
+f_tblPos(string p) => p == 'top_right' ? position.top_right : p == 'top_left' ? position.top_left : p == 'top_center' ? position.top_center : p == 'bottom_right' ? position.bottom_right : p == 'bottom_left' ? position.bottom_left : p == 'bottom_center' ? position.bottom_center : p == 'middle_right' ? position.middle_right : p == 'middle_left' ? position.middle_left : position.top_right
+f_size(string s) => s == 'tiny' ? size.tiny : s == 'small' ? size.small : s == 'normal' ? size.normal : s == 'large' ? size.large : size.huge
 
-showCycle = input.bool(true, "Show 72-Week Cycle Lines", group="3. 72-Week Cycle", tooltip=DESC_72W)
-cycleDays = input.int(500, "Cycle Length (Days)", group="3. 72-Week Cycle")
-anchorDate = input.time(timestamp("2020-01-20T00:00:00"), "Cycle Anchor Date", group="3. 72-Week Cycle")
+if showDash and barstate.islast
+    var table dash = table.new(f_tblPos(dashPos), 2, 4, border_width = 1, frame_color = color.new(color.gray, 50), bgcolor = color.new(color.black, 20))
+    sz = f_size(textSize)
 
-elapsedDays = (time - anchorDate) / 86400000
-cycleCount  = math.floor(elapsedDays / cycleDays)
-is_cycle_hit = ta.change(cycleCount) != 0
+    table.cell(dash, 0, 0, 'SIRE-SF',     text_color = color.lime, text_size = sz)
+    table.cell(dash, 1, 0, 'STATUS',      text_color = color.lime, text_size = sz)
 
-bgcolor(showCycle and is_cycle_hit ? color.new(color.purple, 80) : na)
+    table.cell(dash, 0, 1, 'EMA Bias',    text_color = color.white, text_size = sz)
+    table.cell(dash, 1, 1, emaBias,       text_color = emaBiasCol,  text_size = sz)
+
+    srStr = not na(srHigh) ? str.tostring(srHigh, '#.##') + ' / ' + str.tostring(srLow, '#.##') : 'WAITING'
+    srCol = not na(srHigh) ? color.yellow : color.gray
+    table.cell(dash, 0, 2, 'School Run',  text_color = color.white, text_size = sz)
+    table.cell(dash, 1, 2, srStr,         text_color = srCol,       text_size = sz)
+
+    fishStr = fishBuy ? 'BUY SIGNAL' : fishSell ? 'SELL SIGNAL' : 'STANDBY'
+    fishCol = fishBuy ? color.green : fishSell ? color.red : color.gray
+    table.cell(dash, 0, 3, 'Fishing',     text_color = color.white, text_size = sz)
+    table.cell(dash, 1, 3, fishStr,       text_color = fishCol,     text_size = sz)

@@ -1,93 +1,508 @@
+// ═══════════════════════════════════════════════════════════════
+// M2 A+ System Enhanced
+// © SireMammat
+// Site: https://siremammat.vercel.app/
+// Pine Script v6
+//
+// ─── DESCRIPTION ─────────────────────────────────────────────
+//
+// The M2 A+ System identifies high-probability two-swing reversal
+// patterns (M2B/M2S) and combines them with market context
+// filters — sweeps, traps, trend alignment, and chop detection —
+// to produce adaptive scored signals.
+//
+// Signals are graded A+ (high confluence) or B (acceptable).
+// Each signal auto-plots entry, TP1 (1R), TP2 (2R), and stop loss
+// levels with proper trade state management and multi-condition
+// trade invalidation.
+//
+//   ENHANCEMENTS (v6):
+//     - Trade state management (prevents conflicting signals)
+//     - TP/SL hit detection and auto-clear
+//     - Signal quality score on every label
+//     - Real-time confluence dashboard
+//     - ATR-based dynamic risk option
+//     - 6-condition trade invalidation system
+//     - Exit alerts for TP, SL, and invalidation
+//
+//   SIGNAL		Grade		Action
+//   ▲ Long A+		High		Full size — max confluence
+//   ▼ Short A+		High		Full size — max confluence
+//   ● Long B		Acceptable	Reduced size — moderate confluence
+//   ● Short B		Acceptable	Reduced size — moderate confluence
+//
+// DISCLAIMER:
+// This software is for educational and informational purposes only.
+// Trading futures involves significant risk of loss and is not suitable
+// for all investors. Past performance is not indicative of future results.
+// The author (SireMammat) is not a financial advisor and assumes no
+// liability for financial losses incurred through the use of this script.
+// Use at your own risk.
+// ═══════════════════════════════════════════════════════════════
+
+// This source code is subject to the terms of the Mozilla Public License 2.0
+// https://mozilla.org/MPL/2.0/
+
 //@version=6
-indicator("M2B/M2S Setup (EMA Touch, Fixed)", overlay=true)
+indicator('M2 A+ System Enhanced', shorttitle='M2 A+', overlay=true, max_labels_count=500)
 
-emaLength = input.int(20, title="EMA Length", minval=1)
-shapeSizeStr = input.string("normal", title="Shape Size", options=["tiny", "small", "normal", "large", "huge"])
-showBackground = input.bool(true, title="Show Trend Background")
-showLegCounts = input.bool(false, title="Show Leg Counts")
-showTouches = input.bool(false, title="Show EMA Touch Markers")
-showInfo = input.bool(true, title="Show Info Table")
-labelOffset = input.float(0.05, "Label Offset %", minval=0.01, maxval=5.0, step=0.01, tooltip="Vertical offset percentage for labels")
+// ═══════════════════════════════════════════════════════════════
+// INPUTS
+// ═══════════════════════════════════════════════════════════════
+var g_core    = 'Core Settings'
+var g_filters = 'Signal Filters'
+var g_risk    = 'Risk Management'
+var g_inval   = 'Trade Invalidation'
+var g_display = 'Display'
+var g_dash    = 'Dashboard'
+var g_alerts  = 'Alert Conditions'
 
-shapeSize = switch shapeSizeStr
-    "tiny"  => size.tiny
-    "small" => size.small
-    "normal"=> size.normal
-    "large" => size.large
-    "huge"  => size.huge
-    => size.normal
+// Core
+int swingLen    = input.int(5,      'Swing Length',           group=g_core, minval=2, tooltip='Number of bars for pivot high/low detection.')
+bool showEMA    = input.bool(true,  'Show EMA 20',            group=g_core)
+bool showEMA50  = input.bool(false, 'Show EMA 50',            group=g_core, tooltip='Reference EMA for trend filter. Not plotted by default.')
 
-ema = ta.ema(close, emaLength)
+// Filters
+bool useSweep   = input.bool(true,  'Sweep Filter',           group=g_filters, tooltip='+1 score when price sweeps the 5-bar high/low before reversing.')
+bool useTrap    = input.bool(true,  'Trap Filter',            group=g_filters, tooltip='+1 score when a sweep reverses with high volume (trapped breakout traders).')
+bool useTrend   = input.bool(true,  'Trend Filter (20/50)',   group=g_filters, tooltip='+1 score when trade aligns with EMA trend direction.')
+bool useChop    = input.bool(true,  'Chop Filter',            group=g_filters, tooltip='Blocks all signals when market is choppy (low ATR + flat EMAs).')
 
-trendUp = close > ema
-trendDown = close < ema
+// Risk Management
+string riskMode = input.string('Ticks', 'Risk Mode',          group=g_risk, options=['Ticks','ATR'], tooltip='Ticks = fixed tick risk. ATR = dynamic volatility-based risk.')
+int riskTicks   = input.int(10,         'Risk (ticks)',       group=g_risk, minval=1, tooltip='Stop loss distance in ticks. TP1 = 1R, TP2 = 2R.')
+float riskATR   = input.float(1.0,      'Risk (x ATR)',      group=g_risk, minval=0.5, maxval=3.0, step=0.5, tooltip='Stop loss distance as multiple of ATR(14).')
 
-downLeg = close < close[1]
-upLeg = close > close[1]
+// Trade Invalidation
+int maxBarsInTrade = input.int(20,    'Max Bars in Trade',     group=g_inval, minval=5, maxval=100, tooltip='Auto-exit if trade hasn\'t hit TP1 or SL within this many bars.')
+bool useVWAP       = input.bool(true, 'VWAP Invalidation',     group=g_inval, tooltip='Exit if price crosses VWAP against position direction.')
+bool useATRInv     = input.bool(true, 'ATR Spike Invalidation',group=g_inval, tooltip='Exit on high-volatility bars that go against position.')
+bool useStructInv  = input.bool(true, 'Structure Invalidation', group=g_inval, tooltip='Exit if opposing M2 pattern fires during trade.')
+bool useTrendInv   = input.bool(true, 'Trend Invalidation',     group=g_inval, tooltip='Exit if 20/50 EMA crosses against position.')
+bool useChopInv    = input.bool(true, 'Chop Invalidation',      group=g_inval, tooltip='Exit if market enters chop state during trade.')
 
-pullbackDownLegs = trendUp and downLeg
-pullbackUpLegs = trendDown and upLeg
+// Display
+bool showB      = input.bool(false, 'Show B Setups',          group=g_display, tooltip='B-grade signals have moderate confluence. A+ signals always show.')
+bool showExits  = input.bool(true,  'Show Exit Levels',       group=g_display, tooltip='Plots Entry, TP1 (1R), TP2 (2R), and Stop Loss lines.')
+bool showSL     = input.bool(true,  'Show Stop Loss',         group=g_display)
+bool showScore  = input.bool(true,  'Show Score on Labels',   group=g_display, tooltip='Displays the confluence score on each signal label.')
 
-var int legCountDown = 0
-var int legCountUp = 0
+// Dashboard
+bool showDash   = input.bool(true,       'Show Dashboard',    group=g_dash)
+string dashPos  = input.string('top_right', 'Dashboard Position', group=g_dash, options=['top_right','top_left','bottom_right','bottom_left'])
+string dashSize = input.string('small',  'Dashboard Text Size', group=g_dash, options=['tiny','small','normal','large','huge'])
 
-legCountDown := pullbackDownLegs ? legCountDown[1] + 1 : 0
-legCountUp := pullbackUpLegs ? legCountUp[1] + 1 : 0
+// Alerts
+bool alert_signals  = input.bool(true,  'Alert on A+ Signals',   group=g_alerts)
+bool alert_exits    = input.bool(false, 'Alert on TP/SL Hits',   group=g_alerts)
+bool alert_inval    = input.bool(true,  'Alert on Invalidation', group=g_alerts)
+bool alert_state    = input.bool(false, 'Alert on State Change',  group=g_alerts)
 
-emaTouchedDown = legCountDown >= 2 and low <= ema
-emaTouchedUp = legCountUp >= 2 and high >= ema
+// ═══════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════
+f_dash_pos(string p) =>
+    switch p
+        'top_right'    => position.top_right
+        'top_left'     => position.top_left
+        'bottom_right' => position.bottom_right
+        'bottom_left'  => position.bottom_left
+        =>               position.top_right
 
-m2bEntry = trendUp and emaTouchedDown and close > ema
-m2sEntry = trendDown and emaTouchedUp and close < ema
+f_dash_size(string s) =>
+    switch s
+        'tiny'   => size.tiny
+        'small'  => size.small
+        'normal' => size.normal
+        'large'  => size.large
+        'huge'   => size.huge
+        =>         size.small
 
-m2bSignal = m2bEntry and not m2bEntry[1]
-m2sSignal = m2sEntry and not m2sEntry[1]
+// ═══════════════════════════════════════════════════════════════
+// EMAs & VWAP
+// ═══════════════════════════════════════════════════════════════
+float ema20 = ta.ema(close, 20)
+float ema50 = ta.ema(close, 50)
+float vwap  = ta.vwap(close)
 
-plot(ema, color=color.new(color.blue, 0), linewidth=2, title="EMA")
+plot(showEMA   ? ema20 : na, 'EMA 20', color=#00CCCC, linewidth=2)
+plot(showEMA50 ? ema50 : na, 'EMA 50', color=color.new(#FF9800, 50), linewidth=1)
+plot(useVWAP   ? vwap  : na, 'VWAP',   color=color.new(color.orange, 50), linewidth=1, style=plot.style_circles)
 
-plotshape(m2bSignal, title="M2B", location=location.belowbar, color=color.new(color.green, 0), style=shape.labelup, text="M2B", textcolor=color.white, size=shapeSize)
-plotshape(m2sSignal, title="M2S", location=location.abovebar, color=color.new(color.red, 0), style=shape.labeldown, text="M2S", textcolor=color.white, size=shapeSize)
+// ═══════════════════════════════════════════════════════════════
+// TREND & CHOP
+// ═══════════════════════════════════════════════════════════════
+bool trendBull = ema20 > ema50
+bool trendBear = ema20 < ema50
 
-showCustomLabels = input.bool(false, "Use Custom Label Positioning", tooltip="Alternative label positioning with adjustable offset")
+float atr    = ta.atr(14)
+float atrAvg = ta.sma(atr, 20)
 
-if showCustomLabels and barstate.isconfirmed
-    if m2bSignal
-        label.new(bar_index, low * (1 - labelOffset / 100), "M2B", color=color.new(color.green, 0), textcolor=color.white, style=label.style_label_up, size=shapeSize, yloc=yloc.price)
-    if m2sSignal
-        label.new(bar_index, high * (1 + labelOffset / 100), "M2S", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=shapeSize, yloc=yloc.price)
+bool isChop = atr < atrAvg * 0.8 and math.abs(ema20 - ema50) < atr * 0.5
 
-bgcolor(showBackground and trendUp ? color.new(color.green, 90) : showBackground and trendDown ? color.new(color.red, 90) : na, title="Trend Background")
+// Cross detection (global scope to avoid warnings)
+bool crossUnder20_50 = ta.crossunder(ema20, ema50)
+bool crossOver20_50  = ta.crossover(ema20, ema50)
 
-plotshape(showTouches and emaTouchedDown, title="EMA Touch Down", location=location.belowbar, color=color.new(color.yellow, 70), style=shape.circle, size=size.tiny)
-plotshape(showTouches and emaTouchedUp, title="EMA Touch Up", location=location.abovebar, color=color.new(color.yellow, 70), style=shape.circle, size=size.tiny)
+// ═══════════════════════════════════════════════════════════════
+// SWINGS
+// ═══════════════════════════════════════════════════════════════
+float pivHigh = ta.pivothigh(high, swingLen, swingLen)
+float pivLow  = ta.pivotlow(low, swingLen, swingLen)
 
-if showLegCounts and barstate.isconfirmed
-    if legCountDown > 0 and legCountDown < 3 and trendUp
-        label.new(bar_index, low * (1 - labelOffset / 100), str.tostring(legCountDown), color=color.new(color.green, 70), textcolor=color.white, style=label.style_label_up, size=size.tiny, yloc=yloc.price)
-    if legCountUp > 0 and legCountUp < 3 and trendDown
-        label.new(bar_index, high * (1 + labelOffset / 100), str.tostring(legCountUp), color=color.new(color.red, 70), textcolor=color.white, style=label.style_label_down, size=size.tiny, yloc=yloc.price)
+var float lastHigh = na
+var float prevHigh = na
+var float lastLow  = na
+var float prevLow  = na
 
-if barstate.islast and showInfo
-    var table info = table.new(position.top_right, 2, 5, bgcolor=color.new(color.black, 80), border_width=1)
-    table.cell(info, 0, 0, "M2 System", text_color=color.white, bgcolor=color.navy, text_size=size.small)
-    table.cell(info, 1, 0, "Status", text_color=color.white, bgcolor=color.navy, text_size=size.small)
-    
-    trendText = trendUp ? "UPTREND" : trendDown ? "DOWNTREND" : "FLAT"
-    trendColor = trendUp ? color.green : trendDown ? color.red : color.gray
-    table.cell(info, 0, 1, "Trend", text_color=color.white, text_size=size.small)
-    table.cell(info, 1, 1, trendText, text_color=trendColor, text_size=size.small)
-    
-    table.cell(info, 0, 2, "Down Legs", text_color=color.white, text_size=size.small)
-    table.cell(info, 1, 2, str.tostring(legCountDown), text_color=color.white, text_size=size.small)
-    table.cell(info, 0, 3, "Up Legs", text_color=color.white, text_size=size.small)
-    table.cell(info, 1, 3, str.tostring(legCountUp), text_color=color.white, text_size=size.small)
-    
-    m2bReady = trendUp and legCountDown >= 2
-    m2sReady = trendDown and legCountUp >= 2
-    readyText = m2bReady ? "M2B Ready" : m2sReady ? "M2S Ready" : "Waiting"
-    readyColor = m2bReady ? color.green : m2sReady ? color.red : color.gray
-    table.cell(info, 0, 4, "Signal", text_color=color.white, text_size=size.small)
-    table.cell(info, 1, 4, readyText, text_color=readyColor, text_size=size.small)
+if not na(pivHigh)
+    prevHigh := lastHigh
+    lastHigh := pivHigh
 
-alertcondition(m2bSignal, title="M2B Signal", message="M2B Bullish Setup")
-alertcondition(m2sSignal, title="M2S Signal", message="M2S Bearish Setup")
+if not na(pivLow)
+    prevLow := lastLow
+    lastLow  := pivLow
+
+// ═══════════════════════════════════════════════════════════════
+// M2 PATTERNS
+// ═══════════════════════════════════════════════════════════════
+bool m2b = not na(prevLow) and not na(lastLow) and lastLow > prevLow and close > high[1]
+bool m2s = not na(prevHigh) and not na(lastHigh) and lastHigh < prevHigh and close < low[1]
+
+// ═══════════════════════════════════════════════════════════════
+// SWEEPS & TRAPS
+// ═══════════════════════════════════════════════════════════════
+bool sweepHigh = high > ta.highest(high, 5)[1]
+bool sweepLow  = low  < ta.lowest(low, 5)[1]
+
+float volSMA  = ta.sma(volume, 20)
+bool highVol   = volume > volSMA * 1.5
+
+bool bullTrap = sweepLow  and close > open and highVol
+bool bearTrap = sweepHigh and close < open and highVol
+
+// ═══════════════════════════════════════════════════════════════
+// ADAPTIVE SCORING
+// ═══════════════════════════════════════════════════════════════
+int scoreLong  = 0
+int scoreShort = 0
+
+if m2b
+    scoreLong += 1
+if m2s
+    scoreShort += 1
+
+if close > ema20
+    scoreLong += 1
+if close < ema20
+    scoreShort += 1
+
+if useSweep
+    if sweepLow
+        scoreLong += 1
+    if sweepHigh
+        scoreShort += 1
+
+if useTrap
+    if bullTrap
+        scoreLong += 1
+    if bearTrap
+        scoreShort += 1
+
+if useTrend
+    if trendBull
+        scoreLong += 1
+    if trendBear
+        scoreShort += 1
+
+int maxScore = 2 + (useSweep ? 1 : 0) + (useTrap ? 1 : 0) + (useTrend ? 1 : 0)
+
+int aThreshold = math.ceil(maxScore * 0.75)
+int bThreshold = math.ceil(maxScore * 0.50)
+
+// ═══════════════════════════════════════════════════════════════
+// SIGNAL GENERATION
+// ═══════════════════════════════════════════════════════════════
+bool barsOk = bar_index > swingLen * 2 + 5
+
+bool longA  = barsOk and scoreLong  >= aThreshold and not (useChop and isChop)
+bool shortA = barsOk and scoreShort >= aThreshold and not (useChop and isChop)
+
+bool longB  = barsOk and scoreLong  >= bThreshold and scoreLong  < aThreshold
+bool shortB = barsOk and scoreShort >= bThreshold and scoreShort < aThreshold
+
+// ═══════════════════════════════════════════════════════════════
+// TRADE STATE MANAGEMENT (with Invalidation)
+// ═══════════════════════════════════════════════════════════════
+var bool inLong      = false
+var bool inShort     = false
+var int  barsInTrade = 0
+var string lastExit  = '—'
+
+var float entryPrice = na
+var float tp1Level   = na
+var float tp2Level   = na
+var float slLevel    = na
+
+float riskAmount = riskMode == 'ATR' ? atr * riskATR : riskTicks * syminfo.mintick
+
+// ── Trade Invalidation Conditions ────────────────────────────
+
+bool timeInvalid = barsInTrade >= maxBarsInTrade
+
+bool structInvalidLong  = useStructInv and inLong  and m2s
+bool structInvalidShort = useStructInv and inShort and m2b
+
+bool trendInvalidLong  = useTrendInv and inLong  and crossUnder20_50
+bool trendInvalidShort = useTrendInv and inShort and crossOver20_50
+
+bool vwapInvalidLong  = useVWAP and inLong  and close < vwap
+bool vwapInvalidShort = useVWAP and inShort and close > vwap
+
+bool atrInvalidLong  = useATRInv and inLong  and atr > atrAvg * 1.5 and close < open
+bool atrInvalidShort = useATRInv and inShort and atr > atrAvg * 1.5 and close > open
+
+bool chopInvalid = useChopInv and isChop and not isChop[1]
+
+bool invalidateLong = timeInvalid or structInvalidLong or trendInvalidLong or vwapInvalidLong or atrInvalidLong or chopInvalid
+bool invalidateShort = timeInvalid or structInvalidShort or trendInvalidShort or vwapInvalidShort or atrInvalidShort or chopInvalid
+
+// ── Trade Exit Logic ──────────────────────────────────────────
+
+if inLong or inShort
+    barsInTrade += 1
+else
+    barsInTrade := 0
+
+if inLong
+    if high >= tp1Level
+        inLong   := false
+        lastExit := 'TP1'
+    else if low <= slLevel
+        inLong   := false
+        lastExit := 'SL'
+    else if invalidateLong
+        inLong   := false
+        if timeInvalid
+            lastExit := 'TIME'
+        else if structInvalidLong
+            lastExit := 'M2S'
+        else if trendInvalidLong
+            lastExit := '20<50'
+        else if vwapInvalidLong
+            lastExit := 'VWAP'
+        else if atrInvalidLong
+            lastExit := 'ATR'
+        else if chopInvalid
+            lastExit := 'CHOP'
+        else
+            lastExit := 'INVAL'
+
+if inShort
+    if low <= tp1Level
+        inShort  := false
+        lastExit := 'TP1'
+    else if high >= slLevel
+        inShort  := false
+        lastExit := 'SL'
+    else if invalidateShort
+        inShort  := false
+        if timeInvalid
+            lastExit := 'TIME'
+        else if structInvalidShort
+            lastExit := 'M2B'
+        else if trendInvalidShort
+            lastExit := '20>50'
+        else if vwapInvalidShort
+            lastExit := 'VWAP'
+        else if atrInvalidShort
+            lastExit := 'ATR'
+        else if chopInvalid
+            lastExit := 'CHOP'
+        else
+            lastExit := 'INVAL'
+
+// Track exit types for alerts
+bool longTP1Hit  = inLong[1] and not inLong and lastExit == 'TP1'
+bool longSLHit   = inLong[1] and not inLong and lastExit == 'SL'
+bool shortTP1Hit = inShort[1] and not inShort and lastExit == 'TP1'
+bool shortSLHit  = inShort[1] and not inShort and lastExit == 'SL'
+bool longInvalid = inLong[1] and not inLong and lastExit != 'TP1' and lastExit != 'SL'
+bool shortInvalid = inShort[1] and not inShort and lastExit != 'TP1' and lastExit != 'SL'
+
+// ── Entry Logic ───────────────────────────────────────────────
+
+if longA and not inLong and not inShort
+    inLong      := true
+    barsInTrade := 1
+    lastExit    := '—'
+    entryPrice  := close
+    tp1Level    := close + riskAmount
+    tp2Level    := close + riskAmount * 2
+    slLevel     := close - riskAmount
+
+if shortA and not inShort and not inLong
+    inShort     := true
+    barsInTrade := 1
+    lastExit    := '—'
+    entryPrice  := close
+    tp1Level    := close - riskAmount
+    tp2Level    := close - riskAmount * 2
+    slLevel     := close + riskAmount
+
+if not inLong and not inShort
+    entryPrice := na
+    tp1Level   := na
+    tp2Level   := na
+    slLevel    := na
+
+// ═══════════════════════════════════════════════════════════════
+// PLOT SIGNALS
+// ═══════════════════════════════════════════════════════════════
+plotshape(longA,  'Long A+',  location=location.belowbar, color=color.green,  style=shape.triangleup,   size=size.normal)
+plotshape(shortA, 'Short A+', location=location.abovebar, color=color.red,    style=shape.triangledown, size=size.normal)
+
+plotshape(showB and longB,  'Long B',  location=location.belowbar, color=#00C896, style=shape.circle, size=size.small)
+plotshape(showB and shortB, 'Short B', location=location.abovebar, color=#F05252, style=shape.circle, size=size.small)
+
+// Score labels
+if showScore and longA
+    label.new(bar_index, low, 'A+ ' + str.tostring(scoreLong) + '/' + str.tostring(maxScore), style=label.style_label_up, color=color.green, textcolor=color.white, size=size.small, yloc=yloc.belowbar)
+
+if showScore and shortA
+    label.new(bar_index, high, 'A+ ' + str.tostring(scoreShort) + '/' + str.tostring(maxScore), style=label.style_label_down, color=color.red, textcolor=color.white, size=size.small, yloc=yloc.abovebar)
+
+if showScore and showB and longB
+    label.new(bar_index, low, 'B ' + str.tostring(scoreLong) + '/' + str.tostring(maxScore), style=label.style_label_up, color=#00C896, textcolor=color.white, size=size.tiny, yloc=yloc.belowbar)
+
+if showScore and showB and shortB
+    label.new(bar_index, high, 'B ' + str.tostring(scoreShort) + '/' + str.tostring(maxScore), style=label.style_label_down, color=#F05252, textcolor=color.white, size=size.tiny, yloc=yloc.abovebar)
+
+// Invalidation labels
+if inLong and invalidateLong and barstate.isconfirmed
+    string invalReasonLong = 'INVAL'
+    if timeInvalid
+        invalReasonLong := 'TIME'
+    else if structInvalidLong
+        invalReasonLong := 'M2S'
+    else if trendInvalidLong
+        invalReasonLong := '20<50'
+    else if vwapInvalidLong
+        invalReasonLong := 'VWAP'
+    else if atrInvalidLong
+        invalReasonLong := 'ATR'
+    else if chopInvalid
+        invalReasonLong := 'CHOP'
+    label.new(bar_index, high, '✕ ' + invalReasonLong, style=label.style_label_down, color=color.orange, textcolor=color.white, size=size.small, yloc=yloc.abovebar)
+
+if inShort and invalidateShort and barstate.isconfirmed
+    string invalReasonShort = 'INVAL'
+    if timeInvalid
+        invalReasonShort := 'TIME'
+    else if structInvalidShort
+        invalReasonShort := 'M2B'
+    else if trendInvalidShort
+        invalReasonShort := '20>50'
+    else if vwapInvalidShort
+        invalReasonShort := 'VWAP'
+    else if atrInvalidShort
+        invalReasonShort := 'ATR'
+    else if chopInvalid
+        invalReasonShort := 'CHOP'
+    label.new(bar_index, low, '✕ ' + invalReasonShort, style=label.style_label_up, color=color.orange, textcolor=color.white, size=size.small, yloc=yloc.belowbar)
+
+// ═══════════════════════════════════════════════════════════════
+// EXIT LEVELS
+// ═══════════════════════════════════════════════════════════════
+plot(showExits ? tp1Level   : na, 'TP1 (1R)',  color=#4F8EF7,   style=plot.style_linebr, linewidth=1)
+plot(showExits ? tp2Level   : na, 'TP2 (2R)',  color=color.new(#4F8EF7, 80), style=plot.style_linebr, linewidth=1)
+plot(showSL    ? slLevel    : na, 'Stop Loss', color=#F05252,   style=plot.style_linebr, linewidth=1)
+plot(showExits ? entryPrice : na, 'Entry',     color=#888888,   style=plot.style_linebr, linewidth=1)
+
+// ═══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════════
+if showDash and barstate.islast
+    var table dash = table.new(f_dash_pos(dashPos), 2, 12, border_width=1, frame_color=color.new(color.gray, 50), bgcolor=color.new(color.black, 20))
+    string dsz = f_dash_size(dashSize)
+
+    string stateStr = inLong ? 'LONG' : inShort ? 'SHORT' : 'FLAT'
+    color  stateCol = inLong ? color.green : inShort ? color.red : color.gray
+
+    string longScoreStr = str.tostring(scoreLong) + '/' + str.tostring(maxScore)
+    string shortScoreStr = str.tostring(scoreShort) + '/' + str.tostring(maxScore)
+    color  longScoreCol = scoreLong >= aThreshold ? color.green : scoreLong >= bThreshold ? #00C896 : color.gray
+    color  shortScoreCol = scoreShort >= aThreshold ? color.red : scoreShort >= bThreshold ? #F05252 : color.gray
+
+    string trendStr = trendBull ? 'BULL ▲' : trendBear ? 'BEAR ▼' : 'NEUTRAL'
+    color  trendCol = trendBull ? color.green : trendBear ? color.red : color.gray
+
+    string chopStr = isChop ? '⚠ CHOP' : 'CLEAR'
+    color  chopCol = isChop ? color.orange : color.green
+
+    string invalStr = (inLong and invalidateLong) or (inShort and invalidateShort) ? '⚠ INVALID' : (inLong or inShort ? 'VALID' : '—')
+    color  invalCol = (inLong and invalidateLong) or (inShort and invalidateShort) ? color.red : (inLong or inShort ? color.green : color.gray)
+
+    string barsStr = (inLong or inShort) ? str.tostring(barsInTrade) + '/' + str.tostring(maxBarsInTrade) : '—'
+
+    color exitCol = color.gray
+    if lastExit == 'TP1'
+        exitCol := color.green
+    else if lastExit == 'SL'
+        exitCol := color.red
+    else if lastExit == 'TIME' or lastExit == '20>50' or lastExit == '20<50' or lastExit == 'ATR'
+        exitCol := color.orange
+    else if lastExit == 'M2B' or lastExit == 'M2S' or lastExit == 'VWAP' or lastExit == 'CHOP'
+        exitCol := color.yellow
+
+    table.cell(dash, 0, 0,  'M2 A+ SYSTEM',    text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 0,  'STATUS',          text_color=color.white, text_size=dsz)
+
+    table.cell(dash, 0, 1,  'Position',        text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 1,  stateStr,          text_color=stateCol,    text_size=dsz)
+
+    table.cell(dash, 0, 2,  'Long Score',      text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 2,  longScoreStr,      text_color=longScoreCol, text_size=dsz)
+
+    table.cell(dash, 0, 3,  'Short Score',     text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 3,  shortScoreStr,     text_color=shortScoreCol, text_size=dsz)
+
+    table.cell(dash, 0, 4,  'A Threshold',     text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 4,  str.tostring(aThreshold) + '/' + str.tostring(maxScore), text_color=color.gray, text_size=dsz)
+
+    table.cell(dash, 0, 5,  'M2B Pattern',     text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 5,  m2b ? '✓' : '—',  text_color=m2b ? color.green : color.gray, text_size=dsz)
+
+    table.cell(dash, 0, 6,  'M2S Pattern',     text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 6,  m2s ? '✓' : '—',  text_color=m2s ? color.red : color.gray, text_size=dsz)
+
+    table.cell(dash, 0, 7,  'Trend (20/50)',   text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 7,  trendStr,          text_color=trendCol, text_size=dsz)
+
+    table.cell(dash, 0, 8,  'Chop State',      text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 8,  chopStr,           text_color=chopCol, text_size=dsz)
+
+    table.cell(dash, 0, 9,  'Trade Valid?',    text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 9,  invalStr,          text_color=invalCol,    text_size=dsz)
+
+    table.cell(dash, 0, 10, 'Bars in Trade',   text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 10, barsStr,           text_color=color.white, text_size=dsz)
+
+    table.cell(dash, 0, 11, 'Last Exit',       text_color=color.white, text_size=dsz)
+    table.cell(dash, 1, 11, lastExit,          text_color=exitCol,     text_size=dsz)
+
+// ═══════════════════════════════════════════════════════════════
+// ALERT CONDITIONS
+// ═══════════════════════════════════════════════════════════════
+alertcondition(longA and alert_signals,        'Long A+ Signal',    'M2 A+: LONG A+ signal triggered')
+alertcondition(shortA and alert_signals,       'Short A+ Signal',   'M2 A+: SHORT A+ signal triggered')
+alertcondition(longB and alert_signals,        'Long B Signal',     'M2 A+: LONG B signal triggered')
+alertcondition(shortB and alert_signals,       'Short B Signal',    'M2 A+: SHORT B signal triggered')
+alertcondition(longTP1Hit and alert_exits,     'Long TP1 Hit',      'M2 A+: LONG TP1 reached')
+alertcondition(shortTP1Hit and alert_exits,    'Short TP1 Hit',     'M2 A+: SHORT TP1 reached')
+alertcondition(longSLHit and alert_exits,      'Long SL Hit',       'M2 A+: LONG stop loss hit')
+alertcondition(shortSLHit and alert_exits,     'Short SL Hit',      'M2 A+: SHORT stop loss hit')
+alertcondition(longInvalid and alert_inval,    'Long Invalidated',  'M2 A+: LONG trade invalidated')
+alertcondition(shortInvalid and alert_inval,   'Short Invalidated', 'M2 A+: SHORT trade invalidated')
+alertcondition(isChop and not isChop[1] and alert_state,   'Chop Started', 'M2 A+: Chop state detected — signals blocked')
+alertcondition(not isChop and isChop[1] and alert_state,   'Chop Ended',   'M2 A+: Chop state cleared — signals enabled')
