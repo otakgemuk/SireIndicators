@@ -1,0 +1,105 @@
+//@version=5
+indicator('TD Sequential', overlay=true)
+
+show_td        = input.bool(true,     'Show TD Sequential')
+show_td_line   = input.bool(true,     'Show TD Lines')
+show_td_trail  = input.bool(true,     'TD Pulse on Countdown')
+show_td_inter  = input.bool(false,    'Show Intermediate Counts (1–8)')
+show_cd_inter  = input.bool(false,    'Show Countdown Counts (1–12)')
+td_offset      = input.float(0.05,    'Label Offset %',   minval=0.01, maxval=5.0)
+td_size        = input.string('small', 'Label Size', options=['tiny','small','normal','large','huge'])
+td_ext         = input.int(20,        'Extend Lines Forward', minval=2)
+
+C_TD_SETUP_BULL = color.new(color.green,  0)
+C_TD_SETUP_BEAR = color.new(color.red,    0)
+C_TD_CD_BULL    = color.new(color.green,  0)
+C_TD_CD_BEAR    = color.new(color.red,    0)
+C_TD_TRAIL      = color.new(color.yellow, 80)
+C_TD_INTER_BG   = 60
+C_TD_INTER_TXT  = 20
+
+f_td_label(x, y, txt, bg) => label.new(x, y, txt, color=bg, textcolor=color.white, style=label.style_label_center, size=td_size)
+f_td_line(x, y, isBull) => line.new(x, y, x + td_ext, y, color=isBull ? color.green : color.red, style=line.style_solid, width=2)
+f_td_inter(x, y, txt, bg) => label.new(x, y, txt, color=color.new(bg, C_TD_INTER_BG), textcolor=color.new(color.white, C_TD_INTER_TXT), style=label.style_label_center, size=size.tiny)
+f_td_pulse(x, y) => label.new(x, y, '•', size=size.tiny, textcolor=C_TD_TRAIL, color=color.new(color.black, 100), style=label.style_label_center)
+
+var int  td_setup_up  = 0
+var int  td_setup_dn  = 0
+var int  td_buy_cd    = 0
+var int  td_sell_cd   = 0
+var bool active_bull  = false
+var bool active_bear  = false
+
+bull_setup = close > close[4]
+bear_setup = close < close[4]
+
+if bull_setup
+    td_setup_up := bull_setup[1] ? td_setup_up + 1 : 1
+    td_setup_dn := 0
+else if bear_setup
+    td_setup_dn := bear_setup[1] ? td_setup_dn + 1 : 1
+    td_setup_up := 0
+else
+    td_setup_up := 0
+    td_setup_dn := 0
+
+if show_td and show_td_inter and barstate.isconfirmed
+    if td_setup_up > 0 and td_setup_up < 9
+        f_td_inter(bar_index, high * (1 + td_offset / 100), str.tostring(td_setup_up), C_TD_SETUP_BULL)
+    if td_setup_dn > 0 and td_setup_dn < 9
+        f_td_inter(bar_index, low * (1 - td_offset / 100), str.tostring(td_setup_dn), C_TD_SETUP_BEAR)
+
+is_setup9_bull = show_td and td_setup_up == 9 and barstate.isconfirmed
+is_setup9_bear = show_td and td_setup_dn == 9 and barstate.isconfirmed
+
+if is_setup9_bull
+    f_td_label(bar_index, high * (1 + td_offset / 100), '9', C_TD_SETUP_BULL)
+    if show_td_line
+        f_td_line(bar_index, high, true)
+    active_bull := true
+    active_bear := false
+    td_buy_cd   := 0
+
+if is_setup9_bear
+    f_td_label(bar_index, low * (1 - td_offset / 100), '9', C_TD_SETUP_BEAR)
+    if show_td_line
+        f_td_line(bar_index, low, false)
+    active_bear := true
+    active_bull := false
+    td_sell_cd  := 0
+
+buy_cd_tick  = active_bear and close <= low[2]
+sell_cd_tick = active_bull and close >= high[2]
+
+if buy_cd_tick and td_buy_cd < 13
+    td_buy_cd := td_buy_cd + 1
+
+if sell_cd_tick and td_sell_cd < 13
+    td_sell_cd := td_sell_cd + 1
+
+if show_td and show_cd_inter and barstate.isconfirmed
+    if td_buy_cd > 0 and td_buy_cd < 13
+        f_td_inter(bar_index, low * (1 - td_offset / 100), str.tostring(td_buy_cd), C_TD_CD_BULL)
+    if td_sell_cd > 0 and td_sell_cd < 13
+        f_td_inter(bar_index, high * (1 + td_offset / 100), str.tostring(td_sell_cd), C_TD_CD_BEAR)
+
+is_cd13_buy  = show_td and td_buy_cd  == 13 and barstate.isconfirmed
+is_cd13_sell = show_td and td_sell_cd == 13 and barstate.isconfirmed
+
+if is_cd13_buy
+    f_td_label(bar_index, low * (1 - td_offset / 100), '13', C_TD_CD_BULL)
+    if show_td_line
+        f_td_line(bar_index, low, true)
+    if show_td_trail
+        f_td_pulse(bar_index - 1, low)
+    td_buy_cd   := 0
+    active_bear := false
+
+if is_cd13_sell
+    f_td_label(bar_index, high * (1 + td_offset / 100), '13', C_TD_CD_BEAR)
+    if show_td_line
+        f_td_line(bar_index, high, false)
+    if show_td_trail
+        f_td_pulse(bar_index - 1, high)
+    td_sell_cd  := 0
+    active_bull := false

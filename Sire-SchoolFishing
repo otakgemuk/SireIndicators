@@ -14,27 +14,18 @@ plot(emaFast, color = color.orange, linewidth = 2, title = "9 EMA")
 plot(emaSlow, color = color.blue, linewidth = 2, title = "20 EMA")
 
 // ===============================================
-// ?? STRATEGY NOTES (INTEGRATED TOOLTIPS)
+// 📌 STRATEGY NOTES (INTEGRATED TOOLTIPS)
 // ===============================================
 string DESC_SR   = "SCHOOL RUN (15m RTH):\n- Brackets the 2nd 15m bar of the cash open.\n- 09:30-09:45 (NY) or 08:00-08:15 (DAX).\n- BUY breakout of high / SELL breakdown of low.\n- Best for identifying Trend Days vs Range Days."
 string DESC_FISH = "FISHING TECHNIQUE (10m):\n- Mean Reversion / Liquidity Grab.\n- Look for stop-run of a pivot high/low.\n- ENTRY: Price closes back inside the previous range.\n- 'The best fish are caught in ranges.'"
 string DESC_72W  = "72-WEEK CYCLE (Daily/Weekly):\n- 500 Calendar Day intervals.\n- Macro trend-change warning system.\n- Use for 'Big Picture' direction, not entries."
 
-// ===============================================
-// ?? SESSION & TIMEFRAME SETTINGS
-// ===============================================
-var G_SES = "?? Session Settings"
+var G_SES = "📊 Session Settings"
+var G_TF = "⏱ Timeframe Settings"
 rthSession  = input.session("0930-1600", "RTH Session Time", group=G_SES)
 timeZone    = input.string("America/New_York", "Exchange Timezone", group=G_SES)
-
-var G_TF = "? Timeframe Settings"
 useCustomTF = input.bool(true, "Use Custom Timeframe for Signals?", group=G_TF)
 chosenTF    = input.timeframe("15", "Select Signal Timeframe", group=G_TF)
-
-// ===============================================
-// ?? STRATEGY 1: RTH SCHOOL RUN
-// ===============================================
-showSR = input.bool(true, "Show School Run Brackets", group="1. School Run", tooltip=DESC_SR)
 
 var float srHigh = na
 var float srLow  = na
@@ -50,22 +41,18 @@ if isNewSession
 else if inSession
     barsInSession := barsInSession + 1
 
-// Targets the end of the 2nd bar (e.g. 15m bar #2)
 if inSession and barsInSession == 2
     srHigh := high
     srLow  := low
 
+showSR = input.bool(true, "Show School Run Brackets", group="1. School Run", tooltip=DESC_SR)
 plot(showSR ? srHigh : na, "RTH SR High", color.rgb(172, 140, 0), 2, plot.style_linebr)
 plot(showSR ? srLow : na,  "RTH SR Low",  color.rgb(172, 140, 0), 2, plot.style_linebr)
 
-// ===============================================
-// ?? STRATEGY 2: FISHING TECHNIQUE
-// ===============================================
 showFish = input.bool(true, "Show Fishing Signals", group="2. Fishing Technique", tooltip=DESC_FISH)
 fishLookback = input.int(20, "Swing Lookback", group="2. Fishing Technique")
 
-f_get_tf_data(_src) => 
-    request.security(syminfo.tickerid, useCustomTF ? chosenTF : timeframe.period, _src, lookahead=barmerge.lookahead_on)
+f_get_tf_data(_src) => request.security(syminfo.tickerid, useCustomTF ? chosenTF : timeframe.period, _src, lookahead=barmerge.lookahead_on)
 
 tf_high  = f_get_tf_data(high)
 tf_low   = f_get_tf_data(low)
@@ -79,3 +66,13 @@ fishSell = tf_high > pivotHigh and tf_close < tf_low[1]
 
 plotshape(showFish and fishBuy, "Fishing Buy", shape.triangleup, location.belowbar, color.green, size=size.small)
 plotshape(showFish and fishSell, "Fishing Sell", shape.triangledown, location.abovebar, color.red, size=size.small)
+
+showCycle = input.bool(true, "Show 72-Week Cycle Lines", group="3. 72-Week Cycle", tooltip=DESC_72W)
+cycleDays = input.int(500, "Cycle Length (Days)", group="3. 72-Week Cycle")
+anchorDate = input.time(timestamp("2020-01-20T00:00:00"), "Cycle Anchor Date", group="3. 72-Week Cycle")
+
+elapsedDays = (time - anchorDate) / 86400000
+cycleCount  = math.floor(elapsedDays / cycleDays)
+is_cycle_hit = ta.change(cycleCount) != 0
+
+bgcolor(showCycle and is_cycle_hit ? color.new(color.purple, 80) : na)

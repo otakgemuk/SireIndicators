@@ -1,0 +1,146 @@
+//@version=5
+strategy("Sire-PYE", overlay=true, initial_capital=50000, default_qty_type=strategy.fixed, default_qty_value=1, slippage=1)
+
+sl_points     = input.float(5.0,  "Stop Loss (Points)")
+qty           = input.int(5,      "Contracts")
+max_consec_sl = input.int(2,      "Max Consecutive Stops Before Pause")
+cooldown_bars = input.int(3,      "Cooldown Bars After Pause")
+daily_sl_max  = input.float(100.0, "Daily Max Loss ($) - kill switch")
+
+grp_chop = "Trend vs Chop Filter"
+showTrendFilter  = input.bool(true,  "Enable Chop Filter",         group=grp_chop)
+openingBarLimit  = input.int(18,     "Opening Range Bar Count",    group=grp_chop, minval=1, maxval=20)
+chopThreshold    = input.float(0.5,  "Chop Threshold (0-1)",       group=grp_chop, minval=0.1, maxval=0.9, step=0.05, tooltip="trend_ratio = |close - day_open| / (day_high - day_low). Above threshold = trending, below = choppy. 0.5 recommended.")
+
+ema20_30m = request.security(syminfo.tickerid, "30", ta.ema(close, 20), lookahead=barmerge.lookahead_off)
+
+above = close > ema20_30m
+below = close < ema20_30m
+
+crossed_up   = above and below[1]
+crossed_down = below and above[1]
+
+var int   st_bar_count = 0
+var float s_open       = na
+var float s_high       = 0.0
+var float s_low        = 999999.0
+
+new_day_chop = ta.change(time('D')) != 0
+if new_day_chop
+    st_bar_count := 1
+    s_open       := open
+    s_high       := high
+    s_low        := low
+else
+    st_bar_count += 1
+    s_high       := math.max(s_high, high)
+    s_low        := math.min(s_low, low)
+
+trend_ratio = (s_high - s_low) != 0 ? math.abs(close - s_open) / (s_high - s_low) : 0.0
+is_trending = not showTrendFilter or (st_bar_count >= openingBarLimit and trend_ratio > chopThreshold)
+is_choppy   = showTrendFilter and st_bar_count >= openingBarLimit and trend_ratio <= chopThreshold
+
+trend_long_bias  = is_trending and close >= s_open
+trend_short_bias = is_trending and close <= s_open
+
+is_long  = strategy.position_size > 0
+is_short = strategy.position_size < 0
+is_flat  = strategy.position_size == 0
+
+var int   consec_stops = 0
+var int   cooldown_count = 0
+var bool  in_cooldown  = false
+
+closed_this_bar = strategy.closedtrades > strategy.closedtrades[1]
+if closed_this_bar
+    last_trade_pnl = strategy.closedtrades.profit(strategy.closedtrades - 1)
+    if last_trade_pnl < 0
+        consec_stops += 1
+        if consec_stops >= max_consec_sl
+            in_cooldown   := true
+            cooldown_count := 0
+            consec_stops  := 0
+    else
+        consec_stops   := 0
+        in_cooldown    := false
+        cooldown_count := 0
+
+if in_cooldown
+    cooldown_count += 1
+    if cooldown_count >= cooldown_bars
+        in_cooldown    := false
+        cooldown_count := 0
+
+var float daily_start_equity = strategy.equity
+var int   last_day           = -1
+var bool  daily_killed       = false
+
+new_day = dayofmonth != last_day
+if new_day
+    daily_start_equity := strategy.equity
+    daily_killed       := false
+    last_day           := dayofmonth
+
+daily_loss = daily_start_equity - strategy.equity
+if daily_loss >= daily_sl_max
+    daily_killed := true
+
+if daily_killed and (is_long or is_short)
+    strategy.close_all(comment="Daily Kill")
+
+can_trade = not in_cooldown and not daily_killed
+
+long_valid  = above and trend_long_bias
+short_valid = below and trend_short_bias
+
+flip_to_long  = long_valid  and is_short
+flip_to_short = short_valid and is_long
+reenter_long  = is_flat and long_valid  and can_trade
+reenter_short = is_flat and short_valid and can_trade
+
+if flip_to_long and not daily_killed
+    strategy.close("Short", comment="Flip Long")
+    strategy.entry("Long",  strategy.long,  qty=qty, comment="Long")
+else if flip_to_short and not daily_killed
+    strategy.close("Long",  comment="Flip Short")
+    strategy.entry("Short", strategy.short, qty=qty, comment="Short")
+else if reenter_long
+    strategy.entry("Long",  strategy.long,  qty=qty, comment="Re-Entry Long")
+else if reenter_short
+    strategy.entry("Short", strategy.short, qty=qty, comment="Re-Entry Short")
+
+if is_trending == false and (is_long or is_short) and can_trade
+    strategy.close_all(comment="Chop Exit")
+
+sl_ticks = sl_points / syminfo.mintick
+strategy.exit("SL", loss=sl_ticks, comment="10pt Stop")
+
+plot(ema20_30m, "20 EMA (30min)", color=color.new(color.yellow, 0), linewidth=3)
+
+avg = strategy.position_avg_price
+var float stop_line = na
+stop_line := is_long  ? avg - sl_points : is_short ? avg + sl_points : na
+plot(stop_line, "Stop", color=color.new(color.red, 0), linewidth=1, style=plot.style_linebr)
+
+bgcolor(is_choppy                                         ? color.new(color.orange, 88) : na, title="Chop Zone")
+bgcolor(in_cooldown                                       ? color.new(color.gray,   88) : na, title="Cooldown")
+bgcolor(not in_cooldown and long_valid  and can_trade     ? color.new(color.green,  90) : na, title="Long Zone")
+bgcolor(not in_cooldown and short_valid and can_trade     ? color.new(color.red,    90) : na, title="Short Zone")
+
+var label ratio_lbl = na
+label.delete(ratio_lbl)
+ratio_col = is_trending ? color.green : color.orange
+ratio_txt = "Ratio: " + str.tostring(math.round(trend_ratio * 100) / 100) + (is_trending ? "  TREND" : "  CHOP")
+ratio_lbl := label.new(bar_index, low, ratio_txt, style=label.style_label_up, color=ratio_col, textcolor=color.white, size=size.small)
+
+plotshape(crossed_up   and not daily_killed, title="Cross Up",   style=shape.triangleup,   location=location.belowbar, color=color.new(color.green, 0), size=size.normal)
+plotshape(crossed_down and not daily_killed, title="Cross Down", style=shape.triangledown, location=location.abovebar, color=color.new(color.red,   0), size=size.normal)
+
+plotshape(reenter_long  and not flip_to_long,  title="Re-Entry Long",  style=shape.circle, location=location.belowbar, color=color.new(color.aqua,   0), size=size.tiny)
+plotshape(reenter_short and not flip_to_short, title="Re-Entry Short", style=shape.circle, location=location.abovebar, color=color.new(color.orange, 0), size=size.tiny)
+
+var label lbl = na
+label.delete(lbl)
+lbl_txt = daily_killed ? "DAILY KILL" : in_cooldown  ? "COOLDOWN - " + str.tostring(cooldown_bars - cooldown_count) + " bars" : is_choppy    ? "CHOP - ratio: " + str.tostring(math.round(trend_ratio * 100) / 100) : is_long      ? "LONG  | Entry: " + str.tostring(math.round(avg * 10) / 10) + " | Stop: " + str.tostring(math.round((avg - sl_points) * 10) / 10) : is_short     ? "SHORT | Entry: " + str.tostring(math.round(avg * 10) / 10) + " | Stop: " + str.tostring(math.round((avg + sl_points) * 10) / 10) : "FLAT | ratio: " + str.tostring(math.round(trend_ratio * 100) / 100)
+lbl_col = daily_killed ? color.purple : in_cooldown ? color.gray : is_choppy ? color.orange : is_long ? color.green : is_short ? color.red : color.gray
+lbl := label.new(bar_index, high, lbl_txt, style=label.style_label_down, color=lbl_col, textcolor=color.white, size=size.small)

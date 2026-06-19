@@ -1,0 +1,93 @@
+//@version=6
+indicator("M2B/M2S Setup (EMA Touch, Fixed)", overlay=true)
+
+emaLength = input.int(20, title="EMA Length", minval=1)
+shapeSizeStr = input.string("normal", title="Shape Size", options=["tiny", "small", "normal", "large", "huge"])
+showBackground = input.bool(true, title="Show Trend Background")
+showLegCounts = input.bool(false, title="Show Leg Counts")
+showTouches = input.bool(false, title="Show EMA Touch Markers")
+showInfo = input.bool(true, title="Show Info Table")
+labelOffset = input.float(0.05, "Label Offset %", minval=0.01, maxval=5.0, step=0.01, tooltip="Vertical offset percentage for labels")
+
+shapeSize = switch shapeSizeStr
+    "tiny"  => size.tiny
+    "small" => size.small
+    "normal"=> size.normal
+    "large" => size.large
+    "huge"  => size.huge
+    => size.normal
+
+ema = ta.ema(close, emaLength)
+
+trendUp = close > ema
+trendDown = close < ema
+
+downLeg = close < close[1]
+upLeg = close > close[1]
+
+pullbackDownLegs = trendUp and downLeg
+pullbackUpLegs = trendDown and upLeg
+
+var int legCountDown = 0
+var int legCountUp = 0
+
+legCountDown := pullbackDownLegs ? legCountDown[1] + 1 : 0
+legCountUp := pullbackUpLegs ? legCountUp[1] + 1 : 0
+
+emaTouchedDown = legCountDown >= 2 and low <= ema
+emaTouchedUp = legCountUp >= 2 and high >= ema
+
+m2bEntry = trendUp and emaTouchedDown and close > ema
+m2sEntry = trendDown and emaTouchedUp and close < ema
+
+m2bSignal = m2bEntry and not m2bEntry[1]
+m2sSignal = m2sEntry and not m2sEntry[1]
+
+plot(ema, color=color.new(color.blue, 0), linewidth=2, title="EMA")
+
+plotshape(m2bSignal, title="M2B", location=location.belowbar, color=color.new(color.green, 0), style=shape.labelup, text="M2B", textcolor=color.white, size=shapeSize)
+plotshape(m2sSignal, title="M2S", location=location.abovebar, color=color.new(color.red, 0), style=shape.labeldown, text="M2S", textcolor=color.white, size=shapeSize)
+
+showCustomLabels = input.bool(false, "Use Custom Label Positioning", tooltip="Alternative label positioning with adjustable offset")
+
+if showCustomLabels and barstate.isconfirmed
+    if m2bSignal
+        label.new(bar_index, low * (1 - labelOffset / 100), "M2B", color=color.new(color.green, 0), textcolor=color.white, style=label.style_label_up, size=shapeSize, yloc=yloc.price)
+    if m2sSignal
+        label.new(bar_index, high * (1 + labelOffset / 100), "M2S", color=color.new(color.red, 0), textcolor=color.white, style=label.style_label_down, size=shapeSize, yloc=yloc.price)
+
+bgcolor(showBackground and trendUp ? color.new(color.green, 90) : showBackground and trendDown ? color.new(color.red, 90) : na, title="Trend Background")
+
+plotshape(showTouches and emaTouchedDown, title="EMA Touch Down", location=location.belowbar, color=color.new(color.yellow, 70), style=shape.circle, size=size.tiny)
+plotshape(showTouches and emaTouchedUp, title="EMA Touch Up", location=location.abovebar, color=color.new(color.yellow, 70), style=shape.circle, size=size.tiny)
+
+if showLegCounts and barstate.isconfirmed
+    if legCountDown > 0 and legCountDown < 3 and trendUp
+        label.new(bar_index, low * (1 - labelOffset / 100), str.tostring(legCountDown), color=color.new(color.green, 70), textcolor=color.white, style=label.style_label_up, size=size.tiny, yloc=yloc.price)
+    if legCountUp > 0 and legCountUp < 3 and trendDown
+        label.new(bar_index, high * (1 + labelOffset / 100), str.tostring(legCountUp), color=color.new(color.red, 70), textcolor=color.white, style=label.style_label_down, size=size.tiny, yloc=yloc.price)
+
+if barstate.islast and showInfo
+    var table info = table.new(position.top_right, 2, 5, bgcolor=color.new(color.black, 80), border_width=1)
+    table.cell(info, 0, 0, "M2 System", text_color=color.white, bgcolor=color.navy, text_size=size.small)
+    table.cell(info, 1, 0, "Status", text_color=color.white, bgcolor=color.navy, text_size=size.small)
+    
+    trendText = trendUp ? "UPTREND" : trendDown ? "DOWNTREND" : "FLAT"
+    trendColor = trendUp ? color.green : trendDown ? color.red : color.gray
+    table.cell(info, 0, 1, "Trend", text_color=color.white, text_size=size.small)
+    table.cell(info, 1, 1, trendText, text_color=trendColor, text_size=size.small)
+    
+    table.cell(info, 0, 2, "Down Legs", text_color=color.white, text_size=size.small)
+    table.cell(info, 1, 2, str.tostring(legCountDown), text_color=color.white, text_size=size.small)
+    table.cell(info, 0, 3, "Up Legs", text_color=color.white, text_size=size.small)
+    table.cell(info, 1, 3, str.tostring(legCountUp), text_color=color.white, text_size=size.small)
+    
+    m2bReady = trendUp and legCountDown >= 2
+    m2sReady = trendDown and legCountUp >= 2
+    readyText = m2bReady ? "M2B Ready" : m2sReady ? "M2S Ready" : "Waiting"
+    readyColor = m2bReady ? color.green : m2sReady ? color.red : color.gray
+    table.cell(info, 0, 4, "Signal", text_color=color.white, text_size=size.small)
+    table.cell(info, 1, 4, readyText, text_color=readyColor, text_size=size.small)
+
+alertcondition(m2bSignal, title="M2B Signal", message="M2B Bullish Setup")
+alertcondition(m2sSignal, title="M2S Signal", message="M2S Bearish Setup")
