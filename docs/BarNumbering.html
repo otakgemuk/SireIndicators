@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SireMammat · Bar Numbering Indicator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      background: #0A0E17;
+      color: #E8EDF5;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      background: #111927;
+      padding: 2.5rem 2rem;
+      border-radius: 20px;
+      border: 1px solid #2A3548;
+      box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.8);
+    }
+
+    .badge {
+      display: inline-block;
+      background: #1E2A3A;
+      color: #94A3B8;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.8rem;
+      border-radius: 20px;
+      letter-spacing: 0.3px;
+      border: 1px solid #2A3548;
+      margin-right: 0.5rem;
+    }
+
+    .badge-free {
+      background: #0B3B2C;
+      color: #4ADE80;
+      border-color: #166534;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-top: 0.5rem;
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, #FBBF24, #F59E0B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      color: #94A3B8;
+      border-left: 3px solid #F59E0B;
+      padding-left: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .meta-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 2rem;
+      background: #0F172A;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+      border: 1px solid #1E293B;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .meta-item strong {
+      color: #94A3B8;
+      font-weight: 500;
+    }
+
+    .meta-item span {
+      color: #E8EDF5;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: #F1F5F9;
+      border-bottom: 1px solid #1E293B;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: #E2E8F0;
+    }
+
+    p, li {
+      color: #CBD5E1;
+    }
+
+    ul, ol {
+      padding-left: 1.5rem;
+      margin: 0.75rem 0;
+    }
+
+    li {
+      margin-bottom: 0.4rem;
+    }
+
+    .highlight-box {
+      background: #0F172A;
+      border-left: 4px solid #F59E0B;
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box strong {
+      color: #FBBF24;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 1.25rem 0;
+    }
+
+    th {
+      text-align: left;
+      background: #1E293B;
+      color: #94A3B8;
+      font-weight: 500;
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #2A3548;
+    }
+
+    td {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #2A3548;
+      color: #CBD5E1;
+    }
+
+    .code-block {
+      background: #0A0E17;
+      border: 1px solid #1E293B;
+      border-radius: 10px;
+      padding: 1.25rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: #E2E8F0;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 1.25rem 0;
+    }
+
+    .code-block .comment {
+      color: #64748B;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #F59E0B;
+      color: #0A0E17;
+      font-weight: 600;
+      padding: 0.7rem 1.8rem;
+      border-radius: 30px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #FBBF24;
+      transform: scale(1.02);
+    }
+
+    .btn-secondary {
+      background: #1E293B;
+      color: #E8EDF5;
+      border: 1px solid #334155;
+    }
+
+    .btn-secondary:hover {
+      background: #2A3548;
+    }
+
+    .footer-note {
+      margin-top: 2.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #1E293B;
+      color: #64748B;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .container { padding: 1.5rem 1rem; }
+      h1 { font-size: 1.6rem; }
+      .meta-grid { flex-direction: column; gap: 0.5rem; }
+      table { font-size: 0.75rem; }
+      th, td { padding: 0.4rem 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- BADGES -->
+  <div>
+    <span class="badge">TradingView</span>
+    <span class="badge">Futures</span>
+    <span class="badge">ES · NQ · MES · MNQ</span>
+    <span class="badge badge-free">Free</span>
+  </div>
+
+  <!-- TITLE -->
+  <h1>Bar Numbering</h1>
+  <div class="subtitle">RTH/ETH Bar Counter — Track Every Bar with Context</div>
+
+  <!-- META INFO -->
+  <div class="meta-grid">
+    <div class="meta-item"><strong>Platform</strong><span>TradingView</span></div>
+    <div class="meta-item"><strong>Markets</strong><span>ES · NQ · MES · MNQ</span></div>
+    <div class="meta-item"><strong>Price</strong><span>Free</span></div>
+    <div class="meta-item"><strong>Type</strong><span>Overlay</span></div>
+    <div class="meta-item"><strong>Repaint</strong><span>❌ No</span></div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <h2>Overview</h2>
+  <p>
+    The <strong>Bar Numbering</strong> indicator is a simple, focused tool for futures traders who need to track bar counts with session context. 
+    Built specifically for <strong>ES, NQ, MES, and MNQ</strong> futures, it labels every bar with a sequential number and distinguishes between 
+    <strong>Regular Trading Hours (RTH)</strong> and <strong>Electronic Trading Hours (ETH)</strong>.
+  </p>
+  <p>
+    This indicator provides clear, objective structure to your chart, helping you reference specific bars in your trading notes and analysis without ambiguity.
+  </p>
+
+  <!-- WHAT IT DOES -->
+  <h2>What It Does</h2>
+  <ul>
+    <li><strong>Counts Bars Sequentially</strong> – Each bar in the current RTH session gets a number (1, 2, 3…).</li>
+    <li><strong>Resets at RTH Open</strong> – The count resets to <code>1</code> at the start of each new RTH session (9:30 AM ET).</li>
+    <li><strong>ETH Bars are Prefixed with "E"</strong> – Bars outside RTH are labelled <code>E1</code>, <code>E2</code>, <code>E3</code>… so you always know when price is trading in the overnight session.</li>
+    <li><strong>Customizable Display</strong> – Choose which bars to label (every 1st, 2nd, 5th, or 10th bar) and where to place the labels (above or below the bar).</li>
+    <li><strong>No Repaint</strong> – The indicator draws labels on the current bar as it forms, and does not change past labels. No repaint, no look-ahead bias.</li>
+  </ul>
+
+  <!-- HOW TO USE -->
+  <h2>How to Use It</h2>
+  <ol>
+    <li><strong>For Journaling</strong> – When reviewing your trades, you can reference specific bars (e.g., <em>"At bar 34 of the RTH session, price broke the opening range"</em>).</li>
+    <li><strong>For Session Context</strong> – The <code>E</code> prefix instantly tells you if price action occurred during the overnight session (ETH) or the regular session (RTH).</li>
+    <li><strong>For Pattern Recognition</strong> – Track how many bars have formed since the open, which can help you identify time-based patterns (e.g., <em>"The trend usually exhausts around bar 40–50"</em>).</li>
+  </ol>
+
+  <div class="highlight-box">
+    <strong>💡 Pro Tip:</strong> Combine this indicator with the <strong>Sire Cockpit</strong> or other price action tools to create a complete trading dashboard.
+  </div>
+
+  <!-- INPUTS TABLE -->
+  <h2>Inputs</h2>
+  <table>
+    <thead>
+      <tr><th>Input</th><th>Description</th><th>Default</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Label Offset (x ATR)</strong></td><td>Distance of the label from the bar (high/low).</td><td><code>0.5</code></td></tr>
+      <tr><td><strong>Show Bar Numbers</strong></td><td>Toggle the display on/off.</td><td><code>On</code></td></tr>
+      <tr><td><strong>Show Every Nth Bar</strong></td><td>Display every 1st, 2nd, 5th, or 10th bar.</td><td><code>1</code></td></tr>
+      <tr><td><strong>Label Position</strong></td><td>Place label above or below the bar.</td><td><code>Below Bar</code></td></tr>
+      <tr><td><strong>Label Size</strong></td><td>Font size of the label.</td><td><code>Tiny</code></td></tr>
+      <tr><td><strong>RTH Number Color</strong></td><td>Color for RTH bar numbers.</td><td>White (30% opacity)</td></tr>
+      <tr><td><strong>ETH Number Color</strong></td><td>Color for ETH bar numbers.</td><td>Gray (30% opacity)</td></tr>
+      <tr><td><strong>Show Numbers For</strong></td><td>RTH only, ETH only, or both.</td><td><code>RTH + ETH</code></td></tr>
+    </tbody>
+  </table>
+
+  <!-- FULL SCRIPT -->
+  <h2>Full Pine Script</h2>
+  <p>Copy the code below and paste it into a new TradingView indicator.</p>
+
+  <div class="code-block" id="pineScript">
+//@version=6
+// ╔═══════════════════════════════════════════════════════════════════════╗
+// ║  BAR NUMBERING — RTH/ETH Bar Counter for Futures                     ║
+// ║  TRACK EVERY BAR WITH CONTEXT. NO REPAINTS. NO BLOAT.                ║
+// ╚═══════════════════════════════════════════════════════════════════════╝
+indicator("SireMammat · Bar Numbering", shorttitle="Sire · Bar #", overlay=true, max_labels_count=500)
+
+// ─────────────────────────────────────────────
+// 🧰 INPUTS
+// ─────────────────────────────────────────────
+G_BARNUM = '🔢 Bar Numbers'
+
+float labelOffset = input.float(0.5, "Label & Bar Number Offset (x ATR)", minval=0, step=0.1, group=G_BARNUM)
+float _atr14 = ta.atr(14)
+float _labelOff = labelOffset * nz(_atr14, 1.0)
+
+bool showBarNums = input.bool(true, "Show Bar Numbers", group=G_BARNUM)
+int barNumFreq = input.int(1, "Show Every Nth Bar", minval=1, maxval=10, group=G_BARNUM, tooltip="1 = every bar, 2 = every other bar, etc.")
+string barNumPos = input.string("Below Bar", "Label Position", options=["Below Bar","Above Bar"], group=G_BARNUM)
+string barNumSize = input.string("Tiny", "Label Size", options=["Tiny","Small","Normal"], group=G_BARNUM)
+color barNumRTHColor = input.color(color.new(color.white, 30), "RTH Number Color", group=G_BARNUM)
+color barNumETHColor = input.color(color.new(color.gray, 30), "ETH Number Color", group=G_BARNUM)
+string barNumScope = input.string("RTH + ETH", "Show Numbers For", options=["RTH + ETH","RTH Only","ETH Only"], group=G_BARNUM, tooltip="Choose whether to display bar numbers during RTH, ETH, or both.")
+
+// ─────────────────────────────────────────────
+// 📍 CORE LOGIC
+// ─────────────────────────────────────────────
+
+// TIME CONTEXT (NY TIME)
+int nyHour = hour(time, "America/New_York")
+int nyMinute = minute(time, "America/New_York")
+int nyTime = nyHour * 100 + nyMinute
+
+// BAR NUMBER COUNTING
+var int barCount = 0
+var bool wasRTHBar = false
+
+// RTH = Regular Trading Hours (9:30 AM - 4:00 PM ET)
+bool isRTHBar = nyTime >= 930 and nyTime < 1600
+
+if isRTHBar and not wasRTHBar
+    barCount := 1
+    wasRTHBar := true
+else if not isRTHBar and wasRTHBar
+    barCount := 1
+    wasRTHBar := false
+else
+    barCount += 1
+
+// SIZE CONVERSION
+_barNumSize = switch barNumSize
+    "Tiny"   => size.tiny
+    "Small"  => size.small
+    "Normal" => size.normal
+    =>         size.tiny
+
+// VISIBILITY CHECKS
+bool showThisBar = showBarNums
+showThisBar := showThisBar and (barCount % barNumFreq == 0 or barCount == 1)
+
+if barNumScope == "RTH Only" and not isRTHBar
+    showThisBar := false
+if barNumScope == "ETH Only" and isRTHBar
+    showThisBar := false
+
+// DRAW BAR NUMBER LABELS
+string barNumText = (isRTHBar ? "" : "E") + str.tostring(barCount)
+color barNumClr = isRTHBar ? barNumRTHColor : barNumETHColor
+
+if showThisBar
+    string _barNumStyle = barNumPos == "Below Bar" ? label.style_label_up : label.style_label_down
+    float _barNumY = barNumPos == "Below Bar" ? low - _labelOff : high + _labelOff
+    label.new(bar_index, _barNumY, barNumText, style=_barNumStyle, color=color.new(color.black, 100), textcolor=barNumClr, size=_barNumSize)
+  </div>
+
+  <!-- DOWNLOAD / COPY BUTTONS -->
+  <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 1.25rem 0;">
+    <button class="btn" onclick="copyScript()">📋 Copy Script</button>
+    <a href="#" class="btn btn-secondary" onclick="downloadScript(event)">⬇️ Download .pine</a>
+  </div>
+
+  <script>
+    function copyScript() {
+      const code = document.getElementById('pineScript').innerText;
+      navigator.clipboard?.writeText(code).then(() => {
+        alert('✅ Script copied to clipboard!');
+      }).catch(() => {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = code;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+        alert('✅ Script copied!');
+      });
+    }
+
+    function downloadScript(e) {
+      e.preventDefault();
+      const code = document.getElementById('pineScript').innerText;
+      const blob = new Blob([code], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Sire_Bar_Numbering.pine';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+  </script>
+
+  <!-- CHANGELOG -->
+  <h2>Changelog</h2>
+  <ul>
+    <li><strong>v1.0</strong> – Initial release. RTH/ETH detection with customizable labels.</li>
+  </ul>
+
+  <!-- FOOTER -->
+  <div class="footer-note">
+    Built by SireMammat · Free for personal and commercial use · No repaint · Open source
+  </div>
+
+</div>
+
+</body>
+</html>
