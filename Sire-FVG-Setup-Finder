@@ -1,0 +1,190 @@
+//@version=6
+indicator("Sire FVG Setup Finder + Entries/SL/TP", overlay=true, max_boxes_count=500, max_labels_count=500, max_lines_count=500)
+
+// ============================================================
+//  Sire FVG Setup Finder — Pine v6
+//  ICT Fair Value Gaps with a complete trade plan:
+//   - Detect 3-candle imbalance (bullish / bearish FVG)
+//   - Draw the gap as a box, size-filtered by ATR
+//   - Price taps back into the gap = "Setup done from FVG"
+//   - Plot Entry / Stop-Loss / Take-Profit (risk:reward based)
+//   - Mark SL/TP hits + fire alerts at every stage
+//  NOTE: indicator() — visual signals + alerts, not a backtest.
+//  By SireMammat · sire-indicators.vercel.app
+// ============================================================
+
+// ---------- Inputs ----------
+grpD = "Detection"
+showBull   = input.bool(true,  "Show Bullish FVGs",  group = grpD)
+showBear   = input.bool(true,  "Show Bearish FVGs",  group = grpD)
+minGapATR  = input.float(0.0,  "Min gap size (x ATR, 0 = off)", minval = 0.0, step = 0.1, group = grpD, tooltip = "Filter out tiny gaps. e.g. 0.25 = ignore gaps smaller than 1/4 ATR.")
+extendBars = input.int(20,     "Extend box past mitigation (bars)", minval = 0, maxval = 200, group = grpD)
+maxTracked = input.int(100,    "Max FVGs tracked", minval = 10, maxval = 250, group = grpD, tooltip = "Oldest FVGs are dropped beyond this. Keeps long histories fast.")
+
+grpS = "Setup / Mitigation"
+flagSetup    = input.bool(true,  "Label 'Setup done from FVG'", group = grpS)
+removeFilled = input.bool(false, "Delete box once fully filled", group = grpS)
+
+grpT = "Trade Plan (Entry / SL / TP)"
+showTrades   = input.bool(true,  "Show Entry / SL / TP", group = grpT)
+entryMode    = input.string("Gap edge", "Entry price", options = ["Gap edge", "Touch close"], group = grpT, tooltip = "Gap edge = entry at the near edge of the FVG. Touch close = entry at the candle close that taps the gap.")
+slMode       = input.string("Gap far edge", "Stop-Loss", options = ["Gap far edge", "ATR"], group = grpT)
+slBufATR     = input.float(0.1,  "SL buffer (x ATR)", minval = 0.0, step = 0.1, group = grpT, tooltip = "Extra cushion beyond the stop level.")
+atrSLmult    = input.float(1.5,  "SL distance (x ATR)  [ATR mode]", minval = 0.1, step = 0.1, group = grpT)
+rr           = input.float(2.0,  "Risk : Reward (TP)", minval = 0.1, step = 0.1, group = grpT)
+tradeLineLen = input.int(30,     "Entry/SL/TP line length (bars)", minval = 5, maxval = 300, group = grpT)
+oneAtATime   = input.bool(true,  "Only one active trade at a time", group = grpT)
+exitPrio     = input.string("SL first (conservative)", "If TP and SL hit on same bar", options = ["SL first (conservative)", "TP first (optimistic)"], group = grpT, tooltip = "Intrabar order is unknowable on historical bars. SL-first avoids overstating results.")
+
+grpC = "Colors"
+bullCol  = input.color(color.new(color.green, 80), "Bullish FVG", group = grpC)
+bearCol  = input.color(color.new(color.red,   80), "Bearish FVG", group = grpC)
+setupCol = input.color(color.yellow, "Setup label", group = grpC)
+entryC   = input.color(color.blue,   "Entry line", group = grpC)
+slC      = input.color(color.red,    "Stop line",  group = grpC)
+tpC      = input.color(color.green,  "Target line", group = grpC)
+
+atr = ta.atr(14)
+
+// ---------- Core FVG definition (3-candle imbalance) ----------
+bullGap = low > high[2]
+bearGap = high < low[2]
+
+bullSize = bullGap ? low - high[2] : 0.0
+bearSize = bearGap ? low[2] - high : 0.0
+
+passBull = bullGap and (minGapATR == 0 or bullSize >= minGapATR * atr)
+passBear = bearGap and (minGapATR == 0 or bearSize >= minGapATR * atr)
+
+// ---------- Track active FVG boxes ----------
+var array<box>  boxes  = array.new<box>()
+var array<bool> isBull = array.new<bool>()
+var array<bool> done   = array.new<bool>()
+
+if passBull and showBull
+    b = box.new(bar_index[2], low, bar_index, high[2], border_color = color.new(color.green, 40), bgcolor = bullCol, text = "FVG", text_color = color.new(color.green, 0), text_size = size.tiny, text_halign = text.align_left)
+    array.push(boxes, b)
+    array.push(isBull, true)
+    array.push(done, false)
+
+if passBear and showBear
+    b = box.new(bar_index[2], low[2], bar_index, high, border_color = color.new(color.red, 40), bgcolor = bearCol, text = "FVG", text_color = color.new(color.red, 0), text_size = size.tiny, text_halign = text.align_left)
+    array.push(boxes, b)
+    array.push(isBull, false)
+    array.push(done, false)
+
+// Cap tracked FVGs — drop oldest beyond the limit
+while array.size(boxes) > maxTracked
+    box.delete(array.shift(boxes))
+    array.shift(isBull)
+    array.shift(done)
+
+// ---------- Trade state ----------
+var bool  inTrade   = false
+var bool  tradeBull = false
+var float entryPx   = na
+var float slPx      = na
+var float tpPx      = na
+var int   entryBar  = na
+
+// signals for this bar (for alerts / plotshape)
+newLong  = false
+newShort = false
+hitTP    = false
+hitSL    = false
+
+// ---------- Check mitigation / setups ----------
+if array.size(boxes) > 0
+    for i = array.size(boxes) - 1 to 0
+        b       = array.get(boxes, i)
+        bull    = array.get(isBull, i)
+        flagged = array.get(done, i)
+        top     = box.get_top(b)
+        bot     = box.get_bottom(b)
+
+        // Unmitigated boxes follow price; mitigated boxes freeze.
+        if not flagged
+            box.set_right(b, bar_index)
+
+        // Touch = bar range overlaps the gap (wicks AND full pierces)
+        touched = low <= top and high >= bot
+
+        if touched and not flagged
+            array.set(done, i, true)
+            box.set_right(b, bar_index + extendBars)
+
+            if flagSetup
+                label.new(bar_index, bull ? bot : top, "Setup done from FVG", yloc = yloc.price, style = bull ? label.style_label_up : label.style_label_down, color = color.new(color.black, 20), textcolor = setupCol, size = size.small)
+
+            // ----- build the trade plan -----
+            if showTrades and not (oneAtATime and inTrade)
+                eGapEdge = bull ? top : bot
+                ePx      = entryMode == "Gap edge" ? eGapEdge : close
+
+                slLevel = 0.0
+                if slMode == "Gap far edge"
+                    slLevel := bull ? bot - slBufATR * atr : top + slBufATR * atr
+                else
+                    slLevel := bull ? ePx - atrSLmult * atr : ePx + atrSLmult * atr
+
+                risk = math.abs(ePx - slLevel)
+                tPx  = bull ? ePx + rr * risk : ePx - rr * risk
+
+                entryPx   := ePx
+                slPx      := slLevel
+                tpPx      := tPx
+                tradeBull := bull
+                inTrade   := true
+                entryBar  := bar_index
+                newLong   := bull
+                newShort  := not bull
+
+                rgt = bar_index + tradeLineLen
+                line.new(bar_index, ePx,     rgt, ePx,     color = entryC, width = 2, style = line.style_solid)
+                line.new(bar_index, slLevel, rgt, slLevel, color = slC,    width = 1, style = line.style_dashed)
+                line.new(bar_index, tPx,     rgt, tPx,     color = tpC,    width = 1, style = line.style_dashed)
+                label.new(rgt, ePx,     "Entry " + str.tostring(ePx,     format.mintick), style = label.style_label_left, color = color.new(entryC, 70), textcolor = entryC, size = size.small)
+                label.new(rgt, slLevel, "SL "    + str.tostring(slLevel, format.mintick), style = label.style_label_left, color = color.new(slC,    70), textcolor = slC,    size = size.small)
+                label.new(rgt, tPx,     "TP "    + str.tostring(tPx,     format.mintick), style = label.style_label_left, color = color.new(tpC,    70), textcolor = tpC,    size = size.small)
+
+        // gap fully filled -> optionally remove
+        filled = bull ? close < bot : close > top
+        if filled and removeFilled
+            box.delete(b)
+            array.remove(boxes, i)
+            array.remove(isBull, i)
+            array.remove(done, i)
+
+// ---------- Manage open trade (SL / TP hit) ----------
+// No exit checks on the entry bar itself
+if inTrade and bar_index > entryBar
+    tpTouch = tradeBull ? high >= tpPx : low <= tpPx
+    slTouch = tradeBull ? low <= slPx  : high >= slPx
+
+    if exitPrio == "SL first (conservative)"
+        hitSL := slTouch
+        hitTP := tpTouch and not slTouch
+    else
+        hitTP := tpTouch
+        hitSL := slTouch and not tpTouch
+
+    if hitTP or hitSL
+        yy = hitTP ? tpPx : slPx
+        label.new(bar_index, yy, hitTP ? "TP hit" : "SL hit", style = hitTP ? label.style_label_down : label.style_label_up, color = color.new(hitTP ? tpC : slC, 30), textcolor = color.white, size = size.tiny)
+        inTrade  := false
+        entryPx  := na
+        slPx     := na
+        tpPx     := na
+        entryBar := na
+
+// ---------- Markers ----------
+plotshape(newLong,  title = "Long signal",  style = shape.triangleup,   location = location.belowbar, color = tpC, size = size.tiny)
+plotshape(newShort, title = "Short signal", style = shape.triangledown, location = location.abovebar, color = slC, size = size.tiny)
+
+// ---------- Alerts ----------
+alertcondition(passBull, "Bullish FVG formed",  "Bullish Fair Value Gap formed")
+alertcondition(passBear, "Bearish FVG formed",  "Bearish Fair Value Gap formed")
+alertcondition(newLong,  "Long entry",  "FVG long setup triggered — entry/SL/TP set")
+alertcondition(newShort, "Short entry", "FVG short setup triggered — entry/SL/TP set")
+alertcondition(hitTP,    "Take-Profit hit", "FVG trade hit take-profit")
+alertcondition(hitSL,    "Stop-Loss hit",   "FVG trade hit stop-loss")
