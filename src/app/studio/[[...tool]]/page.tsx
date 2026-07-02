@@ -1,19 +1,11 @@
+import { redirect } from 'next/navigation';
+
 /**
- * This route is responsible for the built-in authoring environment using Sanity Studio.
- * All routes under your studio path is handled by this file using Next.js' catch-all routes:
- * https://nextjs.org/docs/routing/dynamic-routes#catch-all-routes
- *
- * You can learn more about the next-sanity package here:
- * https://github.com/sanity-io/next-sanity
+ * Sanity Studio removed 2026-07-02 — it was unused default scaffold and its
+ * dependencies (sanity v5) require React 19, which broke the Next 14 build.
+ * Content is managed in /data/indicators.json. To restore a studio later,
+ * upgrade to Next 15 + React 19 and recover the old files from git history.
  */
-
-import { NextStudio } from 'next-sanity/studio'
-import config from '../../../../sanity.config'
-
-export const dynamic = 'force-static'
-
-export { metadata, viewport } from 'next-sanity/studio'
-
-export default function StudioPage() {
-  return <NextStudio config={config} />
+export default function StudioDisabled() {
+  redirect('/');
 }
