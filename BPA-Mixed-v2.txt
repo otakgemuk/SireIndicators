@@ -1,0 +1,597 @@
+//@version=6
+// BPA Mixed v2 — refactored
+// Fixes: label leak, array-mutation-while-iterating, off-grid session detection,
+// repainting W/M levels, forex double-scaling, box.all wipe conflict, merged barcolor,
+// dead code removed, single source of truth for patterns.
+indicator("BPA Mixed v2", overlay = true, max_bars_back = 300,
+     max_labels_count = 500, max_lines_count = 500, max_boxes_count = 500)
+
+// ════════════════════════════ 1. HELPERS ════════════════════════════
+// FIX: show-condition lives INSIDE the helpers so they can be called
+// unconditionally on every bar (avoids "should be called on each calculation" warnings)
+updLabel(_id, _show, _x, _y, _text, _col, _labelSize) =>
+    if _show and not na(_y)
+        label.set_xy(_id, _x, _y)
+        label.set_text(_id, _text)
+        label.set_textcolor(_id, _col)
+        label.set_size(_id, _labelSize)
+        label.set_yloc(_id, yloc.price)
+
+updLine(_line, _show, _price, _lineLength, _ext) =>
+    if _show and not na(_price)
+        len = math.max(nz(_lineLength, 5), 1)
+        line.set_xy1(_line, bar_index[len], _price)
+        line.set_xy2(_line, last_bar_index, _price)
+        line.set_extend(_line, _ext)
+
+// display units: forex → pips, everything else → points
+disp(x) => syminfo.type == 'forex' ? x / syminfo.mintick / 10 : x
+
+// ════════════════════════════ 2. SESSION ENGINE ════════════════════════════
+// FIX: time()-based session detection. Works on any timeframe alignment,
+// handles exchange timezone and midnight-crossing sessions automatically.
+sessionInput = input.session("0830-1455", "Session", group = "Session")
+
+inSess            = not na(time(timeframe.period, sessionInput))
+isFirstBarSession = inSess and not inSess[1]
+sessionJustEnded  = not inSess and inSess[1]
+
+var float ood = na   // open of day (session open)
+var float cod = na   // close of day (running session close)
+var float hod = na   // high of day (session)
+var float lod = na   // low of day (session)
+var float coy = na   // yesterday's session close
+var float hoy = na   // yesterday's session high
+var float loy = na   // yesterday's session low
+var float oow = na   // open of week
+var float gxh = na   // globex high
+var float gxl = na   // globex low
+var int   lastBarIndex  = 0
+var int   firstBarIndex = 0
+var int   lineLen       = 10
+var highsArr = array.new_float()
+var lowsArr  = array.new_float()
+
+// globex accumulation (outside session)
+if not inSess
+    if sessionJustEnded
+        gxh := high
+        gxl := low
+    else
+        gxh := math.max(nz(gxh, high), high)
+        gxl := math.min(nz(gxl, low), low)
+
+if isFirstBarSession
+    coy := cod[1]
+    hoy := hod[1]
+    loy := lod[1]
+    ood := open
+    if dayofweek == dayofweek.monday
+        oow := open
+    hod := high
+    lod := low
+    lineLen := math.max(lastBarIndex[1] - firstBarIndex[1], 1)
+    firstBarIndex := bar_index
+    array.push(highsArr, hoy)
+    array.push(lowsArr, loy)
+else if inSess
+    hod := math.max(nz(hod, high), high)
+    lod := math.min(nz(lod, low), low)
+
+if inSess
+    cod := close
+    lastBarIndex := bar_index
+
+// ════════════════════════════ 3. INPUTS ════════════════════════════
+showGlobex             = input.bool(false, "Show Globex High/Low")
+showWeekly             = input.bool(false, "Show weekly levels")
+showPreviousDayClose   = input.bool(true,  "Show previous day close")
+showSessionOpen        = input.bool(true,  "Show session open")
+showMonthly            = input.bool(false, "Show monthly levels")
+extendLinesRight       = input.bool(false, "Extend lines to the right")
+hideBreakoutModePatterns = input.bool(false, "Hide breakout mode patterns")
+showBarCount           = input.bool(true,  "Show Bar count")
+showVWAP               = input.bool(false, "Enable VWAP")
+oowshow                = input.bool(false, "Show open of the week")
+showBdg                = input.bool(true,  "Show body gaps", group = "Body gaps")
+extendBdg              = input.bool(false, "Extend body gaps", group = "Body gaps")
+showAvgGxRange         = input.bool(false, "Show average globex range", group = "Info Table")
+hideLabels             = input.bool(true,  "Hide labels", group = "Labels")
+
+adrPeriod = input.int(10, "ADR Period")
+atrPeriod = input.int(10, "ATR Period")
+
+sessionLineStyle = input.string(line.style_solid,  "Session", options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_right], group="line style")
+weeklyLineStyle  = input.string(line.style_dashed, "Weekly",  options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_right], group="line style")
+monthlyLineStyle = input.string(line.style_dotted, "Monthly", options=[line.style_solid, line.style_dotted, line.style_dashed, line.style_arrow_right], group="line style")
+sessionLineWidth = input.int(1, "Session", group="line width")
+weeklyLineWidth  = input.int(1, "Weekly",  group="line width")
+monthlyLineWidth = input.int(1, "Monthly", group="line width")
+
+sOpenCol    = input.color(color.aqua,   "ood",         group = "line colors")
+pdsHiCol    = input.color(color.gray,   "pdsHiCol",    group = "line colors")
+pdsLoCol    = input.color(color.gray,   "pdsLoCol",    group = "line colors")
+gxhCol      = input.color(color.yellow, "gxhCol",      group = "line colors")
+gxlCol      = input.color(color.yellow, "gxlCol",      group = "line colors")
+pdsCloseCol = input.color(color.red,    "pdsCloseCol", group = "line colors")
+pwHiCol     = input.color(color.teal,   "pwHiCol",     group = "line colors")
+pwOpenCol   = input.color(color.teal,   "pwOpenCol",   group = "line colors")
+pwCloseCol  = input.color(color.teal,   "pwCloseCol",  group = "line colors")
+pwLoCol     = input.color(color.teal,   "pwLoCol",     group = "line colors")
+oowCol      = input.color(color.blue,   "oow",         group = "line colors")
+pmHiCol     = input.color(color.purple, "pmHiCol",     group = "line colors")
+pmOpenCol   = input.color(color.purple, "pmOpenCol",   group = "line colors")
+pmCloseCol  = input.color(color.purple, "pmCloseCol",  group = "line colors")
+pmLoCol     = input.color(color.purple, "pmLoCol",     group = "line colors")
+
+labelSizeOption = input.string("Normal", "Label Size", options=["Auto", "Huge", "Large", "Normal", "Small", "Tiny"], group = "Labels")
+labelSize = labelSizeOption == "Huge" ? size.huge : labelSizeOption == "Large" ? size.large :
+     labelSizeOption == "Small" ? size.small : labelSizeOption == "Tiny" ? size.tiny :
+     labelSizeOption == "Auto" ? size.auto : size.normal
+
+// ════════════════════════════ 4. HTF DATA ════════════════════════════
+// FIX: lookahead_on + [1] = confirmed previous-period values, no repaint,
+// correct value intraweek/intramonth.
+pwHi    = request.security(syminfo.tickerid, 'W', high[1],  lookahead = barmerge.lookahead_on)
+pwOpen  = request.security(syminfo.tickerid, 'W', open[1],  lookahead = barmerge.lookahead_on)
+pwClose = request.security(syminfo.tickerid, 'W', close[1], lookahead = barmerge.lookahead_on)
+pwLo    = request.security(syminfo.tickerid, 'W', low[1],   lookahead = barmerge.lookahead_on)
+pmHi    = request.security(syminfo.tickerid, 'M', high[1],  lookahead = barmerge.lookahead_on)
+pmOpen  = request.security(syminfo.tickerid, 'M', open[1],  lookahead = barmerge.lookahead_on)
+pmClose = request.security(syminfo.tickerid, 'M', close[1], lookahead = barmerge.lookahead_on)
+pmLo    = request.security(syminfo.tickerid, 'M', low[1],   lookahead = barmerge.lookahead_on)
+
+// daily ATR, standard non-repainting pattern
+indexHighTF = barstate.isrealtime ? 1 : 0
+indexCurrTF = barstate.isrealtime ? 0 : 1
+atrd = request.security(syminfo.tickerid, 'D', ta.atr(atrPeriod)[indexHighTF])[indexCurrTF]
+
+// FIX: robust intraday check (str.tonumber(timeframe.period) is na on D/W/M/seconds)
+isIntraday1hOrLess = timeframe.in_seconds() <= 3600
+
+sessionX = bar_index + 3
+weeklyX  = bar_index + 6
+monthlyX = bar_index + 9
+
+// ════════════════════════════ 5. LEVEL OBJECTS + DRAWING ════════════════════════════
+var pdsHiLine    = line.new(na, na, na, na, xloc.bar_index, extend.none, pdsHiCol,    sessionLineStyle, sessionLineWidth)
+var pdsCloseLine = line.new(na, na, na, na, xloc.bar_index, extend.none, pdsCloseCol, sessionLineStyle, sessionLineWidth)
+var pdsLoLine    = line.new(na, na, na, na, xloc.bar_index, extend.none, pdsLoCol,    sessionLineStyle, sessionLineWidth)
+var sOpenLine    = line.new(na, na, na, na, xloc.bar_index, extend.none, sOpenCol,    sessionLineStyle, sessionLineWidth)
+var gxhLine      = line.new(na, na, na, na, xloc.bar_index, extend.none, gxhCol,      sessionLineStyle, sessionLineWidth)
+var gxlLine      = line.new(na, na, na, na, xloc.bar_index, extend.none, gxlCol,      sessionLineStyle, sessionLineWidth)
+var pwHiLine     = line.new(na, na, na, na, xloc.bar_index, extend.none, pwHiCol,     weeklyLineStyle,  weeklyLineWidth)
+var pwOpenLine   = line.new(na, na, na, na, xloc.bar_index, extend.none, pwOpenCol,   weeklyLineStyle,  weeklyLineWidth)
+var pwCloseLine  = line.new(na, na, na, na, xloc.bar_index, extend.none, pwCloseCol,  weeklyLineStyle,  weeklyLineWidth)
+var pwLoLine     = line.new(na, na, na, na, xloc.bar_index, extend.none, pwLoCol,     weeklyLineStyle,  weeklyLineWidth)
+var pmHiLine     = line.new(na, na, na, na, xloc.bar_index, extend.none, pmHiCol,     monthlyLineStyle, monthlyLineWidth)
+var pmOpenLine   = line.new(na, na, na, na, xloc.bar_index, extend.none, pmOpenCol,   monthlyLineStyle, monthlyLineWidth)
+var pmCloseLine  = line.new(na, na, na, na, xloc.bar_index, extend.none, pmCloseCol,  monthlyLineStyle, monthlyLineWidth)
+var pmLoLine     = line.new(na, na, na, na, xloc.bar_index, extend.none, pmLoCol,     monthlyLineStyle, monthlyLineWidth)
+var oowLine      = line.new(na, na, na, na, xloc.bar_index, extend.none, oowCol,      weeklyLineStyle,  weeklyLineWidth)
+
+var pdsHiLabel    = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pdsCloseLabel = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pdsLoLabel    = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var sOpenLabel    = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var gxhLabel      = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var gxlLabel      = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pwHiLabel     = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pwLoLabel     = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pwCloseLabel  = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pwOpenLabel   = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pmHiLabel     = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pmLoLabel     = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pmCloseLabel  = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var pmOpenLabel   = label.new(na, na, "", color = color(na), style = label.style_label_center)
+var oowLabel      = label.new(na, na, "", color = color(na), style = label.style_label_center)
+
+// unconditional calls every bar — show/hide handled inside the helpers
+lvlExt = extendLinesRight ? extend.right : extend.none
+showLv = isIntraday1hOrLess
+lblOn  = showLv and not hideLabels
+
+updLine(oowLine,      showLv and oowshow,              oow,     lineLen, lvlExt)
+updLine(pdsCloseLine, showLv and showPreviousDayClose, coy,     lineLen, lvlExt)
+updLine(sOpenLine,    showLv and showSessionOpen,      ood,     lineLen, lvlExt)
+updLine(pdsHiLine,    showLv,                          hoy,     lineLen, lvlExt)
+updLine(pdsLoLine,    showLv,                          loy,     lineLen, lvlExt)
+updLine(gxhLine,      showLv and showGlobex,           gxh,     lineLen, lvlExt)
+updLine(gxlLine,      showLv and showGlobex,           gxl,     lineLen, lvlExt)
+updLine(pwHiLine,     showLv and showWeekly,           pwHi,    lineLen, lvlExt)
+updLine(pwOpenLine,   showLv and showWeekly,           pwOpen,  lineLen, lvlExt)
+updLine(pwCloseLine,  showLv and showWeekly,           pwClose, lineLen, lvlExt)
+updLine(pwLoLine,     showLv and showWeekly,           pwLo,    lineLen, lvlExt)
+updLine(pmHiLine,     showLv and showMonthly,          pmHi,    lineLen, lvlExt)
+updLine(pmOpenLine,   showLv and showMonthly,          pmOpen,  lineLen, lvlExt)
+updLine(pmCloseLine,  showLv and showMonthly,          pmClose, lineLen, lvlExt)
+updLine(pmLoLine,     showLv and showMonthly,          pmLo,    lineLen, lvlExt)
+
+updLabel(oowLabel,      lblOn and oowshow,              sessionX, oow,     "oow", oowCol,      labelSize)
+updLabel(pdsCloseLabel, lblOn and showPreviousDayClose, sessionX, coy,     "coy", pdsCloseCol, labelSize)
+updLabel(sOpenLabel,    lblOn and showSessionOpen,      sessionX, ood,     "ood", sOpenCol,    labelSize)
+updLabel(pdsHiLabel,    lblOn,                          sessionX, hoy,     "hoy", pdsHiCol,    labelSize)
+updLabel(pdsLoLabel,    lblOn,                          sessionX, loy,     "loy", pdsLoCol,    labelSize)
+updLabel(gxhLabel,      lblOn and showGlobex,           sessionX, gxh,     "gxh", gxhCol,      labelSize)
+updLabel(gxlLabel,      lblOn and showGlobex,           sessionX, gxl,     "gxl", gxlCol,      labelSize)
+updLabel(pwHiLabel,     lblOn and showWeekly,           weeklyX,  pwHi,    "hlw", pwHiCol,     labelSize)
+updLabel(pwLoLabel,     lblOn and showWeekly,           weeklyX,  pwLo,    "llw", pwLoCol,     labelSize)
+updLabel(pwCloseLabel,  lblOn and showWeekly,           weeklyX,  pwClose, "clw", pwCloseCol,  labelSize)
+updLabel(pwOpenLabel,   lblOn and showWeekly,           weeklyX,  pwOpen,  "olw", pwOpenCol,   labelSize)
+updLabel(pmHiLabel,     lblOn and showMonthly,          monthlyX, pmHi,    "hlm", pmHiCol,     labelSize)
+updLabel(pmLoLabel,     lblOn and showMonthly,          monthlyX, pmLo,    "llm", pmLoCol,     labelSize)
+updLabel(pmCloseLabel,  lblOn and showMonthly,          monthlyX, pmClose, "clm", pmCloseCol,  labelSize)
+updLabel(pmOpenLabel,   lblOn and showMonthly,          monthlyX, pmOpen,  "olm", pmOpenCol,   labelSize)
+
+// ════════════════════════════ 6. EMAs ════════════════════════════
+// FIX: EMA 1 is chart-TF — no pointless request.security round-trip.
+vis1    = input.bool(true, "Enable 1st MA", group="EMA 1")
+ema1Col = input.color(color.yellow, "EMA 1 Color", group="EMA 1")
+len1    = input.int(20, "EMA 1 Length", minval=1, group="EMA 1")
+src1    = input.source(close, "EMA 1 Source", group="EMA 1")
+off1    = input.int(0, "Offset 1st EMA", minval=-500, maxval=500, group="EMA 1")
+ema1    = ta.ema(src1, len1)
+
+vis2    = input.bool(true, "Enable 2nd MA", group="EMA 2")
+res2    = input.timeframe("15", "EMA 2 Timeframe", group="EMA 2")
+ema2Col = input.color(color.orange, "EMA 2 Color", group="EMA 2")
+len2    = input.int(20, "EMA 2 Length", minval=1, group="EMA 2")
+src2    = input.source(close, "EMA 2 Source", group="EMA 2")
+off2    = input.int(0, "Offset 2nd EMA", minval=-500, maxval=500, group="EMA 2")
+smooth2 = input.bool(true, "Smooth EMA 2", group="EMA 2")
+ema2_rough  = request.security(syminfo.tickerid, res2, ta.ema(src2, len2), barmerge.gaps_off, barmerge.lookahead_off)
+ema2_smooth = request.security(syminfo.tickerid, res2, ta.ema(src2, len2), barmerge.gaps_on,  barmerge.lookahead_off)
+
+vis3    = input.bool(true, "Enable 3rd MA", group="EMA 3")
+res3    = input.timeframe("60", "EMA 3 Timeframe", group="EMA 3")
+ema3Col = input.color(#e65100, "EMA 3 Color", group="EMA 3")
+len3    = input.int(20, "EMA 3 Length", minval=1, group="EMA 3")
+src3    = input.source(close, "EMA 3 Source", group="EMA 3")
+off3    = input.int(0, "Offset 3rd EMA", minval=-500, maxval=500, group="EMA 3")
+smooth3 = input.bool(true, "Smooth EMA 3", group="EMA 3")
+ema3_rough  = request.security(syminfo.tickerid, res3, ta.ema(src3, len3), barmerge.gaps_off, barmerge.lookahead_off)
+ema3_smooth = request.security(syminfo.tickerid, res3, ta.ema(src3, len3), barmerge.gaps_on,  barmerge.lookahead_off)
+
+plot(vis1 ? ema1 : na, "EMA1", ema1Col, 1, offset = off1)
+plot(isIntraday1hOrLess and vis2 ? (smooth2 ? ema2_smooth : ema2_rough) : na, "EMA2", ema2Col, 1, offset = off2)
+plot(isIntraday1hOrLess and vis3 ? (smooth3 ? ema3_smooth : ema3_rough) : na, "EMA3", ema3Col, 1, offset = off3)
+
+// ════════════════════════════ 7. PATTERNS — single source of truth ════════════════════════════
+isUp      = close > open
+isDown    = close < open
+isInside  = high <= high[1] and low >= low[1]
+isOutside = high >= high[1] and low <= low[1]
+isOutsideUp   = isOutside and isUp
+isOutsideDown = isOutside and isDown
+isBullBO  = close > close[1] and low >= low[1]
+isBearBO  = close < close[1] and high <= high[1]
+
+ii  = isInside and isInside[1]
+oo  = isOutside and isOutside[1]
+ioi = isInside[2] and isOutside[1] and isInside
+
+// ignore first bars of the session (was computed-but-unused in v1; now applied to signal arrows)
+ignoreBarsAtOpen = input.int(3, "Number of bars to ignore at session start", group = "Signals")
+barsIntoSession  = ta.barssince(isFirstBarSession)
+ignore_signals   = not inSess or na(barsIntoSession) or barsIntoSession < ignoreBarsAtOpen
+
+// pattern labels (confirmed, in-session)
+if barstate.isconfirmed and inSess and not hideBreakoutModePatterns
+    if oo
+        label.new(bar_index, na, "oo", yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.red, 100))
+    if ii
+        label.new(bar_index, na, "ii", yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.red, 100))
+    if ioi
+        label.new(bar_index - 1, na, "ioi", yloc = yloc.abovebar, size = size.large, textcolor = color.gray, color = color.new(color.red, 100))
+
+// ════════════════════════════ 8. OUTSIDE-BAR TOOLKIT ════════════════════════════
+plotOBcolour  = input.bool(true, "Show Outside Bar Colour", group = "OB Toolkit")
+plotOBtargets = input.bool(true, "Show OB targets", group = "OB Toolkit")
+plotioi       = input.bool(true, "Show ioi", group = "OB Toolkit")
+plotii_targets = input.bool(true, "Show ii targets", group = "OB Toolkit")
+plotoo_targets = input.bool(true, "Show oo targets", group = "OB Toolkit")
+plotob_ft     = input.bool(true, "Show OB followthrough", group = "OB Toolkit")
+smallBodyAtrMult = input.float(0.15, "Small body threshold (x ATR)", minval = 0.01, group = "OB Toolkit",
+     tooltip = "v1 used a hardcoded 1-point threshold; now scales to the instrument via ATR")
+
+hhdist   = high - high[1]
+lldist   = low[1] - low
+obBullBO = isOutside and hhdist > lldist
+obBearBO = isOutside and lldist > hhdist
+ob_equal_bull = isOutside and hhdist == lldist and isUp
+ob_equal_bear = isOutside and hhdist == lldist and isDown
+
+barHeight = high - low
+bodyRange = math.abs(open - close)
+atr       = ta.atr(atrPeriod)
+smallBody = bodyRange < atr * smallBodyAtrMult
+
+// OB entry/target lines
+if plotOBtargets and plotOBcolour and obBearBO and isDown and barstate.isconfirmed
+    sellLevel = high + syminfo.mintick
+    line.new(bar_index, sellLevel, bar_index + 5, sellLevel, color = color.red, width = 1)
+    label.new(bar_index + 5, sellLevel, "Buy Level", style = label.style_label_right, color = color.green, textcolor = color.white, size = size.small)
+    line.new(bar_index, high + barHeight, bar_index + 5, high + barHeight, color = color.blue, width = 1)
+
+if plotOBtargets and plotOBcolour and obBullBO and isUp and barstate.isconfirmed
+    buyLevel = low - syminfo.mintick
+    line.new(bar_index, buyLevel, bar_index + 5, buyLevel, color = color.green, width = 1)
+    label.new(bar_index + 5, buyLevel, "Sell Level", style = label.style_label_right, color = color.rgb(236, 14, 14), textcolor = color.white, size = size.small)
+    line.new(bar_index, high + syminfo.mintick, bar_index + 1, high + syminfo.mintick, color = color.orange, width = 1)
+    line.new(bar_index, low - barHeight, bar_index + 5, low - barHeight, color = color.blue, width = 1)
+
+// small-body arrows
+plotshape(isInside and smallBody, "SmallIB", shape.arrowup, location.belowbar, color = color.yellow)
+plotshape(obBearBO and smallBody, "SmallOB DOWN", shape.arrowdown, location.abovebar, color = color.orange)
+plotshape(obBullBO and smallBody, "SmallOB UP", shape.arrowup, location.belowbar, color = color.green)
+
+// ioi marker
+plotshape(ioi and plotioi, "ioi", shape.xcross, location.belowbar, color = color.rgb(155, 39, 176, 50), size = size.small)
+
+// ii take-off near EMA 1
+ii_highsabovema = ii and high[1] > ema1 and high[2] > ema1
+take_off_bull   = not ignore_signals and high > ema1 and isBullBO and isUp and ii_highsabovema[1] and high > high[1]
+ii_lowsbelowma  = ii and low[1] < ema1 and low[2] < ema1
+take_off_bear   = not ignore_signals and low < ema1 and isBearBO and isDown and ii_lowsbelowma[1] and low < low[1]
+plotshape(take_off_bull, "ii takeoff bull", shape.arrowup, location.belowbar, color = color.blue, size = size.small)
+plotshape(take_off_bear, "ii takeoff bear", shape.arrowdown, location.abovebar, color = color.red, size = size.small)
+
+// ii / oo measured-move targets
+if ii and plotii_targets and barstate.isconfirmed
+    line.new(bar_index, high[1] + barHeight[1], bar_index + 5, high[1] + barHeight[1], color = color.rgb(255, 82, 82, 50))
+    line.new(bar_index, low[1] - barHeight[1],  bar_index + 5, low[1] - barHeight[1],  color = color.rgb(76, 175, 79, 50))
+if oo and plotoo_targets and barstate.isconfirmed
+    line.new(bar_index, high + barHeight, bar_index + 5, high + barHeight, color = color.rgb(255, 82, 82, 50))
+    line.new(bar_index, low - barHeight,  bar_index + 5, low - barHeight,  color = color.rgb(76, 175, 79, 50))
+
+// OB follow-through
+obft_bull = plotob_ft and not ignore_signals and isOutsideUp[1] and isUp and close > high[1]
+obft_bear = plotob_ft and not ignore_signals and isOutsideDown[1] and isDown and close < low[1]
+plotshape(obft_bull, "OB Bull FT", shape.arrowup, location.abovebar, color = color.blue)
+plotshape(obft_bear, "OB Bear FT", shape.arrowdown, location.belowbar, color = color.red)
+
+// outside-bar sequence signal (v1 called this "High 2" — it is an outside-bar sequence)
+showH2Labels    = input.bool(true, "Show OB-sequence (H2) labels", group = "OB Toolkit")
+obSeq1 = low < low[1] and high > high[1]
+obSeq2 = obSeq1[1] and low < low[2] and high > high[2]
+plotshape(obSeq2 and showH2Labels, "H2 Signal", shape.triangleup, location.belowbar, color = color.green, size = size.small)
+// FIX: v1 created a label object on EVERY bar (na-x labels still count toward the label budget)
+if obSeq2 and showH2Labels and barstate.isconfirmed
+    label.new(bar_index, low, "H2", style = label.style_label_up, color = color.green, textcolor = color.white)
+
+// ════════════════════════════ 9. BAR COLORING (merged) ════════════════════════════
+// FIX: v1 had two competing barcolor() calls; merged into one prioritized expression.
+bullBarColor    = input.color(color.green, "Bull Bar Color", group = "Consecutive bars")
+bearBarColor    = input.color(color.red,   "Bear Bar Color", group = "Consecutive bars")
+consecutiveBars = input.int(3, "Consecutive Bars to Color", minval = 2, maxval = 3, group = "Consecutive bars")
+requireCloseAboveHigh = input.bool(false, "Require Close > Prior High?", group = "Consecutive bars")
+
+var int cBull = 0
+var int cBear = 0
+if isUp and (not requireCloseAboveHigh or close > high[1])
+    cBull += 1
+    cBear := 0
+else if isDown and (not requireCloseAboveHigh or close < low[1])
+    cBear += 1
+    cBull := 0
+else
+    cBull := 0
+    cBear := 0
+
+obBullCol = color.rgb(43, 133, 46, 50)
+obBearCol = color.rgb(255, 165, 54, 50)
+barcolor(cBull >= consecutiveBars ? bullBarColor :
+     cBear >= consecutiveBars ? bearBarColor :
+     plotOBcolour and (obBullBO or ob_equal_bull) ? obBullCol :
+     plotOBcolour and (obBearBO or ob_equal_bear) ? obBearCol :
+     plotOBcolour and isInside ? color.yellow : na)
+
+// ════════════════════════════ 10. VWAP ════════════════════════════
+vwapSource = input.source(open, "VWAP source", group = "VWAP")
+plot(showVWAP ? ta.vwap(vwapSource) : na, "VWAP")
+
+// ════════════════════════════ 11. INFO TABLE ════════════════════════════
+var t = table.new(position.top_right, 2, 20)
+txtColor = input.color(color.gray, "Text color", group = "Info Table")
+
+if barstate.islast
+    sizeh = array.size(highsArr)
+    if sizeh > adrPeriod
+        sliceh = array.slice(highsArr, sizeh - adrPeriod, sizeh)
+        slicel = array.slice(lowsArr, sizeh - adrPeriod, sizeh)
+        // FIX: v1 double-scaled forex values and mixed daily H/L into the session range
+        adrD   = disp(array.avg(sliceh) - array.avg(slicel))
+        crange = disp(hod - lod)
+        gap    = disp(math.abs(ood - coy))
+        gapPct = adrD != 0 ? gap / adrD * 100 : na
+        atrDsp = disp(atr)
+        table.cell(t, 0, 1, "average session range", text_color = txtColor)
+        table.cell(t, 1, 1, str.tostring(adrD, "#.##"), text_color = txtColor)
+        table.cell(t, 0, 2, "current session range", text_color = txtColor)
+        table.cell(t, 1, 2, str.tostring(crange, "#.##"), text_color = txtColor)
+        table.cell(t, 0, 3, "gap size", text_color = txtColor)
+        table.cell(t, 1, 3, str.tostring(gapPct, "#.##") + "%", text_color = txtColor)
+        table.cell(t, 0, 4, "scalp", text_color = txtColor)
+        table.cell(t, 1, 4, str.tostring(atrDsp / 2, "#.##"), text_color = txtColor)
+        table.cell(t, 0, 5, "swing", text_color = txtColor)
+        table.cell(t, 1, 5, str.tostring(adrD * 0.26, "#.##") + "-" + str.tostring(adrD * 0.4, "#.##"), text_color = txtColor)
+        table.cell(t, 0, 6, "stop", text_color = txtColor)
+        table.cell(t, 1, 6, str.tostring(adrD * 0.1, "#.##") + "-" + str.tostring(adrD * 0.2, "#.##"), text_color = txtColor)
+    if showAvgGxRange
+        table.cell(t, 0, 0, "gx atr", text_color = txtColor)
+        table.cell(t, 1, 0, str.tostring(atrd, "#.##"), text_color = txtColor)
+
+// ════════════════════════════ 12. BAR COUNT ════════════════════════════
+sizeOption = input.string("Small", "Bar Label Size", options=["Auto", "Huge", "Large", "Normal", "Small", "Tiny"], group = "Bar count")
+barCountLabelSize = sizeOption == "Huge" ? size.huge : sizeOption == "Large" ? size.large :
+     sizeOption == "Small" ? size.small : sizeOption == "Tiny" ? size.tiny :
+     sizeOption == "Auto" ? size.auto : size.normal
+c_labelColor     = input.color(color.green, "Bar Text Color", group = "Bar count")
+hourlyCloseColor = input.color(color.red, "Hourly Close Color", group = "Bar count")
+c_contador       = input.int(4, "Display at every X bars", group = "Bar count")
+
+var int count = 0
+if inSess and isIntraday1hOrLess
+    count := isFirstBarSession ? 1 : count + 1
+    if showBarCount and (isFirstBarSession or count % c_contador == 0)
+        lbl = label.new(bar_index, 0, str.tostring(count), style = label.style_none)
+        label.set_textcolor(lbl, count % 12 == 0 ? hourlyCloseColor : c_labelColor)
+        label.set_yloc(lbl, yloc.belowbar)
+        label.set_size(lbl, barCountLabelSize)
+
+// ════════════════════════════ 13. BODY GAPS ════════════════════════════
+numberOfGaps = input.int(5, "Number of recent body gaps to show", minval = 1, maxval = 20, group = "Body gaps")
+blgColor     = input.color(color.new(color.green, 80), "Bull body gap color", group = "Body gaps")
+brgColor     = input.color(color.new(color.red, 80),   "Bear body gap color", group = "Body gaps")
+
+type BodyGap
+    float o
+    float c
+    int   x
+    int   y
+
+var bearGaps = array.new<BodyGap>()
+var bullGaps = array.new<BodyGap>()
+var bdgBoxes = array.new<box>()   // FIX: v1 deleted box.all, wiping barbwire + gap-highlight boxes too
+
+// FIX: v1 kept 8 unbounded arrays; we only ever need the last two bull/bear bars
+var float bull2o = na
+var int   bull2i = na
+var float bull1o = na
+var float bull1c = na
+var int   bull1i = na
+var float bear2o = na
+var int   bear2i = na
+var float bear1o = na
+var float bear1c = na
+var int   bear1i = na
+
+if close[1] > open[1]   // prior bar bull
+    if not na(bull2o) and bull2o > bull1c
+        array.push(bearGaps, BodyGap.new(bull2o, bull1c, bull2i, bull1i))
+    bull2o := bull1o
+    bull2i := bull1i
+    bull1o := open[1]
+    bull1c := close[1]
+    bull1i := bar_index[1]
+
+if close[1] < open[1]   // prior bar bear
+    if not na(bear2o) and bear2o < bear1c
+        array.push(bullGaps, BodyGap.new(bear2o, bear1c, bear2i, bear1i))
+    bear2o := bear1o
+    bear2i := bear1i
+    bear1o := open[1]
+    bear1c := close[1]
+    bear1i := bar_index[1]
+
+// cap stored gaps
+if array.size(bearGaps) > 50
+    array.shift(bearGaps)
+if array.size(bullGaps) > 50
+    array.shift(bullGaps)
+
+// FIX: iterate backwards + mutate fields in place (v1 removed/pushed mid-iteration,
+// skipping elements and destroying chronological order)
+if barstate.isconfirmed and showBdg
+    if array.size(bearGaps) > 0
+        for i = array.size(bearGaps) - 1 to 0
+            g = array.get(bearGaps, i)
+            if g.o <= close[1]
+                array.remove(bearGaps, i)
+            else if g.c < close[1]
+                g.c := close[1]
+                g.y := bar_index - 1
+    if array.size(bullGaps) > 0
+        for i = array.size(bullGaps) - 1 to 0
+            g = array.get(bullGaps, i)
+            if g.o >= close[1]
+                array.remove(bullGaps, i)
+            else if g.c > close[1]
+                g.c := close[1]
+                g.y := bar_index - 1
+    // redraw only our own boxes
+    for b in bdgBoxes
+        box.delete(b)
+    array.clear(bdgBoxes)
+    nBull = math.min(array.size(bullGaps), numberOfGaps)
+    if nBull > 0
+        for i = array.size(bullGaps) - nBull to array.size(bullGaps) - 1
+            g = array.get(bullGaps, i)
+            if g.x > bar_index - 500
+                array.push(bdgBoxes, box.new(g.x, g.o, extendBdg ? bar_index : g.y, g.c, bgcolor = blgColor, border_color = na))
+    nBear = math.min(array.size(bearGaps), numberOfGaps)
+    if nBear > 0
+        for i = array.size(bearGaps) - nBear to array.size(bearGaps) - 1
+            g = array.get(bearGaps, i)
+            if g.x > bar_index - 500
+                array.push(bdgBoxes, box.new(g.x, g.o, extendBdg ? bar_index : g.y, g.c, bgcolor = brgColor, border_color = na))
+
+// ════════════════════════════ 14. 2-BAR GAP HIGHLIGHT ════════════════════════════
+highlightGaps      = input.bool(false, "Highlight Gaps?", group = "Gap highlight")
+bullGapBGColor     = input.color(color.rgb(76, 175, 79, 70),  "Bullish Gap Background", group = "Gap highlight")
+bullGapBorderColor = input.color(color.rgb(76, 175, 79, 50),  "Bullish Gap Border", group = "Gap highlight")
+bearGapBGColor     = input.color(color.rgb(255, 82, 82, 70),  "Bearish Gap Background", group = "Gap highlight")
+bearGapBorderColor = input.color(color.rgb(255, 82, 82, 50),  "Bearish Gap Border", group = "Gap highlight")
+
+if highlightGaps and barstate.isconfirmed
+    if low > high[2]
+        box.new(bar_index[2], low, bar_index, high[2], border_color = bullGapBorderColor, bgcolor = bullGapBGColor)
+    if high < low[2]
+        box.new(bar_index[2], low[2], bar_index, high, border_color = bearGapBorderColor, bgcolor = bearGapBGColor)
+
+// ════════════════════════════ 15. SESSION EMA ════════════════════════════
+rthema    = input.bool(false, "Show session EMA", group = "Session EMA")
+rthPeriod = input.int(20, "EMA Period", group = "Session EMA")
+rthemacol = input.color(color.blue, "Session EMA Color", group = "Session EMA")
+
+rthExp = 2.0 / (rthPeriod + 1)
+var float rthVal = na
+if barstate.isconfirmed and inSess
+    rthVal := na(rthVal) ? close : close * rthExp + rthVal * (1 - rthExp)
+plot(rthema ? rthVal : na, "Session EMA", rthemacol)
+
+// ════════════════════════════ 16. HTF SMAs ════════════════════════════
+htf = timeframe.isdaily or timeframe.isweekly or timeframe.ismonthly
+plot(htf ? ta.sma(close, 50)  : na, "sma 50",  color.blue)
+plot(htf ? ta.sma(close, 100) : na, "sma 100", color.green)
+plot(htf ? ta.sma(close, 150) : na, "sma 150", color.orange)
+plot(htf ? ta.sma(close, 200) : na, "sma 200", color.purple)
+
+// ════════════════════════════ 17. BARBWIRE ════════════════════════════
+borderColor = input.color(color.new(color.gray, 80), "Barbwire border color", group = "Barbwire")
+bgColor     = input.color(color.new(color.gray, 80), "Barbwire background color", group = "Barbwire")
+
+isDoji = high != low and math.abs(open - close) / (high - low) < 0.5
+
+fifty_pbar = high[1] - (high[1] - low[1]) * 0.5
+fifty      = high - (high - low) * 0.5
+
+bwUp  = high > high[1] and low > low[1]
+bwDn  = high < high[1] and low < low[1]
+bwOut = high >= high[1] and low <= low[1]
+bwIn  = (high <= high[1] and low > low[1]) or (high < high[1] and low >= low[1])
+
+deepPb = bwUp ? low < fifty_pbar and high[1] > fifty :
+     bwDn ? high > fifty_pbar and low[1] < fifty :
+     bwIn ? high > fifty_pbar and low < fifty_pbar :
+     bwOut ? low[1] < fifty and high[1] > fifty : false
+overlap  = deepPb and deepPb[1]
+anyDoji3 = isDoji or isDoji[1] or isDoji[2]
+barbwire = anyDoji3 and overlap
+
+bwTop = ta.highest(3)
+bwBot = ta.lowest(3)
+var float trtop = na
+var float trbot = na
+var box   ttrbox = na
+
+if barbwire and not barbwire[1]
+    trtop := bwTop
+    trbot := bwBot
+    ttrbox := box.new(bar_index - 2, trtop, bar_index, trbot, border_color = borderColor, bgcolor = bgColor, border_width = 3)
+else if barbwire and barbwire[1] and not na(ttrbox)
+    trtop := math.max(trtop, bwTop)
+    trbot := math.min(trbot, bwBot)
+    box.set_top(ttrbox, trtop)
+    box.set_bottom(ttrbox, trbot)
+    box.set_right(ttrbox, bar_index)
