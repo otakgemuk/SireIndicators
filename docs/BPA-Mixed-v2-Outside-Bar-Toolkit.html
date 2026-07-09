@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BPA Mixed v2 — Outside Bar Toolkit Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0b;
+            --surface: #131316;
+            --surface-raised: #1a1a1f;
+            --border: #2a2a30;
+            --accent: #d4a017;
+            --accent-dim: #d4a01730;
+            --bull: #2ecc71;
+            --bull-dim: #2ecc7120;
+            --bear: #e74c3c;
+            --bear-dim: #e74c3c20;
+            --text: #e8e4dc;
+            --text-muted: #7a756e;
+            --text-dim: #4a4640;
+            --blue: #3498db;
+            --orange: #e67e22;
+            --purple: #9b59b6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Source Serif 4', Georgia, serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 17px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(10, 10, 11, 0.92);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.1rem;
+            color: var(--accent);
+            letter-spacing: 0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-family: 'DM Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover { color: var(--accent); }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 8rem 3rem 4rem;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .hero::before {
+            content: 'OB';
+            position: absolute;
+            top: 8rem;
+            right: -4rem;
+            font-family: 'DM Serif Display', serif;
+            font-size: 18rem;
+            color: var(--accent-dim);
+            line-height: 1;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .hero-tag {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.1s forwards;
+        }
+
+        .hero h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(2.4rem, 5vw, 3.8rem);
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            color: var(--text);
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.25s forwards;
+        }
+
+        .hero h1 span {
+            color: var(--accent);
+        }
+
+        .hero-sub {
+            font-size: 1.15rem;
+            color: var(--text-muted);
+            max-width: 560px;
+            font-weight: 300;
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.4s forwards;
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 2rem;
+            margin-top: 2.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            opacity: 0;
+            animation: fadeUp 0.6s ease 0.55s forwards;
+        }
+
+        .hero-meta-item {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-dim);
+        }
+
+        .hero-meta-item strong {
+            display: block;
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.82rem;
+            margin-top: 0.15rem;
+        }
+
+        /* ── SECTIONS ── */
+        .content {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 0 3rem 6rem;
+        }
+
+        section {
+            margin-bottom: 5rem;
+        }
+
+        .section-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+
+        h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.9rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.3;
+            color: var(--text);
+        }
+
+        h3 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.3rem;
+            margin-top: 2.5rem;
+            margin-bottom: 0.75rem;
+            color: var(--text);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        p strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* ── DIAGRAMS ── */
+        .diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem 2.5rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .diagram::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .diagram.bearish::before { background: linear-gradient(90deg, var(--bear), transparent); }
+        .diagram.bullish::before { background: linear-gradient(90deg, var(--bull), transparent); }
+        .diagram.neutral::before { background: linear-gradient(90deg, var(--accent), transparent); }
+
+        .diagram-title {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-dim);
+            margin-bottom: 1.5rem;
+        }
+
+        .candle-visual {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            padding: 1rem 0;
+        }
+
+        .level-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            font-family: 'DM Mono', monospace;
+            font-size: 0.82rem;
+        }
+
+        .level-row:last-child { border-bottom: none; }
+
+        .level-line {
+            width: 40px;
+            height: 2px;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+
+        .level-line.bear { background: var(--bear); }
+        .level-line.bull { background: var(--bull); }
+        .level-line.blue-line { background: var(--blue); }
+        .level-line.orange-line { background: var(--orange); }
+        .level-line.accent-line { background: var(--accent); }
+
+        .level-name {
+            color: var(--text);
+            min-width: 180px;
+            font-weight: 500;
+        }
+
+        .level-desc {
+            color: var(--text-muted);
+            font-size: 0.78rem;
+        }
+
+        .level-tag {
+            margin-left: auto;
+            padding: 0.15rem 0.6rem;
+            border-radius: 3px;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            flex-shrink: 0;
+        }
+
+        .tag-stop {
+            background: var(--bear-dim);
+            color: var(--bear);
+        }
+
+        .tag-target {
+            background: rgba(52, 152, 219, 0.15);
+            color: var(--blue);
+        }
+
+        .tag-breakout {
+            background: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .tag-confirmation {
+            background: rgba(155, 89, 182, 0.15);
+            color: var(--purple);
+        }
+
+        /* ── CANDLE BLOCK ── */
+        .candle-block {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .candle-svg-wrap {
+            position: relative;
+        }
+
+        .candle-svg-wrap svg {
+            filter: drop-shadow(0 4px 20px rgba(0,0,0,0.4));
+        }
+
+        /* ── TABLE ── */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.9rem;
+        }
+
+        .comparison-table thead {
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .comparison-table th {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .comparison-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-muted);
+            vertical-align: top;
+        }
+
+        .comparison-table tr:last-child td { border-bottom: none; }
+
+        .comparison-table td:first-child {
+            color: var(--text);
+            font-weight: 600;
+            font-size: 0.92rem;
+        }
+
+        /* ── CALLOUT ── */
+        .callout {
+            border-left: 3px solid var(--accent);
+            padding: 1.25rem 1.5rem;
+            margin: 2rem 0;
+            background: var(--surface);
+            border-radius: 0 6px 6px 0;
+        }
+
+        .callout.bull-callout { border-left-color: var(--bull); }
+        .callout.bear-callout { border-left-color: var(--bear); }
+
+        .callout-label {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.5rem;
+        }
+
+        .callout.bull-callout .callout-label { color: var(--bull); }
+        .callout.bear-callout .callout-label { color: var(--bear); }
+        .callout .callout-label { color: var(--accent); }
+
+        .callout p { margin-bottom: 0; font-size: 0.92rem; }
+
+        /* ── CONCEPT CARDS ── */
+        .concept-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .concept-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: border-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .concept-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .concept-card-icon {
+            font-family: 'DM Mono', monospace;
+            font-size: 1.6rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .concept-card h4 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+
+        .concept-card p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* ── SEQUENCE TIMELINE ── */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 2rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 6px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--border);
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+        }
+
+        .timeline-item:last-child { padding-bottom: 0; }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 6px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: var(--surface);
+            border: 2px solid var(--accent);
+        }
+
+        .timeline-item .step-num {
+            font-family: 'DM Mono', monospace;
+            font-size: 0.68rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.25rem;
+        }
+
+        .timeline-item h4 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.05rem;
+            margin-bottom: 0.35rem;
+            color: var(--text);
+        }
+
+        .timeline-item p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 3rem;
+            text-align: center;
+            font-family: 'DM Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        footer a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .hero::before { display: none; }
+            .content { padding: 0 1.5rem 4rem; }
+            .concept-grid { grid-template-columns: 1fr; }
+            .hero-meta { flex-direction: column; gap: 1rem; }
+            .comparison-table { font-size: 0.8rem; }
+            .comparison-table td, .comparison-table th { padding: 0.6rem 0.5rem; }
+            nav { padding: 0 1rem; }
+            .nav-links { gap: 0.8rem; }
+            .nav-links a { font-size: 0.7rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+    <div class="nav-brand">BPA Mixed v2</div>
+    <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#bearish-ob">Bearish OB</a></li>
+        <li><a href="#bullish-ob">Bullish OB</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#why-it-matters">Why It Matters</a></li>
+    </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<div class="hero">
+    <div class="hero-tag">BPA Mixed v2 &middot; Outside Bar Toolkit</div>
+    <h1>Understanding the <span>Buy Level</span> &amp; <span>Sell Level</span></h1>
+    <p class="hero-sub">
+        These two trade management lines mark your stop-loss placement when an outside bar triggers a setup. Here's exactly what they mean and how to read them.
+    </p>
+    <div class="hero-meta">
+        <div class="hero-meta-item">
+            Module
+            <strong>Section 8 &mdash; OB Toolkit</strong>
+        </div>
+        <div class="hero-meta-item">
+            Script
+            <strong>Pine Script v6</strong>
+        </div>
+        <div class="hero-meta-item">
+            Methodology
+            <strong>ICT / Price Action</strong>
+        </div>
+    </div>
+</div>
+
+<!-- ── CONTENT ── -->
+<div class="content">
+
+    <!-- OVERVIEW -->
+    <section id="overview" class="fade-in">
+        <div class="section-num">01 &mdash; Overview</div>
+        <h2>What Are Outside Bars?</h2>
+        <p>
+            An <strong>outside bar</strong> occurs when the current bar's range <strong>engulfs the previous bar's range completely</strong> — the high exceeds the prior high <em>and</em> the low breaks below the prior low. It signals <strong>range expansion</strong> and often represents a liquidity sweep: trapped traders on both sides.
+        </p>
+        <p>
+            The Buy Level and Sell Level are <strong>not entry signals</strong>. They mark where your <strong>protective stop order</strong> sits after an outside bar triggers a trade. The naming describes the <em>type of stop order</em>, not the trade direction.
+        </p>
+
+        <div class="concept-grid">
+            <div class="concept-card">
+                <div class="concept-card-icon">&uarr;</div>
+                <h4>Bullish Outside Bar</h4>
+                <p>Swept below the prior low, closed above the prior high. Trapped sellers below. Direction bias: long.</p>
+            </div>
+            <div class="concept-card">
+                <div class="concept-card-icon">&darr;</div>
+                <h4>Bearish Outside Bar</h4>
+                <p>Swept above the prior high, closed below the prior low. Trapped buyers above. Direction bias: short.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- BEARISH OB -->
+    <section id="bearish-ob" class="fade-in">
+        <div class="section-num">02 &mdash; Bearish Outside Bar</div>
+        <h2>Short Trade &rarr; "Buy Level"</h2>
+        <p>
+            When a <strong>bearish outside bar</strong> forms (red candle that engulfs the prior bar), the script anticipates a <strong>short trade</strong>. The levels plotted:
+        </p>
+
+        <div class="diagram bearish">
+            <div class="diagram-title">Bearish OB &mdash; Level Map</div>
+
+            <!-- SVG Visual -->
+            <div class="candle-block">
+                <div class="candle-svg-wrap">
+                    <svg width="260" height="300" viewBox="0 0 260 300">
+                        <!-- Blue line: measured move risk target -->
+                        <line x1="40" y1="25" x2="220" y2="25" stroke="#3498db" stroke-width="2" stroke-dasharray="6,4"/>
+                        <text x="228" y="29" fill="#3498db" font-family="DM Mono, monospace" font-size="10">RISK TARGET</text>
+                        <text x="228" y="41" fill="#3498db80" font-family="DM Mono, monospace" font-size="9">high + barHeight</text>
+
+                        <!-- Red line: Buy Level (stop) -->
+                        <line x1="40" y1="75" x2="220" y2="75" stroke="#e74c3c" stroke-width="2"/>
+                        <text x="228" y="79" fill="#e74c3c" font-family="DM Mono, monospace" font-size="10">BUY LEVEL</text>
+                        <text x="228" y="91" fill="#e74c3c80" font-family="DM Mono, monospace" font-size="9">high + 1 tick</text>
+
+                        <!-- Wick above -->
+                        <line x1="130" y1="80" x2="130" y2="110" stroke="#e74c3c" stroke-width="2" opacity="0.6"/>
+
+                        <!-- OB Body -->
+                        <rect x="100" y="110" width="60" height="100" rx="3" fill="#e74c3c" fill-opacity="0.2" stroke="#e74c3c" stroke-width="2"/>
+
+                        <!-- Label inside OB -->
+                        <text x="130" y="162" text-anchor="middle" fill="#e74c3c" font-family="DM Serif Display, serif" font-size="14">OB</text>
+                        <text x="130" y="178" text-anchor="middle" fill="#e74c3c80" font-family="DM Mono, monospace" font-size="9">bearish</text>
+
+                        <!-- Wick below -->
+                        <line x1="130" y1="210" x2="130" y2="230" stroke="#e74c3c" stroke-width="2" opacity="0.6"/>
+
+                        <!-- Dashed zone indicator -->
+                        <line x1="80" y1="75" x2="80" y2="110" stroke="#e74c3c40" stroke-width="1" stroke-dasharray="3,3"/>
+                        <line x1="80" y1="110" x2="100" y2="110" stroke="#e74c3c40" stroke-width="1" stroke-dasharray="3,3"/>
+                        <line x1="80" y1="75" x2="100" y2="75" stroke="#e74c3c40" stroke-width="1" stroke-dasharray="3,3"/>
+
+                        <!-- Risk arrow -->
+                        <line x1="55" y1="75" x2="55" y2="25" stroke="#3498db40" stroke-width="1.5"/>
+                        <polygon points="52,28 55,20 58,28" fill="#3498db40"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="candle-visual">
+                <div class="level-row">
+                    <div class="level-line blue-line"></div>
+                    <div class="level-name">Blue Line</div>
+                    <div class="level-desc">high + barHeight (full measured-move)</div>
+                    <div class="level-tag tag-target">Risk Target</div>
+                </div>
+                <div class="level-row">
+                    <div class="level-line bear"></div>
+                    <div class="level-name">Red Line + Label</div>
+                    <div class="level-desc">high + 1 tick &mdash; labeled "Buy Level"</div>
+                    <div class="level-tag tag-stop">Stop-Loss</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout bear-callout">
+            <div class="callout-label">Why "Buy Level" for a Short?</div>
+            <p>
+                The label describes the <strong>type of stop order</strong>, not the trade direction. You're short, so your protective stop is a <strong>buy-stop order</strong> placed above the OB high. If price hits this level, the bearish setup is negated.
+            </p>
+        </div>
+    </section>
+
+    <!-- BULLISH OB -->
+    <section id="bullish-ob" class="fade-in">
+        <div class="section-num">03 &mdash; Bullish Outside Bar</div>
+        <h2>Long Trade &rarr; "Sell Level"</h2>
+        <p>
+            When a <strong>bullish outside bar</strong> forms (green candle that engulfs the prior bar), the script anticipates a <strong>long trade</strong>. The levels plotted:
+        </p>
+
+        <div class="diagram bullish">
+            <div class="diagram-title">Bullish OB &mdash; Level Map</div>
+
+            <!-- SVG Visual -->
+            <div class="candle-block">
+                <div class="candle-svg-wrap">
+                    <svg width="260" height="300" viewBox="0 0 260 300">
+                        <!-- Orange tick: breakout reference -->
+                        <line x1="40" y1="65" x2="220" y2="65" stroke="#e67e22" stroke-width="2"/>
+                        <text x="228" y="69" fill="#e67e22" font-family="DM Mono, monospace" font-size="10">BREAKOUT REF</text>
+                        <text x="228" y="81" fill="#e67e2280" font-family="DM Mono, monospace" font-size="9">high + 1 tick</text>
+
+                        <!-- Wick above -->
+                        <line x1="130" y1="85" x2="130" y2="95" stroke="#2ecc71" stroke-width="2" opacity="0.6"/>
+
+                        <!-- OB Body -->
+                        <rect x="100" y="95" width="60" height="100" rx="3" fill="#2ecc71" fill-opacity="0.2" stroke="#2ecc71" stroke-width="2"/>
+
+                        <!-- Label inside OB -->
+                        <text x="130" y="148" text-anchor="middle" fill="#2ecc71" font-family="DM Serif Display, serif" font-size="14">OB</text>
+                        <text x="130" y="164" text-anchor="middle" fill="#2ecc7180" font-family="DM Mono, monospace" font-size="9">bullish</text>
+
+                        <!-- Wick below -->
+                        <line x1="130" y1="195" x2="130" y2="225" stroke="#2ecc71" stroke-width="2" opacity="0.6"/>
+
+                        <!-- Green line: Sell Level (stop) -->
+                        <line x1="40" y1="235" x2="220" y2="235" stroke="#2ecc71" stroke-width="2"/>
+                        <text x="228" y="239" fill="#2ecc71" font-family="DM Mono, monospace" font-size="10">SELL LEVEL</text>
+                        <text x="228" y="251" fill="#2ecc7180" font-family="DM Mono, monospace" font-size="9">low - 1 tick</text>
+
+                        <!-- Blue line: measured move risk target -->
+                        <line x1="40" y1="275" x2="220" y2="275" stroke="#3498db" stroke-width="2" stroke-dasharray="6,4"/>
+                        <text x="228" y="279" fill="#3498db" font-family="DM Mono, monospace" font-size="10">RISK TARGET</text>
+                        <text x="228" y="291" fill="#3498db80" font-family="DM Mono, monospace" font-size="9">low - barHeight</text>
+
+                        <!-- Risk arrow -->
+                        <line x1="55" y1="235" x2="55" y2="275" stroke="#3498db40" stroke-width="1.5"/>
+                        <polygon points="52,272 55,280 58,272" fill="#3498db40"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="candle-visual">
+                <div class="level-row">
+                    <div class="level-line orange-line"></div>
+                    <div class="level-name">Orange Tick</div>
+                    <div class="level-desc">high + 1 tick &mdash; breakout reference point</div>
+                    <div class="level-tag tag-breakout">Breakout</div>
+                </div>
+                <div class="level-row">
+                    <div class="level-line bull"></div>
+                    <div class="level-name">Green Line + Label</div>
+                    <div class="level-desc">low - 1 tick &mdash; labeled "Sell Level"</div>
+                    <div class="level-tag tag-stop">Stop-Loss</div>
+                </div>
+                <div class="level-row">
+                    <div class="level-line blue-line"></div>
+                    <div class="level-name">Blue Line</div>
+                    <div class="level-desc">low - barHeight (full measured-move)</div>
+                    <div class="level-tag tag-target">Risk Target</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="callout bull-callout">
+            <div class="callout-label">Why "Sell Level" for a Long?</div>
+            <p>
+                You're long, so your protective stop is a <strong>sell-stop order</strong> placed below the OB low. If price trades below this level, the bullish outside bar was itself a trap &mdash; time to exit.
+            </p>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="how-it-works" class="fade-in">
+        <div class="section-num">04 &mdash; How It Works</div>
+        <h2>The Decision Flow</h2>
+        <p>
+            Here's the step-by-step logic the script follows when evaluating an outside bar:
+        </p>
+
+        <div class="timeline">
+            <div class="timeline-item">
+                <div class="step-num">Step 1</div>
+                <h4>Detect the Outside Bar</h4>
+                <p>Current bar's high &ge; prior high AND current bar's low &le; prior low. The bar is classified as bullish (green close) or bearish (red close).</p>
+            </div>
+            <div class="timeline-item">
+                <div class="step-num">Step 2</div>
+                <h4>Check the Direction</h4>
+                <p><strong>Bearish OB + red close &rarr;</strong> short bias. <strong>Bullish OB + green close &rarr;</strong> long bias. The OB must close in the direction of the trade (not just any outside bar).</p>
+            </div>
+            <div class="timeline-item">
+                <div class="step-num">Step 3</div>
+                <h4>Calculate the Bar Height</h4>
+                <p><code style="font-family: 'DM Mono', monospace; background: var(--surface-raised); padding: 0.15rem 0.4rem; border-radius: 3px; font-size: 0.85rem; color: var(--accent);">barHeight = high - low</code> This becomes the measured-move distance for both the stop and the risk target.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="step-num">Step 4</div>
+                <h4>Plot the Levels</h4>
+                <p>For a bearish OB: stop at <em>high + 1 tick</em>, risk target at <em>high + barHeight</em>. For a bullish OB: stop at <em>low - 1 tick</em>, risk target at <em>low - barHeight</em>.</p>
+            </div>
+            <div class="timeline-item">
+                <div class="step-num">Step 5</div>
+                <h4>Follow-Through Check</h4>
+                <p>On subsequent bars, the script checks if the next candle confirms the OB direction (closes above/below the OB's extreme). If confirmed, a <strong>follow-through arrow</strong> appears.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- COMPARISON TABLE -->
+    <section class="fade-in">
+        <div class="section-num">05 &mdash; Quick Reference</div>
+        <h2>Side-by-Side Comparison</h2>
+
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Bearish OB &rarr; Short</th>
+                    <th>Bullish OB &rarr; Long</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>OB Close</td>
+                    <td>Red (close &lt; open)</td>
+                    <td>Green (close &gt; open)</td>
+                </tr>
+                <tr>
+                    <td>Trade Direction</td>
+                    <td style="color: var(--bear);">Short</td>
+                    <td style="color: var(--bull);">Long</td>
+                </tr>
+                <tr>
+                    <td>Stop Label</td>
+                    <td style="color: var(--bear);">"Buy Level" (red line)</td>
+                    <td style="color: var(--bull);">"Sell Level" (green line)</td>
+                </tr>
+                <tr>
+                    <td>Stop Placement</td>
+                    <td>high + 1 tick</td>
+                    <td>low - 1 tick</td>
+                </tr>
+                <tr>
+                    <td>Risk Target</td>
+                    <td>high + barHeight (blue)</td>
+                    <td>low - barHeight (blue)</td>
+                </tr>
+                <tr>
+                    <td>Breakout Ref</td>
+                    <td>&mdash;</td>
+                    <td>high + 1 tick (orange)</td>
+                </tr>
+                <tr>
+                    <td>Stop Order Type</td>
+                    <td>Buy-stop (protects short)</td>
+                    <td>Sell-stop (protects long)</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- WHY IT MATTERS -->
+    <section id="why-it-matters" class="fade-in">
+        <div class="section-num">06 &mdash; Context</div>
+        <h2>Why This Matters in BPA</h2>
+        <p>
+            Outside bars represent <strong>range expansion and potential traps</strong>. The OB toolkit translates raw candle data into actionable trade management:
+        </p>
+
+        <div class="concept-grid">
+            <div class="concept-card">
+                <div class="concept-card-icon">1</div>
+                <h4>Identify the Trap</h4>
+                <p>Bearish OB swept highs and closed red &mdash; buyers above are trapped. Bullish OB swept lows and closed green &mdash; sellers below are trapped.</p>
+            </div>
+            <div class="concept-card">
+                <div class="concept-card-icon">2</div>
+                <h4>Define Your Risk</h4>
+                <p>The stop level is one tick beyond the OB extreme. If price returns there, the trap thesis is invalidated. Clean, mechanical.</p>
+            </div>
+            <div class="concept-card">
+                <div class="concept-card-icon">3</div>
+                <h4>See the Failure Cost</h4>
+                <p>The blue measured-move line shows exactly what happens if the OB was itself a trap &mdash; full range projection against your position.</p>
+            </div>
+            <div class="concept-card">
+                <div class="concept-card-icon">4</div>
+                <h4>Confirm with Follow-Through</h4>
+                <p>The script marks when the next bar confirms the OB direction, giving you confidence that the trap thesis is playing out.</p>
+            </div>
+        </div>
+
+        <div class="callout">
+            <div class="callout-label">Remember</div>
+            <p>
+                The naming convention describes the <strong>type of stop order</strong>, not the trade direction. "Buy Level" = where your protective buy-stop sits (you're short). "Sell Level" = where your protective sell-stop sits (you're long). The blue risk target line shows the full measured-move distance if the trade fails.
+            </p>
+        </div>
+    </section>
+
+</div>
+
+<footer>
+    BPA Mixed v2 Documentation &middot; Based on ICT / Price Action methodology &middot; <a href="#">sire-indicators.vercel.app</a>
+</footer>
+
+<script>
+    // Intersection Observer for fade-in
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+</script>
+
+</body>
+</html>
