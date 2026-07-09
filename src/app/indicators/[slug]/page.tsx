@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { indicators, getIndicator } from '@/data/indicators';
 import { TickerBar, SiteNav, SiteFooter, Callout, REPO_URL } from '@/components/SiteChrome';
+import CopyScriptButton from '@/components/CopyScriptButton';
 
 export function generateStaticParams() {
   return indicators.map((i) => ({ slug: i.slug }));
@@ -13,8 +14,9 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
   const hasSource = ind.sourceFile.trim().length > 0;
   const sourceUrl = hasSource
-    ? `${REPO_URL}/blob/main/${encodeURIComponent(ind.sourceFile)}`
+    ? `${REPO_URL}/blob/main/${encodeURIComponent(ind.sourceFile)}.txt`
     : null;
+  const scriptPath = hasSource ? `${ind.sourceFile}.txt` : null;
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-[#F5EDD8]">
@@ -33,14 +35,17 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
         {/* CTA */}
         <div className="mt-7 flex flex-wrap gap-3">
           {hasSource ? (
-            <a
-              href={sourceUrl!}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded bg-[#B87333] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0B0F19] transition-colors hover:bg-[#E8C46A]"
-            >
-              GET PINE SCRIPT SOURCE →
-            </a>
+            <>
+              <CopyScriptButton scriptPath={scriptPath!} indicatorName={ind.name} />
+              <a
+                href={sourceUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded border border-[#B87333] px-6 py-3 font-mono text-sm tracking-wide text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
+              >
+                VIEW ON GITHUB →
+              </a>
+            </>
           ) : (
             <span className="rounded border border-[#B87333]/40 px-6 py-3 font-mono text-sm tracking-wide text-[#F5EDD8]/50">
               SOURCE COMING SOON
@@ -52,7 +57,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             rel="noopener noreferrer"
             className="rounded border border-[#B87333] px-6 py-3 font-mono text-sm tracking-wide text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
           >
-            VIEW REPO
+            REPO
           </a>
         </div>
 
@@ -150,8 +155,8 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="mt-14">
-      <h2 className="mb-5 font-mono text-xs uppercase tracking-[0.3em] text-[#B87333]">— {title}</h2>
+    <section className="mt-12">
+      <h2 className="mb-6 font-display text-2xl font-semibold text-[#F5EDD8]">{title}</h2>
       {children}
     </section>
   );
