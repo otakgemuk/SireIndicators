@@ -1,0 +1,187 @@
+// ============================================================================
+//  Sire Order Blocks — Detection + Mitigation Tracking + FVG Confluence
+//  © SireMammat
+//  Site: https://sire-indicators.vercel.app/
+//  Pine Script v6
+// ----------------------------------------------------------------------------
+//  Logic:
+//  • Bullish OB  = last DOWN candle before a displacement move that breaks
+//    a swing high (Break of Structure / BOS).
+//  • Bearish OB  = last UP candle before a displacement move that breaks
+//    a swing low.
+//  • Displacement filter: the impulse leg must exceed ATR x multiplier,
+//    filtering out weak/random structure breaks.
+//  • Optional FVG confluence: only keep OBs whose displacement leg contains
+//    a Fair Value Gap (imbalance) — higher-quality zones.
+//  • Mitigation: OB is marked mitigated when price trades back into the zone;
+//    invalidated (removed) when price closes through the far side.
+//
+//  DISCLAIMER: This indicator is for educational purposes only. Trading
+//  involves significant risk of loss. Past performance is not indicative
+//  of future results. Use at your own risk.
+// ============================================================================
+//@version=6
+indicator("Sire Order Blocks [OB + FVG + Mitigation]", overlay=true, max_boxes_count=200, max_labels_count=200)
+
+// ── Inputs ──────────────────────────────────────────────────────────────────
+var grpD = "Detection"
+int swingLen     = input.int(10,    "Swing length (pivot strength)",  minval=2,     group=grpD)
+int maxLookback  = input.int(20,    "Max bars back to find OB candle", minval=3,    group=grpD)
+float dispMult   = input.float(1.5, "Displacement filter (x ATR)",    minval=0.0,   step=0.1, group=grpD)
+bool requireFVG  = input.bool(true, "Require FVG confluence in displacement leg", group=grpD)
+bool useBodyZone = input.bool(false,"Use candle body only for OB zone (else full wick range)", group=grpD)
+
+var grpM = "Mitigation"
+bool mitByClose  = input.bool(false, "Mitigate on close into zone (else wick touch)", group=grpM)
+bool hideMitig   = input.bool(false, "Hide mitigated OBs", group=grpM)
+int maxActive    = input.int(15,     "Max OBs kept per side", minval=1, maxval=100, group=grpM)
+
+var grpS = "Style"
+color bullCol    = input.color(color.new(#26a69a, 75), "Bullish OB",    group=grpS)
+color bearCol    = input.color(color.new(#ef5350, 75), "Bearish OB",    group=grpS)
+color mitigCol   = input.color(color.new(#787b86, 88), "Mitigated OB",  group=grpS)
+bool showLabels  = input.bool(true, "Show OB / OB+FVG labels",          group=grpS)
+
+// ── State ───────────────────────────────────────────────────────────────────
+float atr = ta.atr(14)
+
+var float lastPH   = na
+var float lastPL   = na
+var bool  phBroken = true
+var bool  plBroken = true
+
+float ph = ta.pivothigh(high, swingLen, swingLen)
+float pl = ta.pivotlow(low,  swingLen, swingLen)
+if not na(ph)
+    lastPH   := ph
+    phBroken := false
+if not na(pl)
+    lastPL   := pl
+    plBroken := false
+
+// Parallel arrays
+var array<box>   boxes = array.new_box()
+var array<int>   dirs  = array.new_int()
+var array<bool>  mitig = array.new_bool()
+var array<float> tops  = array.new_float()
+var array<float> bots  = array.new_float()
+var array<int>   made  = array.new_int()
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+legHasBullFVG(int legBars) =>
+    bool found = false
+    if legBars >= 2
+        for j = 0 to legBars - 2
+            if low[j] > high[j + 2]
+                found := true
+                break
+    found
+
+legHasBearFVG(int legBars) =>
+    bool found = false
+    if legBars >= 2
+        for j = 0 to legBars - 2
+            if high[j] < low[j + 2]
+                found := true
+                break
+    found
+
+f_removeOB(int idx) =>
+    box.delete(array.get(boxes, idx))
+    array.remove(boxes, idx)
+    array.remove(dirs, idx)
+    array.remove(mitig, idx)
+    array.remove(tops, idx)
+    array.remove(bots, idx)
+    array.remove(made, idx)
+
+addOB(int dir, float top, float bot, int leftBar, bool hasFVG) =>
+    color col = dir == 1 ? bullCol : bearCol
+    box b = box.new(leftBar, top, bar_index, bot,
+         border_color=color.new(color.gray, 60), border_width=1,
+         bgcolor=col, extend=extend.none)
+    if showLabels
+        box.set_text(b, (dir == 1 ? "+OB" : "-OB") + (hasFVG ? " • FVG" : ""))
+        box.set_text_size(b, size.small)
+        box.set_text_color(b, color.new(color.gray, 30))
+        box.set_text_halign(b, text.align_left)
+    array.push(boxes, b)
+    array.push(dirs, dir)
+    array.push(mitig, false)
+    array.push(tops, top)
+    array.push(bots, bot)
+    array.push(made, bar_index)
+    
+    int cnt = 0
+    for i = array.size(dirs) - 1 to 0 by 1
+        if array.get(dirs, i) == dir
+            cnt += 1
+            if cnt > maxActive
+                f_removeOB(i)
+
+// ── Detection ───────────────────────────────────────────────────────────────
+bool bullBOS = not phBroken and not na(lastPH) and close > lastPH
+bool bearBOS = not plBroken and not na(lastPL) and close < lastPL
+
+if bullBOS
+    phBroken := true
+    int obIdx = -1
+    for i = 1 to maxLookback
+        if close[i] < open[i]
+            obIdx := i
+            break
+    if obIdx > 0
+        float displacement = close - low[obIdx]
+        bool okDisp = displacement > dispMult * atr
+        bool okFVG  = not requireFVG or legHasBullFVG(obIdx)
+        if okDisp and okFVG
+            float top = useBodyZone ? open[obIdx] : high[obIdx]
+            float bot = useBodyZone ? close[obIdx] : low[obIdx]
+            addOB(1, top, bot, bar_index - obIdx, legHasBullFVG(obIdx))
+
+if bearBOS
+    plBroken := true
+    int obIdx = -1
+    for i = 1 to maxLookback
+        if close[i] > open[i]
+            obIdx := i
+            break
+    if obIdx > 0
+        float displacement = high[obIdx] - close
+        bool okDisp = displacement > dispMult * atr
+        bool okFVG  = not requireFVG or legHasBearFVG(obIdx)
+        if okDisp and okFVG
+            float top = useBodyZone ? close[obIdx] : high[obIdx]
+            float bot = useBodyZone ? open[obIdx] : low[obIdx]
+            addOB(-1, top, bot, bar_index - obIdx, legHasBearFVG(obIdx))
+
+// ── Mitigation / invalidation / extension ───────────────────────────────────
+if array.size(boxes) > 0
+    int i = array.size(boxes) - 1
+    while i >= 0
+        box b       = array.get(boxes, i)
+        int dir     = array.get(dirs, i)
+        float top   = array.get(tops, i)
+        float bot   = array.get(bots, i)
+        bool isMit  = array.get(mitig, i)
+
+        bool invalid = dir == 1 ? close < bot : close > top
+        if invalid
+            f_removeOB(i)
+            i := i - 1
+            continue
+
+        box.set_right(b, bar_index)
+
+        if not isMit
+            bool touched = dir == 1 ?
+                 (mitByClose ? close <= top : low  <= top) :
+                 (mitByClose ? close >= bot : high >= bot)
+            if touched and bar_index > array.get(made, i)
+                array.set(mitig, i, true)
+                box.set_bgcolor(b, mitigCol)
+                box.set_border_color(b, color.new(color.gray, 80))
+                if hideMitig
+                    f_removeOB(i)
+        
+        i := i - 1
