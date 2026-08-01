@@ -1,12 +1,12 @@
 // ═══════════════════════════════════════════════════════════════
-// M2 A+ System Enhanced
+// 2 Legged PB M2B/M2S
 // © SireMammat
-// Site: https://siremammat.vercel.app/
+// Site: https://sire-indicators.vercel.app/
 // Pine Script v6
 //
 // ─── DESCRIPTION ─────────────────────────────────────────────
 //
-// The M2 A+ System identifies high-probability two-swing reversal
+// The 2 Legged PB identifies high-probability two-swing reversal
 // patterns (M2B/M2S) and combines them with market context
 // filters — sweeps, traps, trend alignment, and chop detection —
 // to produce adaptive scored signals.
@@ -25,11 +25,11 @@
 //     - 6-condition trade invalidation system
 //     - Exit alerts for TP, SL, and invalidation
 //
-//   SIGNAL		Grade		Action
-//   ▲ Long A+		High		Full size — max confluence
-//   ▼ Short A+		High		Full size — max confluence
-//   ● Long B		Acceptable	Reduced size — moderate confluence
-//   ● Short B		Acceptable	Reduced size — moderate confluence
+//   SIGNAL     Grade       Action
+//   ▲ Long A+  High        Full size — max confluence
+//   ▼ Short A+ High        Full size — max confluence
+//   ● Long B   Acceptable  Reduced size — moderate confluence
+//   ● Short B  Acceptable  Reduced size — moderate confluence
 //
 // DISCLAIMER:
 // This software is for educational and informational purposes only.
@@ -44,7 +44,7 @@
 // https://mozilla.org/MPL/2.0/
 
 //@version=6
-indicator('M2 A+ System Enhanced', shorttitle='M2 A+', overlay=true, max_labels_count=500)
+indicator('2 Legged PB M2B/M2S', shorttitle='2LPB M2B/M2S', overlay=true, max_labels_count=200, max_lines_count=200)
 
 // ═══════════════════════════════════════════════════════════════
 // INPUTS
@@ -140,7 +140,6 @@ float atrAvg = ta.sma(atr, 20)
 
 bool isChop = atr < atrAvg * 0.8 and math.abs(ema20 - ema50) < atr * 0.5
 
-// Cross detection (global scope to avoid warnings)
 bool crossUnder20_50 = ta.crossunder(ema20, ema50)
 bool crossOver20_50  = ta.crossover(ema20, ema50)
 
@@ -455,7 +454,7 @@ if showDash and barstate.islast
     else if lastExit == 'M2B' or lastExit == 'M2S' or lastExit == 'VWAP' or lastExit == 'CHOP'
         exitCol := color.yellow
 
-    table.cell(dash, 0, 0,  'M2 A+ SYSTEM',    text_color=color.white, text_size=dsz)
+    table.cell(dash, 0, 0,  '2 LEGGED PB',     text_color=color.white, text_size=dsz)
     table.cell(dash, 1, 0,  'STATUS',          text_color=color.white, text_size=dsz)
 
     table.cell(dash, 0, 1,  'Position',        text_color=color.white, text_size=dsz)
@@ -494,15 +493,15 @@ if showDash and barstate.islast
 // ═══════════════════════════════════════════════════════════════
 // ALERT CONDITIONS
 // ═══════════════════════════════════════════════════════════════
-alertcondition(longA and alert_signals,        'Long A+ Signal',    'M2 A+: LONG A+ signal triggered')
-alertcondition(shortA and alert_signals,       'Short A+ Signal',   'M2 A+: SHORT A+ signal triggered')
-alertcondition(longB and alert_signals,        'Long B Signal',     'M2 A+: LONG B signal triggered')
-alertcondition(shortB and alert_signals,       'Short B Signal',    'M2 A+: SHORT B signal triggered')
-alertcondition(longTP1Hit and alert_exits,     'Long TP1 Hit',      'M2 A+: LONG TP1 reached')
-alertcondition(shortTP1Hit and alert_exits,    'Short TP1 Hit',     'M2 A+: SHORT TP1 reached')
-alertcondition(longSLHit and alert_exits,      'Long SL Hit',       'M2 A+: LONG stop loss hit')
-alertcondition(shortSLHit and alert_exits,     'Short SL Hit',      'M2 A+: SHORT stop loss hit')
-alertcondition(longInvalid and alert_inval,    'Long Invalidated',  'M2 A+: LONG trade invalidated')
-alertcondition(shortInvalid and alert_inval,   'Short Invalidated', 'M2 A+: SHORT trade invalidated')
-alertcondition(isChop and not isChop[1] and alert_state,   'Chop Started', 'M2 A+: Chop state detected — signals blocked')
-alertcondition(not isChop and isChop[1] and alert_state,   'Chop Ended',   'M2 A+: Chop state cleared — signals enabled')
+alertcondition(longA and alert_signals,        'Long A+ Signal',    '2LPB: LONG A+ signal triggered')
+alertcondition(shortA and alert_signals,       'Short A+ Signal',   '2LPB: SHORT A+ signal triggered')
+alertcondition(longB and alert_signals,        'Long B Signal',     '2LPB: LONG B signal triggered')
+alertcondition(shortB and alert_signals,       'Short B Signal',    '2LPB: SHORT B signal triggered')
+alertcondition(longTP1Hit and alert_exits,     'Long TP1 Hit',      '2LPB: LONG TP1 reached')
+alertcondition(shortTP1Hit and alert_exits,    'Short TP1 Hit',     '2LPB: SHORT TP1 reached')
+alertcondition(longSLHit and alert_exits,      'Long SL Hit',       '2LPB: LONG stop loss hit')
+alertcondition(shortSLHit and alert_exits,     'Short SL Hit',      '2LPB: SHORT stop loss hit')
+alertcondition(longInvalid and alert_inval,    'Long Invalidated',  '2LPB: LONG trade invalidated')
+alertcondition(shortInvalid and alert_inval,   'Short Invalidated', '2LPB: SHORT trade invalidated')
+alertcondition(isChop and not isChop[1] and alert_state,   'Chop Started', '2LPB: Chop state detected — signals blocked')
+alertcondition(not isChop and isChop[1] and alert_state,   'Chop Ended',   '2LPB: Chop state cleared — signals enabled')
