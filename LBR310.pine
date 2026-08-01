@@ -1,0 +1,96 @@
+//@version=6
+// =============================================================
+//  LR 3-10 Oscillator
+//  Linda Raschke's momentum tool.
+//    Fast  = SMA(3) - SMA(10)          -> raw momentum
+//    Slow  = SMA(Fast, 16)             -> signal / smoothing
+//    Hist  = Fast - Slow               -> acceleration
+//  Read: zero-line crosses for bias, histogram flips for
+//  momentum shifts, pivot divergence for exhaustion.
+// =============================================================
+
+indicator("LBR 3-10 Oscillator", shorttitle = "LBR310", overlay = false, precision = 2)
+
+// ---------- Inputs ----------
+grpCalc   = "Calculation"
+src       = input.source(close, "Source", group = grpCalc)
+fastLen   = input.int(3, "Fast MA Length", minval = 1, group = grpCalc)
+slowLen   = input.int(10, "Slow MA Length", minval = 1, group = grpCalc)
+sigLen    = input.int(16, "Signal Length", minval = 1, group = grpCalc)
+
+grpDiv    = "Divergence"
+showDiv   = input.bool(true, "Show Divergence", group = grpDiv)
+pivLen    = input.int(5, "Pivot Lookback", minval = 1, group = grpDiv)
+showLines = input.bool(true, "Draw Divergence Lines", group = grpDiv)
+
+grpStyle  = "Style"
+fadeHist  = input.bool(true, "Fade Contracting Histogram", group = grpStyle)
+
+// ---------- Calculation ----------
+osc  = ta.sma(src, fastLen) - ta.sma(src, slowLen)
+sig  = ta.sma(osc, sigLen)
+hist = osc - sig
+
+// ---------- Histogram colouring ----------
+// Solid when momentum is expanding, faded when it is contracting.
+rising   = hist > hist[1]
+baseCol  = hist >= 0 ? color.new(#26a69a, 0) : color.new(#ef5350, 0)
+faded    = hist >= 0 ? color.new(#26a69a, 55) : color.new(#ef5350, 55)
+histCol  = not fadeHist ? baseCol : (hist >= 0 ? (rising ? baseCol : faded) : (rising ? faded : baseCol))
+
+plot(hist, "Histogram", color = histCol, style = plot.style_columns)
+plot(osc, "Fast (3-10)", color = color.new(#ff9800, 0), linewidth = 2)
+plot(sig, "Signal (16)", color = color.new(#e0a3d8, 0), linewidth = 1)
+hline(0, "Zero", color = color.new(color.gray, 40), linestyle = hline.style_solid)
+
+// ---------- Divergence ----------
+var float prevOscPH   = na
+var float prevPricePH = na
+var int   prevBarPH   = na
+var float prevOscPL   = na
+var float prevPricePL = na
+var int   prevBarPL   = na
+
+ph = ta.pivothigh(osc, pivLen, pivLen)
+pl = ta.pivotlow(osc, pivLen, pivLen)
+
+bearDiv = false
+bullDiv = false
+
+if showDiv and not na(ph)
+    curPrice = high[pivLen]
+    curBar   = bar_index - pivLen
+    if not na(prevOscPH)
+        // Price makes a higher high, oscillator does not -> bearish
+        if curPrice > prevPricePH and ph < prevOscPH
+            bearDiv := true
+            label.new(curBar, ph, "▼", yloc = yloc.price, style = label.style_label_down,
+                      color = color.new(#ef5350, 20), textcolor = color.white, size = size.tiny)
+            if showLines
+                line.new(prevBarPH, prevOscPH, curBar, ph, color = color.new(#ef5350, 0), width = 1)
+    prevOscPH   := ph
+    prevPricePH := curPrice
+    prevBarPH   := curBar
+
+if showDiv and not na(pl)
+    curPrice = low[pivLen]
+    curBar   = bar_index - pivLen
+    if not na(prevOscPL)
+        // Price makes a lower low, oscillator does not -> bullish
+        if curPrice < prevPricePL and pl > prevOscPL
+            bullDiv := true
+            label.new(curBar, pl, "▲", yloc = yloc.price, style = label.style_label_up,
+                      color = color.new(#26a69a, 20), textcolor = color.white, size = size.tiny)
+            if showLines
+                line.new(prevBarPL, prevOscPL, curBar, pl, color = color.new(#26a69a, 0), width = 1)
+    prevOscPL   := pl
+    prevPricePL := curPrice
+    prevBarPL   := curBar
+
+// ---------- Alerts ----------
+alertcondition(ta.crossover(osc, 0), "LBR310 Zero Cross Up", "LBR310 crossed above zero")
+alertcondition(ta.crossunder(osc, 0), "LBR310 Zero Cross Down", "LBR310 crossed below zero")
+alertcondition(ta.crossover(osc, sig), "LBR310 Signal Cross Up", "Fast crossed above signal")
+alertcondition(ta.crossunder(osc, sig), "LBR310 Signal Cross Down", "Fast crossed below signal")
+alertcondition(bearDiv, "LBR310 Bearish Divergence", "Bearish divergence on LBR310")
+alertcondition(bullDiv, "LBR310 Bullish Divergence", "Bullish divergence on LBR310")
