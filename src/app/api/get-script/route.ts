@@ -1,30 +1,40 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
-export const GET = (request: NextRequest) => {
-  const searchParams = request.nextUrl.searchParams;
-  const path = searchParams.get('path');
+const REPO_RAW_BASE =
+  'https://raw.githubusercontent.com/otakgemuk/SireIndicators/main/';
 
-  if (!path) {
+export const GET = async (request: NextRequest) => {
+  const scriptPath = request.nextUrl.searchParams.get('path');
+
+  if (!scriptPath) {
     return NextResponse.json({ error: 'Missing path parameter' }, { status: 400 });
   }
 
+  // Only published Pine sources in the dedicated scripts folder are readable.
+  if (!/^scripts\/[a-z0-9-]+\.pine$/.test(scriptPath)) {
+    return NextResponse.json({ error: 'Invalid script path' }, { status: 400 });
+  }
+
   try {
-    // Security: only allow files from repo root (no ../../../ traversal)
-    if (path.includes('..') || path.startsWith('/')) {
-      return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+    const encodedPath = scriptPath.split('/').map(encodeURIComponent).join('/');
+    const response = await fetch(`${REPO_RAW_BASE}${encodedPath}`, {
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return NextResponse.json({ error: 'Script not found' }, { status: 404 });
     }
 
-    const filePath = join(process.cwd(), path);
-    const content = readFileSync(filePath, 'utf-8');
+    const content = await response.text();
 
-    return NextResponse.json({ content }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
-      },
-    });
+    return NextResponse.json(
+      { content },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=300',
+        },
+      }
+    );
   } catch (error) {
     console.error('Script fetch error:', error);
     return NextResponse.json(
