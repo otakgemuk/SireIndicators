@@ -52,7 +52,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             </span>
           )}
           <a
-            href={REPO_URL}
+            href={`${REPO_URL}/tree/main/scripts`}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded border border-[#B87333] px-6 py-3 font-mono text-sm tracking-wide text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
