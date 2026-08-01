@@ -14,9 +14,9 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
   const hasSource = ind.sourceFile.trim().length > 0;
   const sourceUrl = hasSource
-    ? `${REPO_URL}/blob/main/${encodeURIComponent(ind.sourceFile)}.txt`
+    ? `${REPO_URL}/blob/main/${ind.sourceFile.split('/').map(encodeURIComponent).join('/')}`
     : null;
-  const scriptPath = hasSource ? `${ind.sourceFile}.txt` : null;
+  const scriptPath = hasSource ? ind.sourceFile : null;
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-[#F5EDD8]">

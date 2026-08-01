@@ -92,7 +92,7 @@
       "FAIL signals work best on COIL days that trap early breakout traders.",
       "Respect the volume gate. No volume, no trade — that is the institutional footprint filter."
     ],
-    "sourceFile": "Institutional ORB + Brooks Box v3"
+    "sourceFile": "scripts/institutional-orb-brooks-box.pine"
   },
   {
     "slug": "raschke-12-rules",
@@ -185,7 +185,7 @@
       "When both Bull and Bear scores are below 6, stand aside — the market has no edge.",
       "Score 8 is the floor, not the target. 10–12 readings are where the real trades live."
     ],
-    "sourceFile": "Raschke 12 Rules-SireMammatEdition"
+    "sourceFile": "scripts/raschke-12-rules.pine"
   },
   {
     "slug": "sire-trade-qualification",
@@ -291,7 +291,7 @@
       "The lunch-chop window (1130–1330 NY) actively penalises the Timing check. Respect the session windows.",
       "Pair with Institutional ORB + Brooks Box on the same chart — qualification × structure is the highest-conviction trade."
     ],
-    "sourceFile": "Sire Trade Qualification v1"
+    "sourceFile": "scripts/sire-trade-qualification.pine"
   },
   {
     "slug": "sire-cockpit",
@@ -410,7 +410,7 @@
       "Keep the FVG timeframe above your chart timeframe; requesting a lower timeframe produces unreliable zones.",
       "This is a context HUD, not a mechanical signal system — combine the modules, don't trade any one in isolation."
     ],
-    "sourceFile": "Sire Cockpit"
+    "sourceFile": "scripts/sire-cockpit.pine"
   },
   {
     "slug": "greenlight-pro-enhanced",
@@ -544,7 +544,7 @@
       "Respect the 18-bar box: COIL favors a patient breakout, BO favors trading with trend, TR favors fading the extremes.",
       "A Countdown 13 or a 3-push wedge against your direction is a reason to tighten or wait — confirm exhaustion before countering a trend."
     ],
-    "sourceFile": "Sire-GreenLight Pro Enhanced"
+    "sourceFile": "scripts/greenlight-pro-enhanced.pine"
   },
   {
     "slug": "sire-schoolfishing",
@@ -622,7 +622,7 @@
       "EMA Aligned — every signal is stronger when the 9/20 EMA confirms direction.",
       "Volume Present — low volume means weak signals; wait for institutional participation."
     ],
-    "sourceFile": "Sire-SchoolFishing"
+    "sourceFile": "scripts/sire-schoolfishing.pine"
   },
   {
     "slug": "m2b-m2s-setup",
@@ -702,7 +702,7 @@
       "EMA Touch — the second leg must reach or come within 1–2 ticks of the EMA.",
       "No News — skip if FOMC, CPI, or NFP is within 30 minutes."
     ],
-    "sourceFile": "M2B-M2S"
+    "sourceFile": "scripts/m2b-m2s-setup.pine"
   },
   {
     "slug": "td-sequential",
@@ -776,7 +776,7 @@
       "At S/R Levels — a Countdown 13 at a key level is the strongest signal.",
       "With Price Action — always confirm with reversal bars or failed breakouts."
     ],
-    "sourceFile": "TD Sequential"
+    "sourceFile": "scripts/td-sequential.pine"
   },
   {
     "slug": "sire-pye",
@@ -860,7 +860,7 @@
       "Kill Switch Clear — only trade while the daily loss threshold hasn't been hit.",
       "RTH Session — best during regular hours with institutional volume."
     ],
-    "sourceFile": "Sire-PYE"
+    "sourceFile": "scripts/sire-pye.pine"
   },
   {
     "slug": "fvg-setup-finder",
@@ -955,7 +955,7 @@
       "No News — skip if FOMC, CPI, or NFP is within 30 minutes. Imbalances get run both ways.",
       "It's a map, not a backtest — this is an indicator, not a strategy(). The TP/SL tracking is honest (SL-first, no same-bar exits) but it is not fill simulation. Size accordingly."
     ],
-    "sourceFile": "Sire-FVG-Setup-Finder"
+    "sourceFile": "scripts/fvg-setup-finder.pine"
   },
   {
     "slug": "bpa-mixed-v2",
@@ -1113,7 +1113,7 @@
       "OB Follow-Through arrows are confirmation, not entries. Enter on the setup (the OB itself), confirm with follow-through.",
       "Outside-bar measured moves often run the full bar-height distance. The blue line shows the full projection; take partial profits at halfway."
     ],
-    "sourceFile": "BPA-Mixed-v2"
+    "sourceFile": "scripts/bpa-mixed-v2.pine"
   },
   {
     "slug": "lbr-3-10-oscillator",
@@ -1213,7 +1213,7 @@
       "Do not optimize away the 3 / 10 / 16 identity without testing; changing those lengths produces a different momentum tool.",
       "Use alerts as prompts to review context, never as instructions to enter automatically."
     ],
-    "sourceFile": "LBR 3-10 Oscillator"
+    "sourceFile": "scripts/lbr-3-10-oscillator.pine"
   },
   {
     "slug": "sire-order-blocks",
@@ -1324,6 +1324,6 @@
       "Do not keep trusting a block after price closes through its far side; the script removes invalidated zones automatically.",
       "Avoid treating every displayed block equally around major news or low-liquidity periods."
     ],
-    "sourceFile": "Sire Order Blocks"
+    "sourceFile": "scripts/sire-order-blocks.pine"
   }
 ]
