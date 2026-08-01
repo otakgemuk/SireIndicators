@@ -626,10 +626,10 @@
   },
   {
     "slug": "m2b-m2s-setup",
-    "name": "M2B/M2S Setup",
+    "name": "2 Legged PB M2B/M2S",
     "version": "v1",
-    "tagline": "Two-legged pullback to the 20 EMA with price-action confirmation — disciplined entries, not chasing",
-    "category": "Mean Reversion",
+    "tagline": "Two-legged pullback continuation entries at the 20 EMA—M2B in bull trends, M2S in bear trends",
+    "category": "Trend Continuation",
     "status": "Stable",
     "markets": [
       "ES",
@@ -638,22 +638,24 @@
       "MNQ"
     ],
     "timeframes": "5m – 1H",
-    "description": "A mean-reversion entry system that waits for a two-legged pullback to the 20 EMA, then confirms a rejection with a candle closing back on the trend side. Built on Al Brooks' methodology — the two-legged pullback to the EMA is one of the highest-probability setups in a trending market. M2B fires longs in uptrends, M2S fires shorts in downtrends.",
+    "description": "A trend-continuation setup based on the classic two-legged pullback described in Al Brooks price-action methodology. Instead of chasing an extended move, the indicator waits for price to correct in two distinct legs toward the 20 EMA, then looks for confirmation back in the direction of the established trend. M2B identifies a second-entry buy after a two-legged pullback in a bullish market; M2S identifies a second-entry sell after a two-legged rally in a bearish market. The setup is strongest when market structure, EMA slope, and signal-bar quality all agree.",
     "features": [
-      "Two-legged pullback detection (A-B-C structure)",
-      "20 EMA touch confirmation on the second leg",
-      "M2B long in uptrends / M2S short in downtrends",
-      "Precise entry, stop, and target rules on every signal",
-      "Works on 5-minute through 1-hour charts"
+      "Two-legged A-B-C pullback structure detection",
+      "20 EMA location and trend-direction confirmation",
+      "M2B second-entry long setups in bullish structure",
+      "M2S second-entry short setups in bearish structure",
+      "Signal-bar confirmation before an entry is armed",
+      "Defined entry, structural stop, and target framework",
+      "Designed for clear trends rather than trading ranges"
     ],
     "signals": [
       {
         "name": "M2B Long",
-        "meaning": "Two-legged pullback to the 20 EMA in an uptrend — buy stop above the signal bar"
+        "meaning": "A two-legged pullback reaches the 20 EMA in an uptrend and confirms back upward—place a buy stop above the signal bar"
       },
       {
         "name": "M2S Short",
-        "meaning": "Two-legged rally to the 20 EMA in a downtrend — sell stop below the signal bar"
+        "meaning": "A two-legged rally reaches the 20 EMA in a downtrend and confirms back downward—place a sell stop below the signal bar"
       }
     ],
     "settings": [
@@ -689,18 +691,22 @@
       }
     ],
     "howToUse": [
-      "Open TradingView and go to Pine Editor (bottom panel).",
-      "Copy the full source from the file linked below and paste it into the editor.",
-      "Click \"Add to chart\". Best on 5m–1H charts in a clearly trending market.",
-      "Wait for the SECOND leg — never enter on the first test of the EMA.",
-      "Place the entry stop 1 tick beyond the signal bar; cancel if not triggered within 2 bars.",
-      "Move to breakeven once 50% to the first target is reached, and never widen the stop."
+      "Open TradingView and go to Pine Editor in the bottom panel.",
+      "Copy the full source linked below, paste it into the editor, and click “Add to chart.”",
+      "Confirm a clear trend first: higher highs and higher lows for M2B, or lower lows and lower highs for M2S.",
+      "Wait for two distinct pullback legs toward the 20 EMA—do not treat the first EMA test as the completed setup.",
+      "Require a credible signal bar that closes back toward the trend direction.",
+      "Place the entry stop 1 tick beyond the signal bar and cancel the order if it is not triggered within 2 bars.",
+      "Manage risk from the second-leg extreme, scale at the prior swing, and never widen the original stop."
     ],
     "bestPractices": [
-      "Strong Trend — the EMA must be rising (long) or falling (short); a flat EMA means skip.",
-      "Clean Two-Leg Pullback — the A-B-C structure must be clear; messy pullbacks are a skip.",
-      "EMA Touch — the second leg must reach or come within 1–2 ticks of the EMA.",
-      "No News — skip if FOMC, CPI, or NFP is within 30 minutes."
+      "Strong Trend—trade M2B only with a rising 20 EMA and M2S only with a falling 20 EMA; skip a flat average.",
+      "Clear Two Legs—the A-B-C structure should be obvious without forcing the count.",
+      "EMA Confluence—the second leg should touch or approach the 20 EMA while the broader trend remains intact.",
+      "Signal-Bar Quality—prefer a strong rejection or trend bar; avoid weak dojis and overlapping congestion.",
+      "Room to Target—make sure the prior swing offers enough reward relative to the structural stop.",
+      "Trading Range Filter—M2B/M2S loses its edge when price repeatedly crosses a flat EMA.",
+      "News Filter—avoid initiating the setup within 30 minutes of FOMC, CPI, or NFP."
     ],
     "sourceFile": "scripts/m2b-m2s-setup.pine"
   },
