@@ -1214,5 +1214,116 @@
       "Use alerts as prompts to review context, never as instructions to enter automatically."
     ],
     "sourceFile": "LBR 3-10 Oscillator"
+  },
+  {
+    "slug": "sire-order-blocks",
+    "name": "Sire Order Blocks",
+    "version": "v1",
+    "tagline": "Structure-confirmed order blocks with displacement filtering, FVG confluence, and mitigation tracking",
+    "category": "ICT / Smart Money",
+    "status": "Stable",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Stocks",
+      "Forex",
+      "Crypto"
+    ],
+    "timeframes": "1m – 4H",
+    "description": "Sire Order Blocks identifies institutional-style supply and demand zones only after price confirms a break of structure. A bullish order block is the last bearish candle before an ATR-qualified displacement move closes above a confirmed swing high; a bearish order block is the last bullish candle before price closes below a confirmed swing low. Optional Fair Value Gap confluence keeps only zones whose impulse leg contains an imbalance. Every zone then extends forward, changes appearance when mitigated, and is removed when price closes through its far side. The result is a selective structure map designed to distinguish meaningful order blocks from every ordinary opposing candle.",
+    "features": [
+      "Bullish and bearish order-block detection confirmed by Break of Structure (BOS)",
+      "Pivot-based swing structure with configurable confirmation strength",
+      "ATR displacement filter suppresses weak or random structure breaks",
+      "Optional Fair Value Gap confluence within the displacement leg",
+      "Full-wick or candle-body zone construction",
+      "Live mitigation tracking by wick touch or closing price",
+      "Automatic invalidation when price closes through the far side",
+      "Configurable zone limits, colors, labels, and mitigated-zone visibility"
+    ],
+    "signals": [
+      {
+        "name": "+OB",
+        "meaning": "Bullish order block: the last down candle before an ATR-qualified break above a confirmed swing high"
+      },
+      {
+        "name": "−OB",
+        "meaning": "Bearish order block: the last up candle before an ATR-qualified break below a confirmed swing low"
+      },
+      {
+        "name": "OB • FVG",
+        "meaning": "Order block whose displacement leg also contains a Fair Value Gap—higher-quality confluence"
+      },
+      {
+        "name": "Mitigated Zone",
+        "meaning": "Price has returned to the order block by the selected wick-touch or close-based rule; the zone turns gray"
+      },
+      {
+        "name": "Invalidated Zone",
+        "meaning": "Price closes through the far boundary of the block, deleting the zone from the chart"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Swing Length",
+        "defaultValue": "10",
+        "description": "Pivot strength used to confirm swing highs and lows before a BOS can occur"
+      },
+      {
+        "name": "Max Bars Back",
+        "defaultValue": "20",
+        "description": "Maximum distance searched for the last opposing candle that formed the order block"
+      },
+      {
+        "name": "Displacement Filter",
+        "defaultValue": "1.5× ATR",
+        "description": "Minimum impulse size required for a structure break to qualify"
+      },
+      {
+        "name": "Require FVG",
+        "defaultValue": "On",
+        "description": "Keeps only order blocks whose displacement leg contains a Fair Value Gap"
+      },
+      {
+        "name": "Use Body Zone",
+        "defaultValue": "Off",
+        "description": "Off uses the full wick range; on uses only the candle body"
+      },
+      {
+        "name": "Mitigate on Close",
+        "defaultValue": "Off",
+        "description": "Off marks mitigation on wick touch; on requires a closing price inside the zone"
+      },
+      {
+        "name": "Hide Mitigated",
+        "defaultValue": "Off",
+        "description": "Removes zones after their first mitigation instead of retaining them in gray"
+      },
+      {
+        "name": "Max OBs per Side",
+        "defaultValue": "15",
+        "description": "Maximum bullish and bearish blocks retained on the chart"
+      }
+    ],
+    "howToUse": [
+      "Open TradingView, go to Pine Editor, copy the full source linked below, and click “Add to chart.”",
+      "Begin with Require FVG enabled and the 1.5× ATR displacement filter to focus on cleaner institutional impulses.",
+      "Read +OB zones as potential demand and −OB zones as potential supply, but wait for price to revisit the zone.",
+      "Use the first mitigation as the primary decision point; combine it with trend, session context, and a price-action trigger.",
+      "Place invalidation beyond the far side of the zone and size the trade from that structural risk—not from a fixed contract count.",
+      "If too few zones appear, reduce the displacement multiplier or disable FVG confluence; if the chart is noisy, do the opposite."
+    ],
+    "bestPractices": [
+      "Fresh zones matter most: the first return generally carries more information than repeated tests.",
+      "Trade with higher-timeframe direction; bullish blocks in an uptrend and bearish blocks in a downtrend have better context.",
+      "Prioritize OB • FVG zones created by decisive displacement through an obvious swing level.",
+      "A zone is context, not an entry signal—require rejection, a lower-timeframe structure shift, or another defined trigger.",
+      "Use close-based mitigation for stricter confirmation and wick-touch mitigation for earlier, more sensitive tracking.",
+      "Do not keep trusting a block after price closes through its far side; the script removes invalidated zones automatically.",
+      "Avoid treating every displayed block equally around major news or low-liquidity periods."
+    ],
+    "sourceFile": "Sire Order Blocks"
   }
 ]
