@@ -89,6 +89,22 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
           </div>
         </Section>
 
+        {ind.theoryReference && (
+          <Section title="Theory Reference">
+            <div className="overflow-hidden rounded-lg border border-[#B87333]/30 bg-white p-3">
+              <img
+                src={ind.theoryReference.image}
+                alt={ind.theoryReference.alt}
+                className="mx-auto h-auto max-w-full"
+              />
+            </div>
+            <div className="mt-4 rounded-lg border border-[#E8C46A]/50 bg-[#E8C46A]/10 p-5" role="note" aria-label="Theory reference disclosure">
+              <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[#E8C46A]">Reference disclaimer</p>
+              <p className="mt-2 text-sm leading-relaxed text-[#F5EDD8]/85">{ind.theoryReference.disclaimer}</p>
+            </div>
+          </Section>
+        )}
+
         {/* Features */}
         <Section title="Features">
           <ul className="space-y-2.5">
