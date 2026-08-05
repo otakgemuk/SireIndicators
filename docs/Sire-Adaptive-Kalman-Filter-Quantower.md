@@ -54,6 +54,16 @@ The dashboard reports:
 
 The fallback can be disabled in indicator settings. When enabled, it uses the original ATR-normalized price change measurement outside order-flow availability.
 
+## Automatic data-mode switching
+
+No separate mode-change indicator is required. SAKF Pro checks Quantower Volume Analysis data on every update and selects the active measurement automatically:
+
+- `ORDER FLOW`: valid analyzed bid/ask delta is available, so the composite uses CVD together with VWAP location, Initial Balance position, and trend-day state.
+- `PRICE FALLBACK`: valid delta is unavailable and **Fallback to price proxy** is enabled, so ATR-normalized price change replaces the order-flow measurement.
+- Neutral measurement: valid delta is unavailable and **Fallback to price proxy** is disabled.
+
+The indicator can detect Volume Analysis data, but it cannot enable or calculate the platform service itself. Enable Volume Analysis on the Quantower chart and use a data connection that supplies aggressor-side trade data. The dashboard's `Data` row confirms the mode currently in use.
+
 ## Dashboard
 
 The dashboard reports current bias, momentum, CVD direction, VWAP position, Initial Balance relationship, day type, volatility regime, Kalman gain, and active data mode.
