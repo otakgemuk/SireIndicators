@@ -1348,9 +1348,10 @@
       "Futures"
     ],
     "timeframes": "1m – 30m (intraday)",
-    "description": "A Quantower-native pressure oscillator built around an adaptive Kalman filter. Instead of relying only on price change, its measurement model blends session cumulative volume delta, ATR-normalized location relative to session VWAP, position versus the Initial Balance, and confirmed trend-day expansion. The filter automatically becomes more conservative during elevated volatility and reports whether genuine order-flow data or the price fallback is active.",
+    "description": "A Quantower-native pressure oscillator built around an adaptive Kalman filter. Instead of relying only on price change, its measurement model blends session cumulative volume delta, ATR-normalized location relative to session VWAP, position versus the Initial Balance, and confirmed trend-day expansion. The indicator automatically selects its data mode on every update: it displays ORDER FLOW when valid Quantower Volume Analysis delta is available, switches to PRICE FALLBACK when it is unavailable and fallback is enabled, or supplies a neutral measurement when fallback is disabled. The filter becomes more conservative during elevated volatility.",
     "features": [
       "Composite pressure model: CVD 55%, VWAP 20%, Initial Balance 15%, trend-day state 10% by default",
+      "Automatic data-mode switching between ORDER FLOW and PRICE FALLBACK",
       "Adaptive Kalman measurement noise responds to the current ATR regime",
       "Session CVD and VWAP reset at a configurable session boundary",
       "Bull, bear, and balanced trend-day classification after Initial Balance",
@@ -1377,6 +1378,10 @@
       {
         "name": "Trend Day",
         "meaning": "Price, VWAP, CVD, IB break, and range expansion agree in one direction"
+      },
+      {
+        "name": "Data mode",
+        "meaning": "ORDER FLOW means valid Volume Analysis delta is driving CVD; PRICE FALLBACK means ATR-normalized price change is being used instead"
       }
     ],
     "settings": [
@@ -1408,13 +1413,15 @@
     ],
     "howToUse": [
       "Compile the C# source against the TradingPlatform.BusinessLayer.dll from your Quantower installation.",
-      "Enable Quantower Volume Analysis on the chart so CVD uses aggressor-side trades.",
+      "Enable or calculate Quantower Volume Analysis on the chart and use a connection that provides aggressor-side trade data; the indicator cannot enable this service itself.",
+      "Check the dashboard Data row: ORDER FLOW is selected automatically when valid delta exists, while PRICE FALLBACK appears when it does not.",
       "Set the session start and end to match the timestamps supplied by your broker connection.",
       "Read the signal direction together with the dashboard's CVD, VWAP, IB, and day-type rows.",
       "Use zero crosses as regime alerts and require price structure or a defined setup before entering."
     ],
     "bestPractices": [
       "ORDER FLOW mode is preferred; PRICE FALLBACK is intentionally less informative.",
+      "If Price Fallback is disabled and Volume Analysis is unavailable, the filter receives a neutral measurement rather than silently using price.",
       "Avoid changing all four weights at once—test one adjustment at a time.",
       "Trend-day confirmation is deliberately strict and will remain balanced on many sessions.",
       "Session timestamps must match the connection time zone or VWAP, CVD, and IB boundaries will be wrong.",
