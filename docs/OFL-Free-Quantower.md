@@ -1,5 +1,7 @@
 # OFL Free - Quantower clean-room compatibility suite
 
+> **Attribution notice:** The indicator is adopted from the free version of [https://orderflowlabs.com/](https://orderflowlabs.com/) OrderFlowLabs free indicators. This suite is an independent clean-room Quantower compatibility implementation and is not an official OrderFlowLabs product.
+
 This project provides Quantower-native counterparts for the seven indicators exposed by the NinjaTrader OFLFree 2024.07.23.01 package:
 
 - Sire OFL DDD
