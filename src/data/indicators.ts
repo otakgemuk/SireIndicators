@@ -11,6 +11,7 @@ export interface Indicator {
   slug: string;
   name: string;
   version: string;
+  platform?: string;
   tagline: string;
   category: string;
   status: string;
