@@ -63,6 +63,22 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
           </a>
         </div>
 
+        {ind.attributionUrl && (
+          <aside className="mt-8 rounded-lg border border-[#E8C46A]/50 bg-[#E8C46A]/10 p-5" role="note" aria-label="Source attribution">
+            <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[#E8C46A]">Attribution notice</p>
+            <p className="mt-2 text-sm leading-relaxed text-[#F5EDD8]/85">
+              The indicator is adopted from the free version of{' '}
+              <a href={ind.attributionUrl} target="_blank" rel="noopener noreferrer" className="text-[#E8C46A] underline">
+                https://orderflowlabs.com/
+              </a>{' '}
+              OrderFlowLabs free indicators.
+            </p>
+            <p className="mt-2 text-xs leading-relaxed text-[#F5EDD8]/60">
+              This is an independent clean-room Quantower compatibility implementation and is not an official OrderFlowLabs product.
+            </p>
+          </aside>
+        )}
+
         {/* Overview */}
         <Section title="Overview">
           <p className="leading-relaxed text-[#F5EDD8]/80">{ind.description}</p>
