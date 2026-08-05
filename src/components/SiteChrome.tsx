@@ -9,7 +9,7 @@ export function TickerBar() {
   return (
     <div className="border-b border-[#B87333]/25 bg-[#080b12] py-1.5">
       <p className="text-center font-mono text-[11px] tracking-[0.2em] text-[#E8C46A]/80">
-        ES · NQ · MES · MNQ — FREE PINE SCRIPT TOOLS — LEARN TO READ PRICE
+        ES · NQ · MES · MNQ — TRADINGVIEW + QUANTOWER — FREE OPEN SOURCE TOOLS
       </p>
     </div>
   );
