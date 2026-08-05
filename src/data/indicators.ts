@@ -12,6 +12,7 @@ export interface Indicator {
   name: string;
   version: string;
   platform?: string;
+  attributionUrl?: string;
   tagline: string;
   category: string;
   status: string;
