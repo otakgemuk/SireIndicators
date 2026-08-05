@@ -2,6 +2,12 @@
 
 A Quantower-native order-flow pressure oscillator that combines an adaptive Kalman filter with session CVD, VWAP location, Initial Balance structure, and trend-day confirmation.
 
+## Theory reference disclosure
+
+![Adaptive Kalman filter theory reference](../public/images/kalman-adaptive-filter-theory-reference.png)
+
+> I picked up this image from a post on X to assess the adaptive Kalman filter theory. I am not claiming authorship of the image or the underlying text, and its inclusion does not imply endorsement by the original author. The Sire Adaptive Kalman Filter Pro implementation is an independent Quantower implementation.
+
 ## Measurement model
 
 The default composite pressure score is:

@@ -13,6 +13,7 @@ export interface Indicator {
   version: string;
   platform?: string;
   attributionUrl?: string;
+  theoryReference?: { image: string; alt: string; disclaimer: string };
   tagline: string;
   category: string;
   status: string;
