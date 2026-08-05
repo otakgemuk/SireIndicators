@@ -1497,7 +1497,8 @@
       "Signals inside thin overnight trade need different calibration from RTH.",
       "Use with liquidity and location; isolated arrows in the middle of balance are lower quality."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-delta-towers",
@@ -1566,7 +1567,8 @@
       "Do not equate delta directly with price direction—absorption and trapped traders matter.",
       "Combine with VWAP, IB, prior highs/lows, or order-flow structure."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-reconstructed-tape",
@@ -1631,7 +1633,8 @@
       "Repeated aggressive buying without upward progress can indicate passive seller absorption.",
       "Keep the lookback long enough to represent the current session regime."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-single-prints",
@@ -1691,7 +1694,8 @@
       "Single prints formed during news can be repaired quickly; manage expectations accordingly.",
       "Do not use a zone as an entry without a response trigger."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-tape-reader",
@@ -1755,7 +1759,8 @@
       "Divergence is strongest at meaningful structure and weakest in the center of balance.",
       "Always distinguish RTH liquidity from overnight behavior."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-mgi-weekly",
@@ -1819,7 +1824,8 @@
       "Extensions work best as planning references and scale-out zones.",
       "Prior-week levels can remain relevant even after the current IB expands."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   },
   {
     "slug": "sire-ofl-vwap",
@@ -1898,6 +1904,7 @@
       "Trend days can ride the first or second band for extended periods.",
       "Use consistent session definitions when comparing historical behavior."
     ],
-    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs",
+    "attributionUrl": "https://orderflowlabs.com/"
   }
 ]
