@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { indicators, getIndicator } from '@/data/indicators';
@@ -92,10 +93,13 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
         {ind.theoryReference && (
           <Section title="Theory Reference">
             <div className="overflow-hidden rounded-lg border border-[#B87333]/30 bg-white p-3">
-              <img
+              <Image
                 src={ind.theoryReference.image}
                 alt={ind.theoryReference.alt}
-                className="mx-auto h-auto max-w-full"
+                width={553}
+                height={666}
+                className="mx-auto h-auto w-auto max-w-full"
+                sizes="(max-width: 768px) 90vw, 553px"
               />
             </div>
             <div className="mt-4 rounded-lg border border-[#E8C46A]/50 bg-[#E8C46A]/10 p-5" role="note" aria-label="Theory reference disclosure">
