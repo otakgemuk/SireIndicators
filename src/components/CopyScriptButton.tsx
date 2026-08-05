@@ -28,11 +28,11 @@ export default function CopyScriptButton({ scriptPath, indicatorName }: CopyScri
   return (
     <button
       onClick={handleCopy}
-      aria-label={`Copy ${indicatorName} Pine Script`}
+      aria-label={`Copy ${indicatorName} source code`}
       className="rounded bg-[#E8C46A] px-6 py-3 font-mono text-sm font-semibold tracking-wide text-[#0B0F19] transition-all hover:bg-[#F5EDD8] disabled:opacity-50"
       disabled={copied}
     >
-      {copied ? '✓ COPIED' : 'COPY SCRIPT'}
+      {copied ? '✓ COPIED' : 'COPY SOURCE'}
     </button>
   );
 }
