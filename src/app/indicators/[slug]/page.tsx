@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { indicators, getIndicator } from '@/data/indicators';
@@ -9,8 +8,9 @@ export function generateStaticParams() {
   return indicators.map((i) => ({ slug: i.slug }));
 }
 
-export default function IndicatorPage({ params }: { params: { slug: string } }) {
-  const ind = getIndicator(params.slug);
+export default async function IndicatorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const ind = getIndicator(slug);
   if (!ind) notFound();
 
   const hasSource = ind.sourceFile.trim().length > 0;
@@ -92,16 +92,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
         {ind.theoryReference && (
           <Section title="Theory Reference">
-            <div className="overflow-hidden rounded-lg border border-[#B87333]/30 bg-white p-3">
-              <Image
-                src={ind.theoryReference.image}
-                alt={ind.theoryReference.alt}
-                width={553}
-                height={666}
-                className="mx-auto h-auto w-auto max-w-full"
-                sizes="(max-width: 768px) 90vw, 553px"
-              />
-            </div>
+            <KalmanTheoryReference />
             <div className="mt-4 rounded-lg border border-[#E8C46A]/50 bg-[#E8C46A]/10 p-5" role="note" aria-label="Theory reference disclosure">
               <p className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-[#E8C46A]">Reference disclaimer</p>
               <p className="mt-2 text-sm leading-relaxed text-[#F5EDD8]/85">{ind.theoryReference.disclaimer}</p>
@@ -188,6 +179,29 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
 
       <SiteFooter />
     </div>
+  );
+}
+
+function KalmanTheoryReference() {
+  return (
+    <article className="rounded-lg border border-[#B87333]/30 bg-white px-6 py-8 text-[#171717] shadow-sm sm:px-10" aria-label="Adaptive Kalman Filter theory reference">
+      <h3 className="border-b border-[#B87333]/25 pb-3 font-display text-xl font-semibold">3.1 Adaptive Kalman Filter</h3>
+      <p className="mt-5 leading-relaxed">
+        We model the relationship between observed order flow and the “true” informed signal using a state-space representation.
+      </p>
+      <div className="my-6 space-y-5 text-center font-serif text-lg">
+        <p>θ<sub>t</sub> = φθ<sub>t−1</sub> + η<sub>t</sub>, &nbsp; η<sub>t</sub> ∼ N(0, Q<sub>t</sub>)</p>
+        <p>S<sub>t</sub> = θ<sub>t</sub> + ε<sub>t</sub>, &nbsp; ε<sub>t</sub> ∼ N(0, R<sub>t</sub>)</p>
+        <p>R<sub>t</sub> = R<sub>0</sub> · (σ<sub>t</sub> / σ̄)<sup>γ</sup></p>
+        <p>K<sub>t</sub> = P<sub>t|t−1</sub> / (P<sub>t|t−1</sub> + R<sub>t</sub>)</p>
+      </div>
+      <p className="leading-relaxed">
+        During high-volatility periods, measurement noise rises and the Kalman gain falls, so the filtered estimate discounts recent observations more heavily.
+      </p>
+      <p className="mt-6 text-sm text-[#555]">
+        Source: <a className="underline decoration-[#B87333] underline-offset-2" href="https://arxiv.org/abs/2601.05716" target="_blank" rel="noopener noreferrer">Kang, “When the Rules Change”</a>, §3.1.
+      </p>
+    </article>
   );
 }
 
