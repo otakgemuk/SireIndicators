@@ -23,9 +23,9 @@ const dmMono = DM_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'SireIndicators — Free Pine Script Indicators for Futures Traders',
+  title: 'SireIndicators — Free TradingView and Quantower Indicators',
   description:
-    'Free TradingView indicators for ES, NQ, MES, MNQ futures. Opening range breakout systems, rule-based scoring engines, and price action tools by SireMammat.',
+    'Free TradingView and Quantower indicators for futures traders, including price action, order flow, market profile, VWAP, and adaptive filtering tools by SireMammat.',
 };
 
 export default function RootLayout({

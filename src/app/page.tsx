@@ -19,9 +19,9 @@ export default function Home() {
             <span className="text-[#E8C46A]">Not Hope.</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl leading-relaxed text-[#F5EDD8]/70">
-            Battle-tested TradingView indicators for ES, NQ, MES and MNQ futures —
-            built on Al Brooks price action, opening range structure, and objective
-            rule-based scoring. Free, always. By SireMammat.
+            Open-source TradingView and Quantower indicators for futures traders —
+            spanning price action, opening-range structure, order flow, market profile,
+            VWAP, and adaptive filtering. Free, always. By SireMammat.
           </p>
         </div>
       </section>
@@ -32,7 +32,7 @@ export default function Home() {
           <Stat label="Indicators" value={String(indicators.length)} />
           <Stat label="Markets" value="ES · NQ · MES · MNQ" />
           <Stat label="Price" value="Free" />
-          <Stat label="Platform" value="TradingView" />
+          <Stat label="Platforms" value="TradingView · Quantower" />
         </div>
       </section>
 
@@ -53,7 +53,7 @@ export default function Home() {
                   {ind.category}
                 </span>
                 <span className="font-mono text-xs text-[#F5EDD8]/50">
-                  {ind.version} · {ind.status}
+                  {ind.platform ?? 'TradingView'} · {ind.version} · {ind.status}
                 </span>
               </div>
               <h3 className="font-display text-2xl font-semibold text-[#F5EDD8] group-hover:text-[#E8C46A]">
@@ -80,8 +80,7 @@ export default function Home() {
         {/* Callout */}
         <div className="mt-10">
           <Callout>
-            Every tool here exists because I needed it on my own charts first. No repaints, no
-            black boxes — the full Pine source is open in{' '}
+            Every tool here exists because I needed it on my own charts first. No hidden signals and no locked source — the TradingView Pine and Quantower C# code are open in{' '}
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="text-[#E8C46A] underline">
               the repo
             </a>

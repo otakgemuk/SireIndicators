@@ -17,6 +17,8 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
     ? `${REPO_URL}/blob/main/${ind.sourceFile.split('/').map(encodeURIComponent).join('/')}`
     : null;
   const scriptPath = hasSource ? ind.sourceFile : null;
+  const platform = ind.platform ?? 'TradingView';
+  const sourceDirectory = hasSource ? ind.sourceFile.split('/').slice(0, -1).join('/') : '';
 
   return (
     <div className="min-h-screen bg-[#0B0F19] text-[#F5EDD8]">
@@ -26,7 +28,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
       <main className="mx-auto max-w-4xl px-6 py-12">
         {/* Eyebrow + title */}
         <p className="mb-3 font-mono text-xs uppercase tracking-[0.35em] text-[#B87333]">
-          {ind.category} · {ind.version} · {ind.status}
+          {platform} · {ind.category} · {ind.version} · {ind.status}
         </p>
         <h1 className="font-display text-4xl font-semibold md:text-5xl">{ind.name}</h1>
         <p className="mt-3 text-lg leading-relaxed text-[#F5EDD8]/70">{ind.tagline}</p>
@@ -52,7 +54,7 @@ export default function IndicatorPage({ params }: { params: { slug: string } }) 
             </span>
           )}
           <a
-            href={`${REPO_URL}/tree/main/scripts`}
+            href={`${REPO_URL}/tree/main/${sourceDirectory}`}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded border border-[#B87333] px-6 py-3 font-mono text-sm tracking-wide text-[#E8C46A] transition-colors hover:bg-[#B87333]/10"
