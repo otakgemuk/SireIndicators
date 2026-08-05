@@ -1427,7 +1427,12 @@
       "Session timestamps must match the connection time zone or VWAP, CVD, and IB boundaries will be wrong.",
       "This is a context and pressure tool, not a standalone automated strategy."
     ],
-    "sourceFile": "quantower/SireAdaptiveKalmanFilter.cs"
+    "sourceFile": "quantower/SireAdaptiveKalmanFilter.cs",
+    "theoryReference": {
+      "image": "/images/kalman-adaptive-filter-theory-reference.png",
+      "alt": "Excerpt describing an adaptive Kalman filter state-space model and volatility-dependent measurement noise",
+      "disclaimer": "Theory reference disclosure: I picked up this image from a post on X to assess the adaptive Kalman filter theory. I am not claiming authorship of the image or the underlying text, and its inclusion does not imply endorsement by the original author. The Sire Adaptive Kalman Filter Pro implementation is an independent Quantower implementation."
+    }
   },
   {
     "slug": "sire-ofl-diagonal-delta-divergence",
