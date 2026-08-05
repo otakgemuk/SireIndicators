@@ -872,8 +872,8 @@
     "slug": "fvg-setup-finder",
     "name": "Sire FVG Setup Finder",
     "version": "v1",
-    "tagline": "ICT Fair Value Gaps with a full trade plan — auto entry, stop and target the moment price taps the imbalance",
-    "category": "ICT / Smart Money",
+    "tagline": "Fair Value Gaps with a complete trade plan — automatic entry, stop, and target when price taps the imbalance",
+    "category": "Fair Value Gap",
     "status": "Stable",
     "markets": [
       "ES",
