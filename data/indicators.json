@@ -1331,5 +1331,566 @@
       "Avoid treating every displayed block equally around major news or low-liquidity periods."
     ],
     "sourceFile": "scripts/sire-order-blocks.pine"
+  },
+  {
+    "slug": "sire-adaptive-kalman-filter-pro",
+    "name": "Sire Adaptive Kalman Filter Pro",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Adaptive order-flow pressure combining CVD, VWAP, Initial Balance, and trend-day confirmation",
+    "category": "Order Flow",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "1m – 30m (intraday)",
+    "description": "A Quantower-native pressure oscillator built around an adaptive Kalman filter. Instead of relying only on price change, its measurement model blends session cumulative volume delta, ATR-normalized location relative to session VWAP, position versus the Initial Balance, and confirmed trend-day expansion. The filter automatically becomes more conservative during elevated volatility and reports whether genuine order-flow data or the price fallback is active.",
+    "features": [
+      "Composite pressure model: CVD 55%, VWAP 20%, Initial Balance 15%, trend-day state 10% by default",
+      "Adaptive Kalman measurement noise responds to the current ATR regime",
+      "Session CVD and VWAP reset at a configurable session boundary",
+      "Bull, bear, and balanced trend-day classification after Initial Balance",
+      "Momentum histogram, zero-line regime changes, and directional markers",
+      "On-chart dashboard for bias, momentum, CVD, VWAP, IB, day type, volatility, gain, and data mode"
+    ],
+    "signals": [
+      {
+        "name": "Signal above zero",
+        "meaning": "Filtered composite pressure favors buyers; strength depends on slope and supporting context"
+      },
+      {
+        "name": "Signal below zero",
+        "meaning": "Filtered composite pressure favors sellers"
+      },
+      {
+        "name": "Zero-line cross",
+        "meaning": "The filtered regime changed direction; confirm with structure rather than treating it as an automatic entry"
+      },
+      {
+        "name": "Acceleration histogram",
+        "meaning": "Positive values show improving pressure; negative values show weakening pressure"
+      },
+      {
+        "name": "Trend Day",
+        "meaning": "Price, VWAP, CVD, IB break, and range expansion agree in one direction"
+      }
+    ],
+    "settings": [
+      {
+        "name": "CVD / VWAP / IB / Trend weights",
+        "defaultValue": "55 / 20 / 15 / 10",
+        "description": "Controls the contribution of each pressure component"
+      },
+      {
+        "name": "ATR Length",
+        "defaultValue": "14",
+        "description": "Volatility normalization period"
+      },
+      {
+        "name": "Initial Balance",
+        "defaultValue": "60 min",
+        "description": "Time after the session open used to establish IB high and low"
+      },
+      {
+        "name": "Trend Range Threshold",
+        "defaultValue": "1.5× IB",
+        "description": "Minimum session expansion required for trend-day confirmation"
+      },
+      {
+        "name": "Price Fallback",
+        "defaultValue": "On",
+        "description": "Uses ATR-normalized price change when Volume Analysis is unavailable"
+      }
+    ],
+    "howToUse": [
+      "Compile the C# source against the TradingPlatform.BusinessLayer.dll from your Quantower installation.",
+      "Enable Quantower Volume Analysis on the chart so CVD uses aggressor-side trades.",
+      "Set the session start and end to match the timestamps supplied by your broker connection.",
+      "Read the signal direction together with the dashboard's CVD, VWAP, IB, and day-type rows.",
+      "Use zero crosses as regime alerts and require price structure or a defined setup before entering."
+    ],
+    "bestPractices": [
+      "ORDER FLOW mode is preferred; PRICE FALLBACK is intentionally less informative.",
+      "Avoid changing all four weights at once—test one adjustment at a time.",
+      "Trend-day confirmation is deliberately strict and will remain balanced on many sessions.",
+      "Session timestamps must match the connection time zone or VWAP, CVD, and IB boundaries will be wrong.",
+      "This is a context and pressure tool, not a standalone automated strategy."
+    ],
+    "sourceFile": "quantower/SireAdaptiveKalmanFilter.cs"
+  },
+  {
+    "slug": "sire-ofl-diagonal-delta-divergence",
+    "name": "Sire OFL Diagonal Delta Divergence",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Diagonal bid/ask imbalance signals built from price-level Volume Analysis",
+    "category": "Order Flow",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "Tick – 15m",
+    "description": "A clean-room Quantower implementation of diagonal footprint imbalance logic. At each price level it compares executed ask volume with the bid one tick below, and bid volume with the ask one tick above. When the imbalance ratio and minimum absolute delta are both satisfied, the indicator aggregates the directional pressure and marks qualifying bullish or bearish bars.",
+    "features": [
+      "True price-level bid/ask comparison from Quantower Volume Analysis",
+      "Configurable imbalance ratio and minimum delta filter",
+      "Separate bullish and bearish chart markers",
+      "Tick-aware marker offsets",
+      "Designed for footprint-style confirmation without requiring a footprint chart"
+    ],
+    "signals": [
+      {
+        "name": "Buy arrow",
+        "meaning": "Aggregated bullish diagonal imbalances dominate on a non-bearish bar"
+      },
+      {
+        "name": "Sell arrow",
+        "meaning": "Aggregated bearish diagonal imbalances dominate on a non-bullish bar"
+      },
+      {
+        "name": "No marker",
+        "meaning": "Neither side met both the ratio and minimum-delta requirements"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Imbalance Ratio",
+        "defaultValue": "3.0×",
+        "description": "Required aggressive-to-passive volume ratio"
+      },
+      {
+        "name": "Minimum Delta",
+        "defaultValue": "100",
+        "description": "Minimum absolute volume difference for a level to qualify"
+      },
+      {
+        "name": "Signal Offset",
+        "defaultValue": "2 ticks",
+        "description": "Distance between the marker and bar high or low"
+      }
+    ],
+    "howToUse": [
+      "Enable Volume Analysis for the chart and allow its historical calculation to complete.",
+      "Start on a short intraday timeframe or footprint-compatible aggregation.",
+      "Treat arrows near important structure, VWAP, or range extremes as more meaningful.",
+      "Increase minimum delta for more liquid contracts or noisy sessions.",
+      "Require price acceptance or rejection after the marker before entering."
+    ],
+    "bestPractices": [
+      "Thresholds are instrument-specific; ES and NQ should not automatically share the same minimum delta.",
+      "An imbalance is participation evidence, not proof that price must reverse or continue.",
+      "Signals inside thin overnight trade need different calibration from RTH.",
+      "Use with liquidity and location; isolated arrows in the middle of balance are lower quality."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-delta-towers",
+    "name": "Sire OFL Delta Towers",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Bar-delta percentage towers with static and adaptive significance thresholds",
+    "category": "Order Flow",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "1m – 30m",
+    "description": "A separate-window histogram that converts each bar's bid/ask delta into a percentage of total analyzed volume. Only readings that clear the configured threshold are displayed as positive or negative towers. The optional adaptive mode raises the effective threshold toward the recent average absolute delta percentage, helping suppress ordinary fluctuations.",
+    "features": [
+      "Delta normalized as a percentage of analyzed volume",
+      "Positive and negative histogram towers",
+      "Static minimum threshold",
+      "Rolling adaptive threshold option",
+      "Zero reference line for immediate directional reading"
+    ],
+    "signals": [
+      {
+        "name": "Positive tower",
+        "meaning": "Buyer-initiated volume exceeded the active significance threshold"
+      },
+      {
+        "name": "Negative tower",
+        "meaning": "Seller-initiated volume exceeded the active significance threshold"
+      },
+      {
+        "name": "No tower",
+        "meaning": "Delta remained inside the ordinary range for the selected threshold model"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Delta Threshold",
+        "defaultValue": "20%",
+        "description": "Minimum absolute bar-delta percentage"
+      },
+      {
+        "name": "Dynamic Threshold",
+        "defaultValue": "On",
+        "description": "Uses the greater of the static threshold and rolling average"
+      },
+      {
+        "name": "Dynamic Lookback",
+        "defaultValue": "20 bars",
+        "description": "History used to estimate ordinary delta magnitude"
+      }
+    ],
+    "howToUse": [
+      "Enable Volume Analysis and wait for historical data to populate.",
+      "Use towers to confirm breakouts, failed breaks, and responses at known levels.",
+      "Compare tower direction with the candle result: strong delta with little progress can indicate absorption.",
+      "Raise the threshold when too many ordinary bars print; lower it when meaningful participation is missed."
+    ],
+    "bestPractices": [
+      "A large positive tower on a down-closing bar can be more informative than a conventional bullish tower.",
+      "Compare similar session periods because volume character changes through the day.",
+      "Do not equate delta directly with price direction—absorption and trapped traders matter.",
+      "Combine with VWAP, IB, prior highs/lows, or order-flow structure."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-reconstructed-tape",
+    "name": "Sire OFL Reconstructed Tape",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Delta-colored close markers ranked by relative-volume Z-score",
+    "category": "Tape / Volume",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "Tick – 5m",
+    "description": "A chart overlay that reconstructs a simplified tape from completed chart bars. Each close is plotted as a point, colored by delta direction and intensified when bar volume is statistically large relative to the recent sample. It is not a tick-by-tick Time & Sales replacement; it is a compact way to see directional participation and unusual volume directly on price.",
+    "features": [
+      "Close-price tape points overlaid on the chart",
+      "Color determined by positive or negative delta",
+      "Three visual intensity classes per direction",
+      "Rolling mean and standard deviation of volume",
+      "Configurable large-print Z-score"
+    ],
+    "signals": [
+      {
+        "name": "Bright green point",
+        "meaning": "Positive delta with statistically exceptional volume"
+      },
+      {
+        "name": "Bright red point",
+        "meaning": "Negative delta with statistically exceptional volume"
+      },
+      {
+        "name": "Muted point",
+        "meaning": "Directional delta occurred on ordinary relative volume"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Lookback",
+        "defaultValue": "50 bars",
+        "description": "Sample used for relative-volume statistics"
+      },
+      {
+        "name": "Large Print Z-score",
+        "defaultValue": "2.0",
+        "description": "Standard deviations above the mean required for the strongest color"
+      }
+    ],
+    "howToUse": [
+      "Enable Volume Analysis for true directional coloring.",
+      "Choose a small aggregation if you want a finer tape-like view.",
+      "Watch for clusters of high-intensity points at the same price region.",
+      "Compare aggressive color with actual price progress to identify acceptance or absorption.",
+      "Use the display as context, then confirm entries with structure."
+    ],
+    "bestPractices": [
+      "This is reconstructed from bars and cannot reproduce every individual trade.",
+      "A bright point means unusual bar volume, not necessarily one large market order.",
+      "Repeated aggressive buying without upward progress can indicate passive seller absorption.",
+      "Keep the lookback long enough to represent the current session regime."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-single-prints",
+    "name": "Sire OFL Single Prints",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "TPO-bracket excess zones for tracking one-time-framing auction structure",
+    "category": "Market Profile",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "1m – 30m",
+    "description": "A clean-room approximation of Market Profile single-print structure. Price is grouped into configurable TPO time brackets, and the indicator identifies excess portions of a completed bracket that stand beyond adjacent bracket ranges. The resulting high and low are extended as a zone so traders can monitor later acceptance, rejection, or repair.",
+    "features": [
+      "Configurable TPO bracket duration",
+      "Auction-excess comparison across adjacent brackets",
+      "Persistent zone high and low",
+      "Step-line display on the price chart",
+      "Useful with profile, Initial Balance, and prior-session references"
+    ],
+    "signals": [
+      {
+        "name": "Upper single-print zone",
+        "meaning": "A bracket extended above its neighbors, leaving a potential excess or fast-auction area"
+      },
+      {
+        "name": "Lower single-print zone",
+        "meaning": "A bracket extended below its neighbors"
+      },
+      {
+        "name": "Zone repair",
+        "meaning": "Later trade accepts back through the marked area, reducing its usefulness as untouched structure"
+      }
+    ],
+    "settings": [
+      {
+        "name": "TPO Period",
+        "defaultValue": "30 min",
+        "description": "Duration of each time-price-opportunity bracket"
+      }
+    ],
+    "howToUse": [
+      "Use an intraday chart whose bar size is smaller than the selected TPO bracket.",
+      "Let at least three brackets complete before interpreting a zone.",
+      "Track the first revisit for rejection or acceptance.",
+      "Combine the zone with the session profile, IB, VWAP, and directional context.",
+      "Treat repaired zones as historical structure rather than fresh excess."
+    ],
+    "bestPractices": [
+      "This is a bracket-based approximation, not a full letter-by-letter Market Profile engine.",
+      "Untested excess generally matters more than repeatedly traded structure.",
+      "Single prints formed during news can be repaired quickly; manage expectations accordingly.",
+      "Do not use a zone as an entry without a response trigger."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-tape-reader",
+    "name": "Sire OFL Tape Reader",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Smoothed order-flow delta percentage for reading sustained aggressive pressure",
+    "category": "Tape / Volume",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "Tick – 15m",
+    "description": "A separate-window tape-pressure oscillator that calculates each bar's delta as a percentage of analyzed volume and smooths it over a configurable lookback. Positive readings indicate sustained buyer aggression; negative readings indicate sustained seller aggression. The smoothing makes persistent participation easier to see than raw bar-to-bar delta.",
+    "features": [
+      "True bid/ask delta percentage when Volume Analysis is available",
+      "Configurable moving-average lookback",
+      "Directional line coloring",
+      "Zero-line pressure regime",
+      "Compact confirmation for price-action setups"
+    ],
+    "signals": [
+      {
+        "name": "Above zero",
+        "meaning": "Recent aggressive flow is buyer-dominant"
+      },
+      {
+        "name": "Below zero",
+        "meaning": "Recent aggressive flow is seller-dominant"
+      },
+      {
+        "name": "Zero cross",
+        "meaning": "The smoothed pressure regime changed direction"
+      },
+      {
+        "name": "Price/reader disagreement",
+        "meaning": "Potential absorption, exhaustion, or lag requiring closer context"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Lookback",
+        "defaultValue": "20 bars",
+        "description": "Number of delta-percentage observations in the moving average"
+      }
+    ],
+    "howToUse": [
+      "Enable Volume Analysis and let historical calculation complete.",
+      "Use the zero line for broad pressure bias and slope for improvement or deterioration.",
+      "Confirm long setups when the reader is positive or recovering; reverse for shorts.",
+      "Investigate divergence between price progress and tape pressure rather than trading it automatically.",
+      "Shorten the lookback for responsiveness or lengthen it for regime stability."
+    ],
+    "bestPractices": [
+      "A smoothed reader will lag by design; its purpose is persistence, not exact entry timing.",
+      "Very short lookbacks can become indistinguishable from raw delta noise.",
+      "Divergence is strongest at meaningful structure and weakest in the center of balance.",
+      "Always distinguish RTH liquidity from overnight behavior."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-mgi-weekly",
+    "name": "Sire OFL MGI Weekly",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Weekly Initial Balance, extensions, current-week references, and prior-week structure",
+    "category": "Market Structure",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "5m – Daily",
+    "description": "A weekly structure overlay centered on the opening Initial Balance. It plots the weekly IB high, midpoint, and low, projects symmetrical 100% range extensions, and carries forward prior-week high, low, and close. Current-week open and developing midpoint provide additional auction references for swing and intraday context.",
+    "features": [
+      "Weekly Initial Balance high, midpoint, and low",
+      "Plus and minus 100% IB extensions",
+      "Prior-week high, low, and close",
+      "Current-week open and developing midpoint",
+      "Persistent step-line structure on the price chart"
+    ],
+    "signals": [
+      {
+        "name": "WIB break",
+        "meaning": "Price leaves the weekly opening balance; acceptance outside matters more than the first touch"
+      },
+      {
+        "name": "+100% / -100%",
+        "meaning": "A measured weekly expansion equal to one complete IB range"
+      },
+      {
+        "name": "Prior-week level test",
+        "meaning": "A common liquidity and acceptance decision point"
+      },
+      {
+        "name": "Week-open reclaim/loss",
+        "meaning": "A simple reference for whether the current auction is above or below its origin"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Weekly IB Duration",
+        "defaultValue": "60 min",
+        "description": "Time from the detected week start used to establish weekly IB"
+      }
+    ],
+    "howToUse": [
+      "Confirm that the chart timestamps and trading-week boundary match your market.",
+      "Allow the configured weekly IB period to complete.",
+      "Use the IB as the opening auction and extensions as measured references—not guaranteed targets.",
+      "Watch reactions where weekly levels align with daily, session, VWAP, or profile structure.",
+      "Reassess bias when price accepts back through the weekly open or IB midpoint."
+    ],
+    "bestPractices": [
+      "Week-start timestamps depend on the data connection and instrument session template.",
+      "Acceptance requires time and trade beyond a level; a wick alone is not confirmation.",
+      "Extensions work best as planning references and scale-out zones.",
+      "Prior-week levels can remain relevant even after the current IB expands."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
+  },
+  {
+    "slug": "sire-ofl-vwap",
+    "name": "Sire OFL VWAP",
+    "version": "v1",
+    "platform": "Quantower",
+    "tagline": "Session VWAP with three configurable volume-weighted standard-deviation bands",
+    "category": "VWAP",
+    "status": "Beta",
+    "markets": [
+      "ES",
+      "NQ",
+      "MES",
+      "MNQ",
+      "Futures"
+    ],
+    "timeframes": "1m – 30m (intraday)",
+    "description": "A session-anchored Volume Weighted Average Price overlay with three pairs of weighted standard-deviation bands. Accumulation resets at the configured session start. Quantower Volume Analysis volume is used when available, with chart volume as a fallback, making the indicator useful as a fair-value reference and a framework for trend, balance, and extension.",
+    "features": [
+      "Configurable session anchor",
+      "Volume-weighted typical-price mean",
+      "Weighted variance and standard deviation",
+      "Three independently configurable band pairs",
+      "Volume Analysis volume with chart-volume fallback"
+    ],
+    "signals": [
+      {
+        "name": "Above VWAP",
+        "meaning": "Current trade is above session volume-weighted fair value"
+      },
+      {
+        "name": "Below VWAP",
+        "meaning": "Current trade is below session volume-weighted fair value"
+      },
+      {
+        "name": "VWAP reclaim/rejection",
+        "meaning": "Potential shift in intraday acceptance when confirmed by structure and participation"
+      },
+      {
+        "name": "Outer-band test",
+        "meaning": "Price is statistically extended relative to the session distribution; extension can persist on trend days"
+      }
+    ],
+    "settings": [
+      {
+        "name": "Session Start",
+        "defaultValue": "09:30",
+        "description": "Timestamp at which VWAP accumulation resets"
+      },
+      {
+        "name": "Band 1",
+        "defaultValue": "1.0 SD",
+        "description": "Inner deviation multiplier"
+      },
+      {
+        "name": "Band 2",
+        "defaultValue": "2.0 SD",
+        "description": "Middle deviation multiplier"
+      },
+      {
+        "name": "Band 3",
+        "defaultValue": "3.0 SD",
+        "description": "Outer deviation multiplier"
+      }
+    ],
+    "howToUse": [
+      "Set the session anchor to the relevant market open in your connection's time zone.",
+      "Use VWAP as a fair-value and directional context reference.",
+      "On balanced days, watch for rotation between bands and VWAP.",
+      "On trend days, avoid fading an outer band without evidence that price is returning to value.",
+      "Combine band tests with CVD, delta, IB, and price structure."
+    ],
+    "bestPractices": [
+      "A deviation band is not automatically overbought or oversold.",
+      "Session boundaries must be correct or every calculation will be anchored incorrectly.",
+      "Trend days can ride the first or second band for extended periods.",
+      "Use consistent session definitions when comparing historical behavior."
+    ],
+    "sourceFile": "quantower/OFLFree/OFLFreeQuantower.cs"
   }
 ]
